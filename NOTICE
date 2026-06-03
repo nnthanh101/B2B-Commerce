@@ -1,0 +1,36 @@
+Digital-Commerce
+Copyright (c) 2022-2026 Thanh Nguyen <nnthanh101@gmail.com> and OceanSoft.io
+
+This product is licensed under the MIT License. See the LICENSE file.
+
+================================================================================
+Third-party open-source software
+================================================================================
+
+This product includes and/or is derived from the following open-source
+software. Each is the property of its respective owners and is used under the
+terms of its license.
+
+1. Medusa B2B Starter
+   Source:  https://github.com/medusajs/b2b-starter
+   License: MIT
+   Notes:   The application foundation (apps/backend, apps/storefront) is
+            adapted and extended from this official starter. The upstream
+            license text is preserved at:
+            docs/third-party/medusajs-b2b-starter-LICENSE
+
+2. Medusa (@medusajs/medusa, @medusajs/framework)
+   Source:  https://github.com/medusajs/medusa
+   License: MIT
+
+3. Next.js
+   Source:  https://github.com/vercel/next.js
+   License: MIT
+
+================================================================================
+Trademarks
+================================================================================
+
+"Medusa" and "Next.js" are trademarks of their respective owners. References to
+these names are for identification and attribution purposes only and do not
+imply endorsement.

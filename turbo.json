@@ -1,0 +1,38 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "build": {
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [
+        "dist/**",
+        ".next/**",
+        "!.next/cache/**",
+        ".medusa/server/**",
+        ".medusa/admin/**"
+      ]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "inputs": ["$TURBO_DEFAULT$", ".eslintrc*", "eslint.config.*"]
+    },
+    "test": {
+      "inputs": ["$TURBO_DEFAULT$", "jest.config.*"],
+      "outputs": ["coverage/**"]
+    },
+    "test:integration:http": {
+      "cache": false
+    },
+    "test:integration:modules": {
+      "cache": false
+    },
+    "test:unit": {
+      "inputs": ["$TURBO_DEFAULT$", "jest.config.*"]
+    },
+    "clean": {
+      "cache": false
+    }
+  }
+}
