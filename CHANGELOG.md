@@ -4,10 +4,22 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- **LEAN/5S/3定 guardrails** — `.editorconfig`, `.gitattributes`, Prettier, markdownlint, CI (`.github/workflows/ci.yml`), `CODEOWNERS`, PR template, `CONTRIBUTING`/`SECURITY`/`CODE_OF_CONDUCT`, and `docs/LEAN-5S-3T.md`.
+- **Local Docker-first stack** — `docker-compose.yml`, shared `Dockerfile`, `start.sh`/`start-storefront.sh`, `.dockerignore`, and a `Makefile` (`make up`/`down`/`migrate`/`admin`). Backend :9000, Admin /app, storefront :8000.
+- **Containerised Terraform** — `nnthanh101/terraform` runner image (`infra/docker/terraform`) and a runnable local Docker-provider stack (`infra/terraform/local`) for IaC parity; `infra/terraform/aws/` reserved for Phase 2.
+- `docs/LOCAL.md` developer runbook.
+
+### Changed
+
+- `apps/backend/medusa-config.ts` — env-driven SSL (off locally; `DATABASE_SSL=true` for RDS) and Admin Vite HMR for Docker.
+- README quickstart is now Docker-first; removed an incorrect `seed` step (the starter ships no seed script).
+
 ### Planned
 
 - Phase 0 — AWS account & governance baseline (IAM Identity Center, CloudTrail, Config, GuardDuty, Security Hub, Budgets, Terraform remote state, AppRegistry, FOCUS 1.2 export). See [`TODO.md`](./TODO.md).
-- Phase 1 — Local Medusa B2B running via Docker Compose with company / quote / approval / order flows.
+- Phase 2 — AWS Terraform modules (network, rds-postgres Multi-AZ, ecs-service, appregistry, finops-focus-export) + sized cost baseline.
 
 ## [2.0.0] - 2026-06-03
 

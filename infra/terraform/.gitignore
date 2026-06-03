@@ -1,0 +1,13 @@
+# Terraform working files — never commit state or secrets.
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+!*.tfvars.example
+override.tf
+override.tf.json
+*_override.tf
+.terraformrc
+terraform.rc

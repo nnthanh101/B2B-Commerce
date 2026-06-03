@@ -8,10 +8,11 @@ Engineering work that is **not** a user-facing story (those live in [`features.m
 
 - [ ] Push the `b2b` branch to `origin` (`git push -u origin b2b`) and open a PR into `main`.
 - [ ] Add branch protection on `main`/`b2b` (required reviews, status checks, no force-push).
-- [ ] Add root `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`.
-- [ ] Add `.editorconfig`, root `prettier`/`eslint` config, commit-lint + conventional commits.
-- [ ] Wire CI: install → lint → typecheck → unit → `test:integration:http` on PR.
-- [ ] Add a fresh `.gitpod.yml`/devcontainer pointing at the new `apps/*` layout (replaces the removed 2022 one).
+- [x] Add root `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`.
+- [x] Add `.editorconfig` + Prettier/markdownlint config (ESLint via apps; commit-lint: TODO).
+- [x] Wire CI (`.github/workflows/ci.yml`): lint · format · markdown · build · terraform-fmt (typecheck/integration: TODO).
+- [x] **Local Docker-first stack** (`docker-compose.yml`, `Dockerfile`, `Makefile`) + `nnthanh101/terraform` IaC runner image + local Docker-provider stack.
+- [ ] Add a fresh `.gitpod.yml`/devcontainer pointing at the new `apps/*` layout.
 
 ## 1. Phase 0 — AWS account & governance baseline
 

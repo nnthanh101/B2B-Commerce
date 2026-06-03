@@ -49,10 +49,18 @@ Digital-Commerce/
 ├── apps/
 │   ├── backend/        # Medusa 2.15.5 B2B backend (company, approval, quote, employee modules)
 │   └── storefront/     # Next.js 15 B2B storefront
+├── infra/
+│   ├── docker/terraform/   # nnthanh101/terraform runner image (pinned IaC toolchain)
+│   └── terraform/          # local/ (Docker provider, runnable today) + aws/ (Phase 2)
 ├── docs/
 │   ├── b2b-blueprint.md   # Full business proposal & AWS implementation blueprint
 │   ├── ASSESSMENT.md      # Independent implementation-readiness score (79/100)
+│   ├── LEAN-5S-3T.md      # Repository operating standard
+│   ├── LOCAL.md           # Local dev runbook
 │   └── third-party/       # Preserved upstream licenses (attribution)
+├── docker-compose.yml  # local stack: postgres, redis, backend, storefront
+├── Dockerfile          # shared dev image (backend + storefront)
+├── Makefile            # make up / down / migrate / admin / tf-*
 ├── features.md         # Product backlog — INVEST user stories only
 ├── TODO.md             # Technical / infra / utilities backlog (incl. ASSESSMENT gaps)
 ├── CHANGELOG.md        # Keep a Changelog + SemVer
@@ -63,26 +71,38 @@ Digital-Commerce/
 └── turbo.json
 ```
 
-## Quickstart (local)
+## Quickstart — local (Docker-first)
 
-**Prerequisites:** Node ≥ 20, pnpm 9.15, PostgreSQL, (optional) Redis, Docker.
+**Prerequisites:** Docker + Docker Compose. (Non-Docker path below needs Node ≥ 20, pnpm 9.15, Postgres, Redis.)
 
 ```bash
-# 1. Install workspace dependencies
-pnpm install
-
-# 2. Configure environment
-cp apps/backend/.env.template apps/backend/.env        # set DATABASE_URL, JWT_SECRET, COOKIE_SECRET
-cp apps/storefront/.env.template apps/storefront/.env  # set NEXT_PUBLIC_MEDUSA_BACKEND_URL + publishable key
-
-# 3. Migrate + seed the backend
-cd apps/backend && pnpm medusa db:migrate && pnpm run seed && cd ../..
-
-# 4. Run everything (Turborepo)
-pnpm dev
+make up                                                    # build + start postgres, redis, backend, storefront
+make admin EMAIL=you@oceansoft.io PASSWORD=supersecret     # create an admin user
 ```
 
-Backend runs on `:9000` (admin at `/app`), storefront on `:8000`.
+Then:
+
+1. Open the Admin at **<http://localhost:9000/app>** and log in.
+2. **Settings → API Key Management** → create a **Publishable API Key**.
+3. Set it in `apps/storefront/.env` as `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=pk_...`, then `docker compose up storefront -d`.
+4. Storefront → **<http://localhost:8000>**.
+
+`make help` lists every command (logs, migrate, down-v, terraform…). Full runbook: [`docs/LOCAL.md`](./docs/LOCAL.md).
+
+<details>
+<summary>Run without Docker (pnpm)</summary>
+
+```bash
+pnpm install
+cp apps/backend/.env.template apps/backend/.env
+cp apps/storefront/.env.template apps/storefront/.env
+pnpm --filter @b2b-starter/backend medusa db:migrate
+pnpm dev   # backend :9000 (admin /app), storefront :8000
+```
+
+</details>
+
+> There is no seed script in the starter — create data via the Admin after `make admin`.
 
 ## Environment
 
