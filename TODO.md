@@ -71,4 +71,4 @@ Engineering work that is **not** a user-facing story (those live in [`features.m
 
 ---
 
-*Critical path before the Phase-2 AWS build: **G-01, G-04, G-02, G-03+G-06, G-05, G-09** (see ASSESSMENT §6).*
+_Critical path before the Phase-2 AWS build: **G-01, G-04, G-02, G-03+G-06, G-05, G-09** (see ASSESSMENT §6)._

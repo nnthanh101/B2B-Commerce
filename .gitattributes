@@ -1,0 +1,17 @@
+# 3定 "Fixed Identity": every text file is normalized to LF; binaries & generated
+# files are labelled so diffs, merges and language stats stay honest.
+
+* text=auto eol=lf
+
+# Binary assets
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.webp binary
+*.ico  binary
+*.gif  binary
+*.svg  text
+
+# Generated / vendored — collapse in diffs and exclude from language stats
+pnpm-lock.yaml      linguist-generated=true -diff
+docs/third-party/** linguist-vendored=true

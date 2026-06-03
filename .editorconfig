@@ -1,0 +1,29 @@
+# EditorConfig — https://editorconfig.org
+# 5S "Standardize": one whitespace contract governing every file, in every editor.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Markdown: allow trailing two-space hard line breaks (valid CommonMark <br>)
+[*.md]
+trim_trailing_whitespace = false
+
+# Python & Terraform conventionally use 4 spaces
+[*.{py,tf,tfvars}]
+indent_size = 4
+
+[Makefile]
+indent_style = tab
+
+# Binary assets are exempt
+[*.{png,jpg,jpeg,webp,ico,gif}]
+charset = unset
+trim_trailing_whitespace = unset
+insert_final_newline = unset
+indent_style = unset

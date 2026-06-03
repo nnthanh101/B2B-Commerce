@@ -1,0 +1,64 @@
+name: CI
+
+# 5S "Sustain": the gate that holds every file/line to standard on every change.
+on:
+  push:
+    branches: [b2b, main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint · Format · Markdown
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: ESLint (Turborepo)
+        run: pnpm lint
+      - name: Prettier check (our files; apps/ & markdown excluded via .prettierignore)
+        run: pnpm dlx prettier@3 --check .
+      - name: Markdown lint
+        run: pnpm dlx markdownlint-cli2 "**/*.md" "!apps/**" "!**/node_modules/**"
+
+  build:
+    name: Build apps
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+  iac:
+    name: Terraform fmt (when infra exists)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - name: terraform fmt -check
+        run: |
+          if [ -d infra/terraform ]; then
+            terraform fmt -check -recursive infra/terraform
+          else
+            echo "No infra/terraform yet — skipping (Phase 2)."
+          fi

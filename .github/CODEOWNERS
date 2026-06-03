@@ -1,0 +1,10 @@
+# 3T "Traceability": every path has a named owner who reviews changes to it.
+# Order matters — the last matching pattern wins.
+
+*                    @nnthanh101
+
+/apps/backend/       @nnthanh101
+/apps/storefront/    @nnthanh101
+/infra/              @nnthanh101
+/docs/               @nnthanh101
+/.github/            @nnthanh101

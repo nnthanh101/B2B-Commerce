@@ -19,28 +19,28 @@ The full reasoning, target AWS architecture, and decision records live in **[`do
 
 Adopted from the official, actively-maintained [`medusajs/b2b-starter`](https://github.com/medusajs/b2b-starter) (the legacy `b2b-starter-medusa` repo is deprecated). B2B capabilities ship out of the box and are confirmed in-tree (`apps/backend/src/modules`: `company`, `approval`, `quote`, `employee`):
 
-| Capability | Status | Where |
-|---|---|---|
-| Company management, employees, roles | ✅ in starter | `apps/backend/src/modules/company` |
-| Per-employee spending limits | ✅ in starter | `company` module |
-| Approval workflows (admin / sales manager) | ✅ in starter | `apps/backend/src/modules/approval` |
-| Quote management & negotiation (messaging) | ✅ in starter | `apps/backend/src/modules/quote` |
-| Order editing, bulk add-to-cart, promotions | ✅ in starter | backend workflows |
-| Full ecommerce (products, cart, checkout, orders) | ✅ in starter | Medusa core |
-| AWS infra (Terraform), ADLC AI gateway, FinOps | 🚧 to build | see [`TODO.md`](./TODO.md) |
+| Capability                                        | Status        | Where                               |
+| ------------------------------------------------- | ------------- | ----------------------------------- |
+| Company management, employees, roles              | ✅ in starter | `apps/backend/src/modules/company`  |
+| Per-employee spending limits                      | ✅ in starter | `company` module                    |
+| Approval workflows (admin / sales manager)        | ✅ in starter | `apps/backend/src/modules/approval` |
+| Quote management & negotiation (messaging)        | ✅ in starter | `apps/backend/src/modules/quote`    |
+| Order editing, bulk add-to-cart, promotions       | ✅ in starter | backend workflows                   |
+| Full ecommerce (products, cart, checkout, orders) | ✅ in starter | Medusa core                         |
+| AWS infra (Terraform), ADLC AI gateway, FinOps    | 🚧 to build   | see [`TODO.md`](./TODO.md)          |
 
 ## Tech stack
 
-| Layer | Technology | Version |
-|---|---|---|
-| Backend / commerce | Medusa (`@medusajs/medusa` + `@medusajs/framework`) | 2.15.5 |
-| Storefront | Next.js / React | 15.5.18 / 19.0.5 |
-| Monorepo | pnpm workspaces + Turborepo | pnpm 9.15.0 |
-| Runtime | Node.js | ≥ 20 |
-| Database | PostgreSQL | — |
-| Cache / sessions | Redis (optional locally) | — |
-| Target cloud | AWS ECS/Fargate, RDS, S3, CloudFront, WAF | — |
-| IaC | Terraform | — |
+| Layer              | Technology                                          | Version          |
+| ------------------ | --------------------------------------------------- | ---------------- |
+| Backend / commerce | Medusa (`@medusajs/medusa` + `@medusajs/framework`) | 2.15.5           |
+| Storefront         | Next.js / React                                     | 15.5.18 / 19.0.5 |
+| Monorepo           | pnpm workspaces + Turborepo                         | pnpm 9.15.0      |
+| Runtime            | Node.js                                             | ≥ 20             |
+| Database           | PostgreSQL                                          | —                |
+| Cache / sessions   | Redis (optional locally)                            | —                |
+| Target cloud       | AWS ECS/Fargate, RDS, S3, CloudFront, WAF           | —                |
+| IaC                | Terraform                                           | —                |
 
 ## Monorepo layout
 
@@ -94,12 +94,12 @@ Backend runs on `:9000` (admin at `/app`), storefront on `:8000`.
 
 ## Scripts (root, via Turborepo)
 
-| Command | Action |
-|---|---|
-| `pnpm dev` | Run backend + storefront in watch mode |
-| `pnpm build` | Build all apps |
-| `pnpm lint` | Lint all apps |
-| `pnpm test` | Run all tests |
+| Command                      | Action                                                    |
+| ---------------------------- | --------------------------------------------------------- |
+| `pnpm dev`                   | Run backend + storefront in watch mode                    |
+| `pnpm build`                 | Build all apps                                            |
+| `pnpm lint`                  | Lint all apps                                             |
+| `pnpm test`                  | Run all tests                                             |
 | `pnpm test:integration:http` | Backend HTTP integration tests (company, quote, approval) |
 
 ## Documentation
@@ -124,4 +124,4 @@ MIT — see [LICENSE](./LICENSE). This project is built on the open-source **Med
 
 ---
 
-*Maintained by OceanSoft.io · Thanh Nguyen (nnthanh101@gmail.com) · Foundation reset 2026-06-03.*
+_Maintained by OceanSoft.io · Thanh Nguyen (<nnthanh101@gmail.com>) · Foundation reset 2026-06-03._
