@@ -131,8 +131,16 @@ export async function middleware(request: NextRequest) {
     countryCode && request.nextUrl.pathname.split("/")[1].includes(countryCode)
 
   // check if one of the country codes is in the url
-  if (urlHasCountryCode && (!cartId || cartIdCookie) && cacheIdCookie) {
-    return NextResponse.next()
+  // cacheId is always available (set by setCacheId above), so pass through
+  // even on first visit when cacheIdCookie has not yet been sent back by the browser
+  if (urlHasCountryCode && (!cartId || cartIdCookie) && cacheId) {
+    const nextResponse = NextResponse.next()
+    if (!cacheIdCookie) {
+      nextResponse.cookies.set("_medusa_cache_id", cacheId, {
+        maxAge: 60 * 60 * 24,
+      })
+    }
+    return nextResponse
   }
 
   // check if the url is a static asset

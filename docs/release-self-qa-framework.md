@@ -106,12 +106,16 @@ docker compose -f docker-compose.test.yml -p ec_test up -d
 ```
 test:static       → exec ec pnpm turbo lint (+tsc --noEmit)
 test:db:up        → compose -f docker-compose.test.yml -p ec_test up -d + migrate + seed
-test:integration  → exec ec pnpm --filter backend jest --selectProjects integration
+test:integration  → exec ec pnpm --filter backend jest --selectProjects integration   [CI path — dedicated Postgres, inApp runner]
+test:live         → HTTP smoke against running :9000 — admin login + products/companies/quotes/approvals/orders   [LOCAL integration gate]
 test:e2e          → docker run playwright npx playwright test tests/e2e/
 test:visual       → chrome-MCP (:8000) + computer-use MCP (admin, display 2) → screenshots
 test:report       → docker run node aggregate-report.mjs → REPORT.md/.html
 test:all          → deps:[static, db:up, integration, e2e, visual] → report → db:down
 ```
+
+> **Local vs CI integration model**: Local integration uses `task test:live` (HTTP against the running `:9000` service — no second Medusa boot). `task test:integration` (`inApp` runner) is the CI path and requires a **dedicated Postgres service with no competing Medusa process**. Running `task test:integration` inside the shared local container causes `KnexTimeoutError` boot-hang (not a timeout-tuning issue — 300s full-burn confirmed). See knowledge-plan §17 for full 5-Whys and CA1–CA5.
+> Evidence: `tmp/Digital-Commerce/evidence/root-cause-corrective-actions-2026-06-04.md`
 
 **What to verify at exit:**
 - `task test:all` exits 0 **twice** (two timestamped logs — idempotency gate)
@@ -147,11 +151,16 @@ task test:visual
 
 **Model**: Haiku (loop) + Sonnet (score) | **Agents**: `qa-automation-engineer` + `qa-engineer`
 
+> **Integration gate in P4**: The RQ3 loop uses `task test:live` as the local integration gate (HTTP against running `:9000`). `task test:integration` (`inApp` runner) is reserved for CI (dedicated Postgres, no competing Medusa). Do not substitute `test:integration` for `test:live` in local PDCA cycles — it will boot-hang. See knowledge-plan §17.
+
 **Operator action:**
 ```bash
 /commerce:release-qa   # drives the PDCA loop
 # or monitor via:
 task test:all          # single-pass; loop is managed by release-qa command
+
+# Local integration gate (use this in PDCA, not test:integration):
+task test:live
 ```
 
 **What to verify at exit:**
@@ -243,7 +252,8 @@ task test:all
 
 # Individual phases:
 task test:static          # P2 Tier 1
-task test:integration     # P2 Tier 2
+task test:live            # LOCAL integration gate (HTTP vs :9000) — use this in PDCA loops
+task test:integration     # CI integration gate (inApp runner, dedicated Postgres) — NOT for local shared container
 task test:e2e             # P2 Tier 3b
 task test:visual          # P3 visual verification
 task test:report          # Aggregate REPORT.md/.html

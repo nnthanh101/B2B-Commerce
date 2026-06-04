@@ -76,6 +76,22 @@ tasks:
         PLAYWRIGHT_JSON_OUTPUT_NAME={{.REPORT_DIR}}/playwright-json-results.json \
           npx playwright test tests/e2e/ --reporter=json,html || true
 
+  live:
+    desc: "Tier 3a-live — HTTP integration smoke vs the RUNNING backend (no inApp boot). Needs `task up`."
+    dir: "{{.REPO}}"
+    vars:
+      ADMIN_EMAIL: '{{.ADMIN_EMAIL | default "admin@test.local"}}'
+      ADMIN_PW: '{{.ADMIN_PW | default "Test1234!"}}'
+    cmds:
+      - |
+        if ! curl -sf {{.BACKEND_URL}}/health >/dev/null 2>&1; then
+          echo "[SKIP] live: backend not reachable at {{.BACKEND_URL}} — run 'task up' first"; exit 0
+        fi
+        # ensure an admin exists (idempotent; ignore 'already exists')
+        docker compose exec -T ec sh -c "cd /server/apps/backend && npx medusa user -e {{.ADMIN_EMAIL}} -p {{.ADMIN_PW}}" 2>/dev/null || true
+        # run the fetch-based live smoke in-container (jest + global fetch; backend at localhost:9000)
+        docker compose exec -T ec sh -c "cd /server/apps/backend && ADMIN_EMAIL={{.ADMIN_EMAIL}} ADMIN_PW={{.ADMIN_PW}} npx jest --runInBand --forceExit integration-tests/live/live-api-smoke.spec.ts"
+
   report:
     desc: "Aggregate jest + Playwright + static JSON/logs into REPORT.md + REPORT.html"
     cmds:
@@ -83,11 +99,12 @@ tasks:
       - node {{.TASKFILE_DIR}}/report/aggregate-report.mjs {{.REPORT_DIR}}
 
   all:
-    desc: "Full graph: static -> db:up -> integration -> e2e -> report -> db:down"
+    desc: "Full graph: static -> db:up -> integration -> e2e -> live -> report -> db:down"
     cmds:
       - task: static
       - task: db:up
       - task: integration
       - task: e2e
+      - task: live
       - task: report
       - task: db:down

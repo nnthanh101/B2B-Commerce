@@ -29,7 +29,7 @@ function parseJest(j) {
   for (const f of j.testResults ?? []) {
     const m = f.testFilePath?.match(/integration-tests\/(?:http\/)?(.+?)\.spec\.[jt]s$/);
     const suite = m ? m[1] : (f.testFilePath ?? "unknown");
-    for (const r of f.testResults ?? []) {
+    for (const r of f.assertionResults ?? []) {
       const spec = [...(r.ancestorTitles ?? []), r.title].join(" › ");
       rows.push({
         tier: "Tier 3a — Integration (HTTP)",
