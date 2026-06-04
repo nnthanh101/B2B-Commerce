@@ -1,147 +1,131 @@
-# Digital-Commerce — B2B Headless Commerce & Marketplace for OceanSoft.io
+# Digital-Commerce — OceanSoft B2B Marketplace
 
-> Greenfield **B2B quote-to-order commerce** and **digital-product marketplace** for [oceansoft.io](https://www.oceansoft.io) — built on the active **Medusa B2B Starter** + **Next.js 15**, deployed on **AWS ECS/Fargate** with **Terraform**, governed through **AWS myApplications / AppRegistry**, measured with **FinOps FOCUS 1.2+**, and AI-assisted through the **[ADLC](https://adlc.oceansoft.io) gateway** with read-first, HITL-controlled write tools.
+B2B marketplace platform built on Medusa v2 and Next.js 15. Backend modules for company management, employee spending limits, quote negotiation, and approval workflows. Local-first development with Docker + Terraform IaC skeleton for future AWS deployment.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
-![Medusa](https://img.shields.io/badge/Medusa-2.15.5-7C53FF)
-![Next.js](https://img.shields.io/badge/Next.js-15.5-black)
-![Status](https://img.shields.io/badge/status-foundation%20reset-orange)
+**Status**: Phase 1 (Local Validation) of 6-Phase SDLC. No AWS resources provisioned yet.
 
----
+## Quick Start
 
-## Why this exists
+**Prerequisites**: Docker, docker-compose, Node.js 22+, pnpm 10.11.1+
 
-The problem is **not** "build a beautiful storefront." It is **regulated B2B quote-to-order commerce** with company accounts, spending controls, procurement approvals, quote negotiation, ERP/PIM integration, AI-assisted operations, and auditable FinOps governance. This platform becomes a **digital B2B revenue channel** and a **governed AI-assisted commercial operations platform** — beginning with digital items from [adlc.oceansoft.io/project](https://adlc.oceansoft.io/project) and [adlc.oceansoft.io/marketplace](https://adlc.oceansoft.io/marketplace).
+```bash
+# 1. Clone and enter the workspace
+git clone https://github.com/nnthanh101/Digital-Commerce.git
+cd Digital-Commerce
 
-The full reasoning, target AWS architecture, and decision records live in **[`docs/b2b-blueprint.md`](./docs/b2b-blueprint.md)**. An independent implementation-readiness score of that blueprint (**79/100, B+**) lives in **[`docs/ASSESSMENT.md`](./docs/ASSESSMENT.md)**.
+# 2. Start the full stack (Medusa backend + Next.js storefront + Postgres + Redis)
+task up
 
-## Foundation (what's in the box)
+# 3. Verify endpoints are live
+curl -fsS http://localhost:9000/health     # Medusa backend
+curl -fsS http://localhost:8000            # Next.js storefront
 
-Adopted from the official, actively-maintained [`medusajs/b2b-starter`](https://github.com/medusajs/b2b-starter) (the legacy `b2b-starter-medusa` repo is deprecated). B2B capabilities ship out of the box and are confirmed in-tree (`apps/backend/src/modules`: `company`, `approval`, `quote`, `employee`):
+# 4. Run E2E smoke test (optional — tests login → company → quote → approval flow)
+task test:e2e
 
-| Capability                                        | Status        | Where                               |
-| ------------------------------------------------- | ------------- | ----------------------------------- |
-| Company management, employees, roles              | ✅ in starter | `apps/backend/src/modules/company`  |
-| Per-employee spending limits                      | ✅ in starter | `company` module                    |
-| Approval workflows (admin / sales manager)        | ✅ in starter | `apps/backend/src/modules/approval` |
-| Quote management & negotiation (messaging)        | ✅ in starter | `apps/backend/src/modules/quote`    |
-| Order editing, bulk add-to-cart, promotions       | ✅ in starter | backend workflows                   |
-| Full ecommerce (products, cart, checkout, orders) | ✅ in starter | Medusa core                         |
-| AWS infra (Terraform), ADLC AI gateway, FinOps    | 🚧 to build   | see [`TODO.md`](./TODO.md)          |
+# 5. Stop all services
+task down
+```
 
-## Tech stack
+Services will be live on:
+- **Medusa Admin** — http://localhost:9000/app (default credentials in `.env.template`)
+- **Storefront** — http://localhost:8000
+- **Database** — postgresql://postgres:postgres@localhost:5432/ec-store
+- **Cache** — redis://localhost:6379
 
-| Layer              | Technology                                          | Version          |
-| ------------------ | --------------------------------------------------- | ---------------- |
-| Backend / commerce | Medusa (`@medusajs/medusa` + `@medusajs/framework`) | 2.15.5           |
-| Storefront         | Next.js / React                                     | 15.5.18 / 19.0.5 |
-| Monorepo           | pnpm workspaces + Turborepo                         | pnpm 9.15.0      |
-| Runtime            | Node.js                                             | ≥ 20             |
-| Database           | PostgreSQL                                          | —                |
-| Cache / sessions   | Redis (optional locally)                            | —                |
-| Target cloud       | AWS ECS/Fargate, RDS, S3, CloudFront, WAF           | —                |
-| IaC                | Terraform                                           | —                |
+All commands run inside Docker containers. No host-side package installation required.
 
-## Monorepo layout
+## What This Is
 
-```text
+**For OceanSoft** — The alpha marketplace at www.oceansoft.io runs this stack in production using the `@oceansoft/medusa-plugin-b2b` v0.1 plugin.
+
+**For Plugin Licensees** — Dev shops and merchants buy/license the `@oceansoft/medusa-plugin-b2b` plugin to build their own B2B marketplaces on Medusa. This repo is the reference architecture showing how to integrate the plugin + run locally in Docker.
+
+## Architecture
+
+| Layer | Component | Tech | Port |
+|-------|-----------|------|------|
+| **Storefront** | Next.js 15 App Router | React 19, TypeScript, Tailwind | 8000 |
+| **Backend** | Medusa v2.15+ | Node.js 22, TypeScript, tRPC APIs | 9000 |
+| **Modules** | @oceansoft/medusa-plugin-b2b | Company, Quote, Approval workflows | (internal) |
+| **Data** | PostgreSQL | 15-alpine, per Medusa Docker reference | 5432 |
+| **Cache** | Redis | 7-alpine, per Medusa Docker reference | 6379 |
+
+All services run in a single `docker-compose.yml` file — same file used by VS Code Dev Containers for zero-friction onboarding. Container names follow the `ec_*_b2b` convention (product-flavored, operator-overridable via `COMPOSE_PROJECT_NAME`).
+
+## Key Features
+
+- **Company Management** — Register B2B companies; add employees with spending limits
+- **Quote Negotiation** — Request quotes for bulk orders; negotiate pricing
+- **Approval Workflows** — Manager/admin approval gates for high-value orders
+- **Bulk Add-to-Cart** — B2B buyers add multiple SKUs in one action
+- **Order Editing** — Post-order modifications without full re-checkout
+
+## Repository Layout
+
+```
 Digital-Commerce/
-├── apps/
-│   ├── backend/        # Medusa 2.15.5 B2B backend (company, approval, quote, employee modules)
-│   └── storefront/     # Next.js 15 B2B storefront
-├── infra/
-│   ├── docker/terraform/   # nnthanh101/terraform runner image (pinned IaC toolchain)
-│   └── terraform/          # local/ (Docker provider, runnable today) + aws/ (Phase 2)
-├── docs/
-│   ├── b2b-blueprint.md   # Full business proposal & AWS implementation blueprint
-│   ├── ASSESSMENT.md      # Independent implementation-readiness score (79/100)
-│   ├── LEAN-5S-3T.md      # Repository operating standard
-│   ├── LOCAL.md           # Local dev runbook
-│   └── third-party/       # Preserved upstream licenses (attribution)
-├── docker-compose.yml  # local stack: postgres, redis, backend, storefront
-├── Dockerfile          # shared dev image (backend + storefront)
-├── Makefile            # make up / down / migrate / admin / tf-*
-├── features.md         # Product backlog — INVEST user stories only
-├── TODO.md             # Technical / infra / utilities backlog (incl. ASSESSMENT gaps)
-├── CHANGELOG.md        # Keep a Changelog + SemVer
-├── NOTICE              # Open-source attribution
-├── LICENSE             # MIT
-├── package.json        # Turborepo root
-├── pnpm-workspace.yaml
-└── turbo.json
+├── apps/backend/              Medusa backend (thin consumer app)
+├── apps/storefront/           Next.js storefront
+├── packages/medusa-plugin-b2b/ B2B modules (company, quote, approval)
+├── infra/terraform/           AWS IaC skeleton (validate-only at P1)
+├── tests/                     QA domain (Taskfile + TEST-PLAN + TEST-CASES + e2e/)
+├── docs/                      Architecture + quickstart + licensing
+├── docker-compose.yml         Service definitions (containers: ec_*_b2b)
+├── Taskfile.yml               Task runner (task up, task test:e2e, etc.)
+└── LICENSE                    MIT (root); see licensing.md for boundaries
 ```
 
-## Quickstart — local (Docker-first)
+## Licensing
 
-**Prerequisites:** Docker + Docker Compose. (Non-Docker path below needs Node ≥ 20, pnpm 9.15, Postgres, Redis.)
+**MIT Public License** (applies to `apps/`, `infra/`, `docs/`, root configs):
+- Free to use, modify, distribute — standard MIT terms
+- Source: https://github.com/nnthanh101/Digital-Commerce
 
-```bash
-make up                                                    # build + start postgres, redis, backend, storefront
-make admin EMAIL=you@oceansoft.io PASSWORD=supersecret     # create an admin user
-```
+**OceanSoft Commercial License v1.0** (applies to `packages/medusa-plugin-b2b/` only):
+- Proprietary B2B module package sold separately to licensees
+- Status: DRAFT (finalized before v1.0.0 GA)
+- See `packages/medusa-plugin-b2b/LICENSE.md` and `docs/licensing.md` for boundaries
 
-Then:
-
-1. Open the Admin at **<http://localhost:9000/app>** and log in.
-2. **Settings → API Key Management** → create a **Publishable API Key**.
-3. Set it in `apps/storefront/.env` as `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=pk_...`, then `docker compose up storefront -d`.
-4. Storefront → **<http://localhost:8000>**.
-
-`make help` lists every command (logs, migrate, down-v, terraform…). Full runbook: [`docs/LOCAL.md`](./docs/LOCAL.md).
-
-<details>
-<summary>Run without Docker (pnpm)</summary>
-
-```bash
-pnpm install
-cp apps/backend/.env.template apps/backend/.env
-cp apps/storefront/.env.template apps/storefront/.env
-pnpm --filter @b2b-starter/backend medusa db:migrate
-pnpm dev   # backend :9000 (admin /app), storefront :8000
-```
-
-</details>
-
-> There is no seed script in the starter — create data via the Admin after `make admin`.
-
-## Environment
-
-**Backend** (`apps/backend/.env.template`): `DATABASE_URL`, `DB_NAME`, `REDIS_URL`, `JWT_SECRET`, `COOKIE_SECRET`, `STORE_CORS`, `ADMIN_CORS`, `AUTH_CORS`.
-
-**Storefront** (`apps/storefront/.env.template`): `NEXT_PUBLIC_MEDUSA_BACKEND_URL`, `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY`, `NEXT_PUBLIC_BASE_URL`, `NEXT_PUBLIC_DEFAULT_REGION`.
-
-> ⚠️ Never commit real secrets. On AWS these resolve from **Secrets Manager** (see `TODO.md`, gap G-07).
-
-## Scripts (root, via Turborepo)
-
-| Command                      | Action                                                    |
-| ---------------------------- | --------------------------------------------------------- |
-| `pnpm dev`                   | Run backend + storefront in watch mode                    |
-| `pnpm build`                 | Build all apps                                            |
-| `pnpm lint`                  | Lint all apps                                             |
-| `pnpm test`                  | Run all tests                                             |
-| `pnpm test:integration:http` | Backend HTTP integration tests (company, quote, approval) |
+**Third-party attribution**: Medusa v2 framework (`@medusajs/framework`) is OSS (MIT). Initial scaffolding used code patterns from Medusa's `dtc-starter` and `b2b-starter` (MIT, © 2024 Medusa Holdings). See `THIRD-PARTY-NOTICES.md`.
 
 ## Documentation
 
-- **[docs/b2b-blueprint.md](./docs/b2b-blueprint.md)** — full blueprint: decision, AWS architecture, Terraform, ADLC AI model, FinOps, roadmap, RACI, risks, ADRs.
-- **[docs/ASSESSMENT.md](./docs/ASSESSMENT.md)** — independent score + severity-ranked gap register + phase-gated go/no-go.
-- **[features.md](./features.md)** — product backlog as INVEST user stories.
-- **[TODO.md](./TODO.md)** — engineering/infra backlog mapped to assessment gaps.
-- **[CHANGELOG.md](./CHANGELOG.md)** — release history.
+- **[Quickstart](./docs/quickstart.md)** — Step-by-step setup + verification commands
+- **[Architecture](./docs/architecture.md)** — Component diagram, stack decisions, AWS roadmap
+- **[Licensing](./docs/licensing.md)** — MIT vs. commercial boundary table
 
-## Roadmap (summary)
+## Development
 
-Phase 0 account & governance baseline → Phase 1 local Medusa → Phase 2 AWS dev (Terraform) → Phase 3 ADLC AI gateway → Phase 4 pilot → Phase 5 production hardening. Detail in [blueprint §9](./docs/b2b-blueprint.md).
+**Run tests locally**:
+```bash
+task test          # Unit tests (pnpm turbo test)
+task lint          # Lint (pnpm turbo lint)
+task test:e2e      # Playwright E2E
+task seed          # Seed dev database
+```
 
-## Governance & FinOps
+**Validate Terraform**:
+```bash
+task tf:validate   # Exit 0 = valid structure
+task tf:cost       # Infracost breakdown ($0 at P1 — no resources yet)
+```
 
-Every AWS resource carries the `awsApplication` (AppRegistry) tag plus FinOps tags (`Component`, `Environment`, `BusinessCapability`, `DataClassification`, …) so cost, security findings, and health roll up to one application view in **AWS myApplications**, and cost data exports to **FOCUS 1.2** for unit-economics reporting (cost per quote / order / company / agent interaction).
+**View logs**:
+```bash
+task logs          # Tail all services
+```
 
-## License & attribution
+## Support
 
-MIT — see [LICENSE](./LICENSE). This project is built on the open-source **Medusa B2B Starter** and **Medusa** (both MIT); attributions and preserved upstream licenses are in [NOTICE](./NOTICE) and [`docs/third-party/`](./docs/third-party/).
+- **Bug reports** — Use GitHub Issues
+- **Commercial license inquiries** — Contact sales@oceansoft.io
+- **Technical questions** — See `docs/` or check Medusa docs at medusajs.com
+
+## Contributing
+
+This repository accepts contributions under the MIT License (public code) and OceanSoft Commercial License (plugin code). See `CONTRIBUTING.md` (if present) for guidelines.
 
 ---
 
-_Maintained by OceanSoft.io · Thanh Nguyen (<nnthanh101@gmail.com>) · Foundation reset 2026-06-03._
+**Copyright** © 2026 OceanSoft. All rights reserved for commercial components; MIT License for public reference implementation.

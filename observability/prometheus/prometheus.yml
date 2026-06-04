@@ -1,0 +1,87 @@
+# Prometheus scrape configuration — Digital-Commerce local observability stack
+#
+# CA conditions honoured:
+#   compose-override-network-join       — all targets use Docker DNS service names (NOT localhost)
+#   prometheus-basic-auth-via-env-file  — password_file: /etc/prometheus/.auth (not inline)
+#   FOCUS-labels-day-1                  — environment + application global labels
+#
+# Basic-auth prerequisite:
+#   ./observability/prometheus/.auth must contain the plaintext password for the
+#   PROMETHEUS_METRICS_USER that Medusa /admin/metrics validates.
+#   The file is mounted read-only by docker-compose.observability.yml.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  # FOCUS labels applied globally — Sprint 5 cloud promotion keeps identical shape
+  external_labels:
+    environment: local
+    application: digital-commerce
+    service: observability
+
+# ─── Alert rules (placeholder — wire in Sprint 5 CloudWatch promotion) ─────────
+rule_files: []
+
+# ─── Scrape jobs ────────────────────────────────────────────────────────────────
+scrape_configs:
+
+  # 1. Medusa backend /admin/metrics  (prom-client HTTP histogram + default metrics)
+  #    basic_auth matches the custom middleware in apps/backend/src/api/admin/metrics/route.ts
+  #    Target uses Docker service DNS: backend resolves inside digital-commerce-network
+  - job_name: medusa-backend
+    scrape_interval: 15s
+    metrics_path: /admin/metrics
+    scheme: http
+    basic_auth:
+      username: ${PROMETHEUS_METRICS_USER:-prometheus}
+      password_file: /etc/prometheus/.auth
+    static_configs:
+      - targets:
+          - backend:9000
+        labels:
+          service: backend
+          application: digital-commerce
+          environment: local
+
+  # 2. Postgres exporter (prometheuscommunity/postgres-exporter:v0.15.0)
+  #    Sidecar running in digital-commerce-network; no auth required (internal DNS only)
+  - job_name: postgres
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scheme: http
+    static_configs:
+      - targets:
+          - postgres-exporter:9187
+        labels:
+          service: postgres
+          application: digital-commerce
+          environment: local
+
+  # 3. Redis exporter (oliver006/redis_exporter:v1.62.0)
+  #    Sidecar running in digital-commerce-network; no auth required (internal DNS only)
+  - job_name: redis
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scheme: http
+    static_configs:
+      - targets:
+          - redis-exporter:9121
+        labels:
+          service: redis
+          application: digital-commerce
+          environment: local
+
+  # 4. Node exporter (prom/node-exporter:v1.8.0)
+  #    Host CPU, memory, disk, filesystem metrics
+  #    Optional for Sprint 3.5 (CA condition #9); included for completeness
+  - job_name: node
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scheme: http
+    static_configs:
+      - targets:
+          - node-exporter:9100
+        labels:
+          service: node
+          application: digital-commerce
+          environment: local

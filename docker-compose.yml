@@ -1,101 +1,76 @@
-name: digital-commerce
-
-# Local-first stack for the Medusa B2B backend/admin + Next.js storefront.
-# Based on the official Medusa 2.x Docker guide (version-matched to 2.15.5):
-#   https://docs.medusajs.com/learn/installation/docker
-# Quickstart:  make up   (or: docker compose up --build -d)
-
 services:
   postgres:
-    image: postgres:16-alpine
-    container_name: dc_postgres
+    image: postgres:15-alpine
+    container_name: ec_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: digital_commerce
-      POSTGRES_USER: medusa
-      POSTGRES_PASSWORD: medusa
+      POSTGRES_DB: ec-store
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U medusa -d digital_commerce"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
     networks:
-      - dc_network
+      - ec_network
 
   redis:
     image: redis:7-alpine
-    container_name: dc_redis
+    container_name: ec_redis
     restart: unless-stopped
     ports:
       - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
     networks:
-      - dc_network
+      - ec_network
 
-  # Medusa backend API + Admin dashboard (and Vite HMR on 5173).
-  backend:
+  ec:
     build: .
-    container_name: dc_backend
+    container_name: ec_backend
     restart: unless-stopped
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - postgres
+      - redis
     ports:
       - "9000:9000"
       - "5173:5173"
     environment:
-      NODE_ENV: development
-      DATABASE_URL: postgres://medusa:medusa@postgres:5432/digital_commerce
-      REDIS_URL: redis://redis:6379
+      - NODE_ENV=development
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/ec-store
+      - REDIS_URL=redis://redis:6379
     env_file:
       - apps/backend/.env
-    # Anonymous node_modules volumes are required: pnpm workspaces use per-package
-    # node_modules with symlinks, which a plain bind mount would clobber.
     volumes:
       - .:/server
       - /server/node_modules
       - /server/apps/backend/node_modules
     networks:
-      - dc_network
+      - ec_network
 
-  # Next.js B2B storefront (reuses the same image; overrides the entrypoint).
   storefront:
     build: .
-    container_name: dc_storefront
+    container_name: ec_storefront
     restart: unless-stopped
     depends_on:
-      - backend
+      - ec
     ports:
       - "8000:8000"
     environment:
-      # Internal hostname for SSR fetches. For browser-only asset URLs you may
-      # prefer http://localhost:9000 — see docs/LOCAL.md.
-      NEXT_PUBLIC_MEDUSA_BACKEND_URL: http://backend:9000
+      - NEXT_PUBLIC_MEDUSA_BACKEND_URL=http://ec:9000
     env_file:
       - apps/storefront/.env
-    entrypoint: ["./start-storefront.sh"]
     volumes:
       - .:/server
       - /server/node_modules
       - /server/apps/backend/node_modules
       - /server/apps/storefront/node_modules
       - /server/apps/storefront/.next
+    entrypoint: ["./scripts/start-storefront.sh"]
     networks:
-      - dc_network
+      - ec_network
 
 volumes:
   postgres_data:
 
 networks:
-  dc_network:
+  ec_network:
     driver: bridge

@@ -1,0 +1,185 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Release Workflow — TAG-ONLY trigger (v*.*.*)
+# Builds + pushes backend and storefront Docker images to GHCR.
+# Uses OIDC for AWS authentication (no long-lived secrets).
+# ──────────────────────────────────────────────────────────────────────────────
+# HITL note: This workflow runs on git tag push only.
+# Principle I: `terraform apply` and `cdk deploy` are NOT in this workflow.
+# Deployment to AWS ECS / Amplify is a separate HITL-gated pipeline.
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}/digital-commerce
+
+permissions:
+  contents: write        # release-please changelog
+  packages: write        # push to GHCR
+  id-token: write        # OIDC AWS auth
+  pull-requests: write   # release-please PR
+
+jobs:
+  # ── Release Please ────────────────────────────────────────────────────────
+  release-please:
+    name: Release Notes
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: google-github-actions/release-please-action@v4
+        id: release
+        with:
+          release-type: node
+          package-name: digital-commerce
+
+  # ── Build + Push Backend ──────────────────────────────────────────────────
+  build-backend:
+    name: Build Backend
+    runs-on: ubuntu-latest
+    container:
+      image: nnthanh101/terraform:latest
+      options: --user 0
+    needs: release-please
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-backend
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=sha-
+
+      - name: Build and push backend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/backend/Dockerfile
+          target: runtime
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+
+  # ── Build + Push Storefront ───────────────────────────────────────────────
+  build-storefront:
+    name: Build Storefront
+    runs-on: ubuntu-latest
+    container:
+      image: nnthanh101/terraform:latest
+      options: --user 0
+    needs: release-please
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-storefront
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=sha-
+
+      - name: Build and push storefront
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/storefront/Dockerfile
+          target: runtime
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Inject public env vars at build time (non-secret)
+          build-args: |
+            NEXT_PUBLIC_MEDUSA_BACKEND_URL=${{ vars.MEDUSA_BACKEND_URL }}
+            NEXT_PUBLIC_BASE_URL=${{ vars.STOREFRONT_BASE_URL }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+
+  # ── IaC Security Scan ─────────────────────────────────────────────────────
+  iac-security:
+    name: IaC Security Scan
+    runs-on: ubuntu-latest
+    container:
+      image: nnthanh101/terraform:slim
+      options: --user 0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Terraform fmt check
+        run: terraform fmt -recursive -check infra/terraform/
+
+      - name: Checkov IaC scan
+        run: |
+          checkov \
+            --directory infra/terraform/ \
+            --framework terraform \
+            --output cli \
+            --compact \
+            --quiet \
+            --soft-fail
+
+      - name: Trivy config scan
+        run: trivy config infra/terraform/ --exit-code 0
+
+  # ── Notify deployment ready (HITL gate) ──────────────────────────────────
+  deployment-gate:
+    name: Deployment Gate (HITL)
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-storefront, iac-security]
+    steps:
+      - name: Summary
+        run: |
+          echo "## Release ${{ github.ref_name }} images built" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Image | Tags |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| backend | ${{ github.ref_name }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| storefront | ${{ github.ref_name }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "> **HITL action required**: Update \`medusa_image\` in tfvars and run \`task tf:plan ENV=dev\`" >> "$GITHUB_STEP_SUMMARY"

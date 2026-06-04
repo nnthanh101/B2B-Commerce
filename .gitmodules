@@ -1,0 +1,4 @@
+[submodule "terraform-aws"]
+	path = terraform-aws
+	url = https://github.com/nnthanh101/terraform-aws
+	branch = main

@@ -1,0 +1,70 @@
+version: "3"
+
+includes:
+  test:
+    taskfile: ./tests/Taskfile.yml
+    dir: ./tests
+
+tasks:
+  up:
+    desc: "Start all services (build + detach)"
+    cmds:
+      - docker compose up --build -d
+
+  down:
+    desc: "Stop and remove all containers"
+    cmds:
+      - docker compose down
+
+  logs:
+    desc: "Tail logs for all services"
+    cmds:
+      - docker compose logs -f
+
+  ps:
+    desc: "Show container status"
+    cmds:
+      - docker compose ps
+
+  seed:
+    desc: "Run database seed inside backend container"
+    cmds:
+      - docker compose exec ec sh -c "cd /server/apps/backend && pnpm seed"
+
+  lint:
+    desc: "Run lint across all workspaces"
+    cmds:
+      - docker compose exec ec sh -c "cd /server && pnpm turbo lint"
+
+  test:
+    desc: "Run unit tests across all workspaces"
+    cmds:
+      - docker compose exec ec sh -c "cd /server && pnpm turbo test"
+
+  tf:init:
+    desc: "Terraform init (no backend)"
+    cmds:
+      - docker run --rm
+        -v "{{.ROOT_DIR}}/infra/terraform:/workspace"
+        -w /workspace
+        nnthanh101/terraform:2.6.0
+        sh -c "terraform init -backend=false"
+
+  tf:validate:
+    desc: "Terraform validate"
+    cmds:
+      - docker run --rm
+        -v "{{.ROOT_DIR}}/infra/terraform:/workspace"
+        -w /workspace
+        nnthanh101/terraform:2.6.0
+        sh -c "terraform init -backend=false && terraform validate"
+
+  tf:cost:
+    desc: "Infracost breakdown"
+    cmds:
+      - docker run --rm
+        -v "{{.ROOT_DIR}}/infra/terraform:/workspace"
+        -w /workspace
+        infracost/infracost:ci-latest
+        breakdown --path /workspace --format json
+        --out-file /workspace/../../tmp/Digital-Commerce/test-results/infracost-breakdown.json

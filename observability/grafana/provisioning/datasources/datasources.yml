@@ -1,0 +1,26 @@
+# Grafana datasource provisioning — Digital-Commerce observability stack
+#
+# CA condition adr-004-datasource-uid-deterministic:
+#   uid MUST be the literal string "prometheus" (not an auto-generated UUID).
+#   Every panel query in medusa.json references datasource uid "prometheus".
+#   Changing this uid breaks all dashboards — treat as load-bearing.
+#
+# Access model:
+#   url: http://prometheus:9090 — Docker DNS resolves inside digital-commerce-network.
+#   No auth required (internal network isolation boundary = security boundary for local dev).
+#   Sprint 5 cloud promotion: update url to Grafana Cloud Prometheus endpoint + add basicAuth.
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    url: http://prometheus:9090
+    access: proxy
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: "15s"
+      queryTimeout: "60s"
+      httpMethod: POST

@@ -33,12 +33,11 @@ const Hero = () => {
           </p>
         </span>
         <a
-          href="https://github.com/medusajs/b2b-starter-medusa"
+          href="https://www.oceansoft.io"
           target="_blank"
         >
           <Button variant="secondary" className="rounded-2xl">
-            <Github />
-            Github Repository
+            Explore B2B Commerce
           </Button>
         </a>
       </div>

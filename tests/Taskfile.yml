@@ -1,0 +1,37 @@
+version: "3"
+
+# OceanSoft B2B Commerce — Tests domain Taskfile
+# Delegated from root Taskfile (includes: test: ./tests/Taskfile.yml)
+# 3T discipline: Tier 1 static · Tier 2 unit · Tier 3 integration/e2e
+# Run via: task test:<target>  (namespace "test" from root)
+
+tasks:
+  default:
+    desc: "List available test targets"
+    cmds:
+      - task --list
+
+  e2e:
+    desc: "Run Playwright E2E (Tier 3) against running stack on ec_network_b2b"
+    cmds:
+      - docker run --rm
+        --network ec_network_b2b
+        -v "{{.ROOT_DIR}}/..:/workspace"
+        -w /workspace
+        mcr.microsoft.com/playwright:v1.49.0-jammy
+        npx playwright test tests/e2e/
+
+  unit:
+    desc: "Run unit tests (Tier 2). TODO jest config not yet provisioned"
+    cmds:
+      - 'echo "Tier 2 unit tests not yet provisioned. See TEST-PLAN.md Tier 2 section."'
+
+  integration:
+    desc: "Run integration tests (Tier 3a). TODO backend integration not yet provisioned"
+    cmds:
+      - 'echo "Tier 3a integration not yet provisioned. See TEST-PLAN.md Tier 3a section."'
+
+  static:
+    desc: "Run static checks (Tier 1). Delegates to root lint task"
+    cmds:
+      - cd .. && task lint

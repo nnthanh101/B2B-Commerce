@@ -1,0 +1,24 @@
+# Grafana dashboard provisioning — Digital-Commerce observability stack
+#
+# CA condition grafana-provisioning-files-required:
+#   This file tells Grafana to auto-load all JSON files from /etc/grafana/dashboards
+#   on startup. Without this file, medusa.json requires manual import via UI.
+#
+# Volume mount in docker-compose.observability.yml:
+#   ./observability/grafana/dashboards:/etc/grafana/dashboards:ro
+#
+# Adding new dashboards: drop any *.json file into observability/grafana/dashboards/
+# and restart grafana — no Grafana UI interaction needed.
+
+apiVersion: 1
+
+providers:
+  - name: "Digital-Commerce Dashboards"
+    orgId: 1
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/dashboards
+      foldersFromFilesStructure: false

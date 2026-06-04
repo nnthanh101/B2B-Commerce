@@ -1,19 +1,18 @@
-import { QUOTE_MODULE } from "./src/modules/quote";
-import { APPROVAL_MODULE } from "./src/modules/approval";
-import { COMPANY_MODULE } from "./src/modules/company";
-import { loadEnv, defineConfig } from "@medusajs/framework/utils";
+import { COMPANY_MODULE } from "./src/modules/company"
+import { QUOTE_MODULE } from "./src/modules/quote"
+import { APPROVAL_MODULE } from "./src/modules/approval"
+import { defineConfig, loadEnv } from "@medusajs/framework/utils"
 
-loadEnv(process.env.NODE_ENV || "development", process.cwd());
+loadEnv(process.env.NODE_ENV || "development", process.cwd())
 
 module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
-    // Local Docker Postgres has no TLS. Enable SSL for AWS RDS in Phase 2 by
-    // setting DATABASE_SSL=true. Ref: https://docs.medusajs.com/learn/installation/docker
-    databaseDriverOptions:
-      process.env.DATABASE_SSL === "true"
-        ? { ssl: { rejectUnauthorized: false } }
-        : { ssl: false, sslmode: "disable" },
+    databaseDriverOptions: {
+      ssl: false,
+      sslmode: "disable",
+    },
+    redisUrl: process.env.REDIS_URL,
     http: {
       storeCors: process.env.STORE_CORS!,
       adminCors: process.env.ADMIN_CORS!,
@@ -33,15 +32,16 @@ module.exports = defineConfig({
       resolve: "./modules/approval",
     },
   },
-  // Allow the Admin (Vite) dev server to run inside Docker with working HMR.
-  // Ref: https://docs.medusajs.com/learn/installation/docker
   admin: {
-    vite: () => ({
+    vite: (config) => ({
       server: {
         host: "0.0.0.0",
         allowedHosts: ["localhost", ".localhost", "127.0.0.1"],
-        hmr: { port: 5173, clientPort: 5173 },
+        hmr: {
+          port: 5173,
+          clientPort: 5173,
+        },
       },
     }),
   },
-});
+})

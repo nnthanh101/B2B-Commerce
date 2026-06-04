@@ -1,11 +1,12 @@
 {
-  "name": "@b2b-starter/storefront",
-  "version": "1.0.3",
-  "description": "Medusa B2B Starter Storefront",
-  "author": "Medusa (https://medusajs.com)",
+  "name": "@oceansoft/storefront",
+  "version": "0.1.0",
+  "description": "OceanSoft B2B Commerce — Next.js 15 storefront",
+  "author": "OceanSoft",
   "keywords": [
     "medusa-storefront",
-    "medusa-b2b-storefront"
+    "b2b-storefront",
+    "oceansoft"
   ],
   "scripts": {
     "dev": "next dev -p 8000",
