@@ -140,6 +140,45 @@ Roadmap gates that lift each category to the next band are listed per-category b
 
 ---
 
+## Gap Register (Severity-Ranked)
+
+Phase 1 → Phase 2 production-readiness gaps. CRIT/HIGH block launch; MED post-launch acceptable; LOW deferred.
+
+| Gap | Title | Severity | Story | Sprint | Owner | Status |
+|---|---|---|---|---|---|---|
+| G-01 | No production AWS account | **CRIT** | OS-003 | Sprint 0 | cloud-architect + HITL | BLOCKED |
+| G-02 | No Stripe AU production approval | **HIGH** | OS-005 + OS-040 | S0 + S4 | HITL + devops-security-engineer | BLOCKED |
+| G-03 | No Aurora SLv2 migration plan | MED | Month 2 | post-launch | cloud-architect | PLANNED |
+| G-04 | No rollback rehearsal runbook | MED | OS-044 | Sprint 4 | sre-engineer | TODO |
+| G-05 | Chat widget spec stub | MED | OS-032 | Sprint 3 | fullstack-engineer + ai-systems-architect | TODO |
+| G-09 | No chat-spend metric | MED | OS-034 | Sprint 3 | observability-engineer | TODO |
+| G-10 | No DORA baseline | MED | OS-042 | Sprint 4 | observability-engineer | TODO |
+| G-06 | No canary deployment | LOW | Month 2 | post-launch | sre-engineer | DEFERRED |
+| G-07 | No SBOM | LOW | Month 3 | post-launch | devops-security-engineer | DEFERRED |
+| G-08 | No DAST | LOW | Month 3 | post-launch | security-compliance-engineer | DEFERRED |
+| G-11 | No PII redaction | LOW | Month 2 | post-launch | security-compliance-engineer | DEFERRED |
+| G-12 | No SOC2 attestation | LOW | Month 3 | post-launch | security-compliance-engineer | DEFERRED |
+
+Severity gates: **CRIT** = blocks launch; **HIGH** = blocks sprint cutover; **MED** = post-launch acceptable; **LOW** = deferred. Status: 🔴 BLOCKED, 🟡 TODO, 🟠 IN PROGRESS, 🟢 DEFERRED, ✅ DONE.
+
+---
+
+## Post-Launch Enhancements (Month 2-3)
+
+Backlog for production hardening after v1.0.0 launch.
+
+| Phase | Task | Gap | Owner |
+|---|---|---|---|
+| Month 2 | RDS Aurora SLv2 migration runbook (trigger + cost) | G-03 | cloud-architect |
+| Month 2 | Canary deployment strategy (weighted ALB targets) | G-06 | sre-engineer |
+| Month 2 | PII redaction in CloudWatch Logs (SSM parameter + log policy) | G-11 | security-compliance-engineer |
+| Month 2 | Per-customer cost attribution (FOCUS view with customer_id join) | G-02 (partial) | finops-engineer |
+| Month 3 | SBOM generation (`trivy image scan` in CI) + GitHub release artifacts | G-07 | devops-security-engineer |
+| Month 3 | DAST scan integration (OWASP ZAP weekly on staging) | G-08 | security-compliance-engineer |
+| Month 3 | SOC2 audit readiness assessment + control documentation | G-12 | security-compliance-engineer |
+
+---
+
 ## Next 3 Actions to Lift Readiness 20 Points
 
 Sequenced. Each builds on the prior. Total expected lift: 49 → 69 within 1 quarter of Phase 1 completion.
