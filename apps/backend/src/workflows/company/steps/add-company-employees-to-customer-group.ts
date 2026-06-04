@@ -4,7 +4,7 @@ import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk";
 
 export const addCompanyEmployeesToCustomerGroupStep = createStep(
   "add-company-employees-to-customer-group",
-  async (input: { company_id: string }, { container }) => {
+  async (input: { company_id: string }, { container }): Promise<StepResponse<unknown, { customer_ids: string[]; group_id: string }>> => {
     const query = container.resolve(ContainerRegistrationKeys.QUERY);
 
     const {
@@ -53,9 +53,13 @@ export const addCompanyEmployeesToCustomerGroupStep = createStep(
     });
   },
   async (
-    input: { customer_ids: string[]; group_id: string },
+    input: { customer_ids: string[]; group_id: string } | undefined,
     { container }
   ) => {
+    if (!input) {
+      return;
+    }
+
     const customerModuleService = container.resolve<ICustomerModuleService>(
       Modules.CUSTOMER
     );

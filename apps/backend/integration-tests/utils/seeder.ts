@@ -1,4 +1,4 @@
-export async function regionSeeder({ api, adminHeaders, data }) {
+export async function regionSeeder({ api, adminHeaders, data }: { api: any; adminHeaders: any; data: any }) {
   return (
     await api.post(
       "/admin/regions",
@@ -8,7 +8,7 @@ export async function regionSeeder({ api, adminHeaders, data }) {
   ).data.region;
 }
 
-export async function salesChannelSeeder({ api, adminHeaders, data }) {
+export async function salesChannelSeeder({ api, adminHeaders, data }: { api: any; adminHeaders: any; data: any }) {
   return (
     await api.post(
       `/admin/sales-channels`,
@@ -18,7 +18,7 @@ export async function salesChannelSeeder({ api, adminHeaders, data }) {
   ).data.sales_channel;
 }
 
-export async function productSeeder({ api, adminHeaders, data }) {
+export async function productSeeder({ api, adminHeaders, data }: { api: any; adminHeaders: any; data: any }) {
   return (
     await api.post(
       "/admin/products",
@@ -52,7 +52,7 @@ export async function productSeeder({ api, adminHeaders, data }) {
   ).data.product;
 }
 
-export async function cartSeeder({ api, storeHeaders, data }) {
+export async function cartSeeder({ api, storeHeaders, data }: { api: any; storeHeaders: any; data: any }) {
   return (
     await api.post(
       `/store/carts`,

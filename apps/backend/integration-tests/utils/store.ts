@@ -25,7 +25,7 @@ export const generateStoreHeaders = ({
   publishableKey,
 }: {
   publishableKey: ApiKeyDTO;
-}) => {
+}): { headers: Record<string, string> } => {
   return {
     headers: {
       [PUBLISHABLE_KEY_HEADER]: publishableKey.token,

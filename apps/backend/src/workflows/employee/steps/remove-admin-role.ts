@@ -37,7 +37,11 @@ export const removeAdminRoleStep = createStep(
 
     return new StepResponse(undefined, providerIdentity.id);
   },
-  async (providerIdentityId: string, { container }) => {
+  async (providerIdentityId: string | undefined, { container }) => {
+    if (!providerIdentityId) {
+      return;
+    }
+
     const authModuleService = container.resolve<IAuthModuleService>(
       Modules.AUTH
     );

@@ -33,7 +33,11 @@ export const createEmployeesStep = createStep(
 
     return new StepResponse(employee as unknown as ModuleEmployee, employee.id);
   },
-  async (employeeId: string, { container }) => {
+  async (employeeId: string | undefined, { container }) => {
+    if (!employeeId) {
+      return;
+    }
+
     const companyModuleService =
       container.resolve<ICompanyModuleService>(COMPANY_MODULE);
     await companyModuleService.deleteEmployees([employeeId]);

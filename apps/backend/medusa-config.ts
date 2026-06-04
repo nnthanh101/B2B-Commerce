@@ -42,6 +42,12 @@ module.exports = defineConfig({
           clientPort: 5173,
         },
       },
+      optimizeDeps: {
+        include: [
+          ...(config.optimizeDeps?.include ?? []),
+          "@medusajs/icons",
+        ],
+      },
     }),
   },
 })

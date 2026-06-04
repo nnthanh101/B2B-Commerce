@@ -5,7 +5,7 @@ export const computeShippingOptionTargets = (
   price: HttpTypes.StorePrice
 ) => {
   const priceRule = (price.price_rules || []).find(
-    (pr) => pr.attribute === "item_total"
+    (pr: any) => pr.attribute === "item_total"
   )!;
 
   const currentAmount = cart.item_total;

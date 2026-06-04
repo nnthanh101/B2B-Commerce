@@ -20,6 +20,7 @@
     "clean": "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "turbo": "^2.3.3"
   },
   "pnpm": {

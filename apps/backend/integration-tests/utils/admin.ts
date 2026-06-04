@@ -10,7 +10,7 @@ export const adminHeaders = {
   headers: {},
 };
 
-export const createAdminUser = async (adminHeaders, appContainer) => {
+export const createAdminUser = async (adminHeaders: any, appContainer: any) => {
   const userModule: IUserModuleService = appContainer.resolve(Modules.USER);
   const authModule: IAuthModuleService = appContainer.resolve(Modules.AUTH);
   const user = await userModule.createUsers({
@@ -43,7 +43,7 @@ export const createAdminUser = async (adminHeaders, appContainer) => {
       actor_type: "user",
       auth_identity_id: authIdentity.id,
     },
-    process.env.JWT_SECRET,
+    process.env.JWT_SECRET || "",
     {
       expiresIn: "1d",
     }
@@ -54,7 +54,7 @@ export const createAdminUser = async (adminHeaders, appContainer) => {
   return { user, authIdentity };
 };
 
-export const createStoreUser = async ({ api, storeHeaders }) => {
+export const createStoreUser = async ({ api, storeHeaders }: { api: any; storeHeaders: any }) => {
   const registerToken = (
     await api.post("/auth/customer/emailpass/register", {
       email: "test@email.com",

@@ -1,10 +1,10 @@
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk";
-import { ICompanyModuleService, ModuleUpdateCompany } from "../../../types";
+import { ICompanyModuleService, ModuleCompany, ModuleUpdateCompany } from "../../../types";
 import { COMPANY_MODULE } from "../../../modules/company";
 
 export const updateCompaniesStep = createStep(
   "update-companies",
-  async (input: ModuleUpdateCompany, { container }) => {
+  async (input: ModuleUpdateCompany, { container }): Promise<StepResponse<ModuleCompany, ModuleUpdateCompany>> => {
     const companyModule =
       container.resolve<ICompanyModuleService>(COMPANY_MODULE);
 
@@ -16,7 +16,11 @@ export const updateCompaniesStep = createStep(
 
     return new StepResponse(updatedCompanies, previousData);
   },
-  async (previousData: ModuleUpdateCompany, { container }) => {
+  async (previousData: ModuleUpdateCompany | undefined, { container }) => {
+    if (!previousData) {
+      return;
+    }
+
     const companyModule =
       container.resolve<ICompanyModuleService>(COMPANY_MODULE);
 

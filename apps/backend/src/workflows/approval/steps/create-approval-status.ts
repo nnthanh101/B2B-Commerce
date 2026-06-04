@@ -43,7 +43,7 @@ export const createApprovalStatusStep = createStep(
 
     return new StepResponse(approvalStatus, [approvalStatus.id]);
   },
-  async (statusIds: string[], { container }) => {
+  async (statusIds: string[] | undefined, { container }) => {
     if (!statusIds) {
       return;
     }

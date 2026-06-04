@@ -16,7 +16,11 @@ export const deleteEmployeesStep = createStep(
 
     return new StepResponse(ids);
   },
-  async (ids: string[], { container }) => {
+  async (ids: string[] | undefined, { container }) => {
+    if (!ids) {
+      return;
+    }
+
     const companyModuleService =
       container.resolve<ICompanyModuleService>(COMPANY_MODULE);
     await companyModuleService.restoreEmployees(ids);

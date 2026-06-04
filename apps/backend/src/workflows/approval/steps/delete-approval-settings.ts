@@ -37,7 +37,11 @@ export const deleteApprovalSettingsStep = createStep(
       approvalSettings.map((setting) => setting.company_id)
     );
   },
-  async (companyIds: string[], { container }) => {
+  async (companyIds: string[] | undefined, { container }) => {
+    if (!companyIds) {
+      return;
+    }
+
     const approvalModule =
       container.resolve<IApprovalModuleService>(APPROVAL_MODULE);
 

@@ -21,7 +21,7 @@ export const createApprovalSettingsStep = createStep(
       approvalSettings.map((setting) => setting.id)
     );
   },
-  async (settingIds: string[], { container }) => {
+  async (settingIds: string[] | undefined, { container }) => {
     if (!settingIds) {
       return;
     }

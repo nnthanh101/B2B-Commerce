@@ -3,7 +3,7 @@ import {
   createWorkflow,
   WorkflowData,
   WorkflowResponse,
-} from "@medusajs/workflows-sdk";
+} from "@medusajs/framework/workflows-sdk";
 import { ModuleUpdateEmployee, QueryEmployee } from "../../../types";
 import { removeAdminRoleStep, updateEmployeesStep } from "../steps";
 

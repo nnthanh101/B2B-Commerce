@@ -28,7 +28,11 @@ export const createQuotesStep = createStep(
       quotes.map((quote) => quote.id)
     );
   },
-  async (quoteIds: string[], { container }) => {
+  async (quoteIds: string[] | undefined, { container }) => {
+    if (!quoteIds) {
+      return;
+    }
+
     const quoteModule = container.resolve<IQuoteModuleService>(QUOTE_MODULE);
 
     await quoteModule.deleteQuotes(quoteIds);

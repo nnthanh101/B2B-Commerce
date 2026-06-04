@@ -26,11 +26,13 @@ export const linkEmployeeToCustomerStep = createStep(
     return new StepResponse(undefined, input);
   },
   async (
-    input: { employeeId: string; customerId: string },
+    input: { employeeId: string; customerId: string } | undefined,
     { container }
-  ): Promise<
-    StepResponse<undefined, { employeeId: string; customerId: string }>
-  > => {
+  ) => {
+    if (!input) {
+      return;
+    }
+
     const remoteLink = container.resolve(ContainerRegistrationKeys.REMOTE_LINK);
 
     const link = {
@@ -43,7 +45,5 @@ export const linkEmployeeToCustomerStep = createStep(
     };
 
     await remoteLink.dismiss(link);
-
-    return new StepResponse(undefined, input);
   }
 );

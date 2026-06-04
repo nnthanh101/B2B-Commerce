@@ -46,6 +46,7 @@
   "devDependencies": {
     "@babel/core": "^7.17.5",
     "@medusajs/ui-preset": "2.15.5",
+    "@playwright/test": "^1.48.2",
     "@types/lodash": "^4.14.195",
     "@types/node": "^20.0.0",
     "@types/pg": "^8.11.0",

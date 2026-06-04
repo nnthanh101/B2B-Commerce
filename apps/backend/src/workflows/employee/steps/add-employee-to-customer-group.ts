@@ -1,10 +1,10 @@
-import { ICustomerModuleService } from "@medusajs/framework/types";
+import { CustomerGroupDTO, ICustomerModuleService } from "@medusajs/framework/types";
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils";
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk";
 
 export const addEmployeeToCustomerGroupStep = createStep(
   "add-employee-to-customer-group",
-  async (input: { employee_id: string }, { container }) => {
+  async (input: { employee_id: string }, { container }): Promise<StepResponse<CustomerGroupDTO | null, { customer_id: string | undefined; group_id: string | undefined }>> => {
     const query = container.resolve(ContainerRegistrationKeys.QUERY);
 
     const {
@@ -55,10 +55,10 @@ export const addEmployeeToCustomerGroupStep = createStep(
     });
   },
   async (
-    input: { customer_id: string | undefined; group_id: string | undefined },
+    input: { customer_id: string | undefined; group_id: string | undefined } | undefined,
     { container }
   ) => {
-    if (!input.customer_id || !input.group_id) {
+    if (!input || !input.customer_id || !input.group_id) {
       return;
     }
 

@@ -12,16 +12,16 @@ export const createApprovalsWorkflow = createWorkflow(
   function (input: ModuleCreateApproval | ModuleCreateApproval[]) {
     const result = createApprovalStep(input);
 
-    const cartIds = transform(input, (input) => {
+    const cartIds = transform(input, (input: any) => {
       const approvals = Array.isArray(input) ? input : [input];
-      return approvals.map((approval) => approval.cart_id);
+      return approvals.map((approval: any) => approval.cart_id);
     });
 
     const approvalStatusResult = createApprovalStatusStep(cartIds);
 
-    const approvalLinkData = transform(result, (approval) => {
+    const approvalLinkData = transform(result, (approval: any) => {
       const approvals = Array.isArray(approval) ? approval : [approval];
-      return approvals.map((approval) => ({
+      return approvals.map((approval: any) => ({
         [Modules.CART]: {
           cart_id: approval.cart_id,
         },
@@ -31,9 +31,9 @@ export const createApprovalsWorkflow = createWorkflow(
       }));
     });
 
-    const approvalStatusLinkData = transform(approvalStatusResult, (status) => {
+    const approvalStatusLinkData = transform(approvalStatusResult, (status: any) => {
       const statuses = Array.isArray(status) ? status : [status];
-      return statuses.map((status) => ({
+      return statuses.map((status: any) => ({
         [Modules.CART]: {
           cart_id: status.cart_id,
         },
@@ -45,7 +45,7 @@ export const createApprovalsWorkflow = createWorkflow(
 
     const linkData = transform(
       [approvalLinkData, approvalStatusLinkData],
-      (data) => {
+      (data: any) => {
         return data.flat();
       }
     );

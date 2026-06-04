@@ -52,7 +52,7 @@ export const createRequestForQuoteWorkflow = createWorkflow(
       throw_if_key_not_found: true,
     }).config({ name: "customer-query" });
 
-    const orderInput = transform({ cart, customer }, ({ cart, customer }) => {
+    const orderInput = transform({ cart, customer }, ({ cart, customer }: any) => {
       return {
         is_draft_order: true,
         status: OrderStatus.DRAFT,
@@ -63,7 +63,7 @@ export const createRequestForQuoteWorkflow = createWorkflow(
         shipping_address: cart.shipping_address,
         items: cart.items,
         region_id: cart.region_id,
-        promo_codes: cart.promotions.map(({ code }) => code),
+        promo_codes: cart.promotions.map(({ code }: any) => code),
         currency_code: cart.currency_code,
         shipping_methods: cart.shipping_methods,
       };
@@ -73,7 +73,7 @@ export const createRequestForQuoteWorkflow = createWorkflow(
       input: orderInput,
     });
 
-    const orderEditInput = transform({ draftOrder }, ({ draftOrder }) => {
+    const orderEditInput = transform({ draftOrder }, ({ draftOrder }: any) => {
       return {
         order_id: draftOrder.id,
         description: "",

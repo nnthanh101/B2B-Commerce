@@ -21,7 +21,11 @@ export const updateApprovalSettingsStep = createStep(
 
     return new StepResponse(updatedApprovalSettings, previousData);
   },
-  async (previousData: ModuleUpdateApprovalSettings, { container }) => {
+  async (previousData: ModuleUpdateApprovalSettings | undefined, { container }) => {
+    if (!previousData) {
+      return;
+    }
+
     const approvalModule =
       container.resolve<IApprovalModuleService>(APPROVAL_MODULE);
 

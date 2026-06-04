@@ -93,7 +93,11 @@ export const createApprovalStep = createStep(
       approvals.map((approval) => approval.id)
     );
   },
-  async (approvalIds: string[], { container }) => {
+  async (approvalIds: string[] | undefined, { container }) => {
+    if (!approvalIds) {
+      return;
+    }
+
     const approvalModuleService =
       container.resolve<IApprovalModuleService>(APPROVAL_MODULE);
 

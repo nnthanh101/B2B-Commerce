@@ -31,7 +31,7 @@ export const useUpdateApprovalSettings = (
 
   return useMutation({
     mutationFn: (payload: AdminUpdateApprovalSettings) =>
-      sdk.client.fetch<AdminUpdateApprovalSettings>(
+      sdk.client.fetch<AdminApprovalSettings>(
         `/admin/companies/${companyId}/approval-settings`,
         {
           body: payload,

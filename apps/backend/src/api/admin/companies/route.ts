@@ -39,7 +39,7 @@ export const POST = async (
 
   const { result: createdCompanies } = await createCompaniesWorkflow.run({
     input: Array.isArray(req.validatedBody)
-      ? req.validatedBody.map((company) => ({ ...company }))
+      ? req.validatedBody.map((company: AdminCreateCompanyType) => ({ ...company }))
       : [{ ...req.validatedBody }],
     container: req.scope,
   });
@@ -48,7 +48,7 @@ export const POST = async (
     {
       entity: "companies",
       fields: req.queryConfig.fields,
-      filters: { id: createdCompanies.map((company) => company.id) },
+      filters: { id: (createdCompanies as any[]).map((company: any) => company.id) },
     },
     { throwIfKeyNotFound: true }
   );

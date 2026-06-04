@@ -45,7 +45,11 @@ export const updateEmployeesStep = createStep(
       currentData as unknown as QueryEmployee
     );
   },
-  async (currentData: ModuleUpdateEmployee, { container }) => {
+  async (currentData: ModuleUpdateEmployee | undefined, { container }) => {
+    if (!currentData) {
+      return;
+    }
+
     const companyModuleService =
       container.resolve<ICompanyModuleService>(COMPANY_MODULE);
 

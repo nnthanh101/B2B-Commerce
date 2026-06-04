@@ -4,7 +4,7 @@ import { COMPANY_MODULE } from "../../../modules/company";
 
 export const deleteCompaniesStep = createStep(
   "delete-companies",
-  async (ids: string[], { container }) => {
+  async (ids: string[], { container }): Promise<StepResponse<string[], string[]>> => {
     const companyModule =
       container.resolve<ICompanyModuleService>(COMPANY_MODULE);
 
@@ -12,7 +12,11 @@ export const deleteCompaniesStep = createStep(
 
     return new StepResponse(ids, ids);
   },
-  async (companyIds: string[], { container }) => {
+  async (companyIds: string[] | undefined, { container }) => {
+    if (!companyIds) {
+      return;
+    }
+
     const companyModule =
       container.resolve<ICompanyModuleService>(COMPANY_MODULE);
 

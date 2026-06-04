@@ -1,10 +1,10 @@
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk";
-import { ICompanyModuleService, ModuleCreateCompany } from "../../../types";
+import { ICompanyModuleService, ModuleCompany, ModuleCreateCompany } from "../../../types";
 import { COMPANY_MODULE } from "../../../modules/company";
 
 export const createCompaniesStep = createStep(
   "create-companies",
-  async (input: ModuleCreateCompany[], { container }) => {
+  async (input: ModuleCreateCompany[], { container }): Promise<StepResponse<ModuleCompany[], string[]>> => {
     const companyModuleService =
       container.resolve<ICompanyModuleService>(COMPANY_MODULE);
 
@@ -15,7 +15,7 @@ export const createCompaniesStep = createStep(
       companies.map((company) => company.id)
     );
   },
-  async (companyIds: string[], { container }) => {
+  async (companyIds: string[] | undefined, { container }) => {
     if (!companyIds) {
       return;
     }

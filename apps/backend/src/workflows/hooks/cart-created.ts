@@ -1,6 +1,6 @@
 import { createCartWorkflow } from "@medusajs/core-flows";
 import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils";
-import { StepResponse } from "@medusajs/workflows-sdk";
+import { StepResponse } from "@medusajs/framework/workflows-sdk";
 import { COMPANY_MODULE } from "../../modules/company";
 import { CartDTO } from "@medusajs/framework/types";
 
@@ -35,7 +35,7 @@ createCartWorkflow.hooks.cartCreated(
     });
   },
   async (
-    input: { cart_id: string; company_id: string } | null,
+    input: { cart_id: string; company_id: string } | null | undefined,
     { container }
   ) => {
     if (!input) {

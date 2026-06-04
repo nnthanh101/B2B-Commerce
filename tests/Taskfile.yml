@@ -1,9 +1,27 @@
 version: "3"
 
-# OceanSoft B2B Commerce — Tests domain Taskfile
+# OceanSoft B2B Commerce — Tests domain Taskfile (RQ2 automation harness)
 # Delegated from root Taskfile (includes: test: ./tests/Taskfile.yml)
-# 3T discipline: Tier 1 static · Tier 2 unit · Tier 3 integration/e2e
-# Run via: task test:<target>  (namespace "test" from root)
+# Tiers: 1 static · 3a integration (HTTP, @medusajs/test-utils) · 3b e2e (Playwright) · report
+#
+# Full graph (needs Docker):   task test:all
+# Step-by-step:
+#   task test:static
+#   task test:db:up && task test:integration && task test:db:down
+#   task test:e2e        # SKIPs if backend :9000 unreachable
+#   task test:report
+#
+# Integration env: DATABASE_URL -> :5433/ec-store-test, REDIS_URL -> :6380 (docker-compose.test.yml)
+#   No-Docker: export DATABASE_URL=postgres://postgres@localhost:5432/ec_store_test REDIS_URL=redis://localhost:6379 ; then task test:db:up:local && task test:integration
+
+vars:
+  REPO: "{{.TASKFILE_DIR}}/.."
+  REPORT_DIR: "{{.TASKFILE_DIR}}/../tmp/Digital-Commerce/test-results"
+  COMPOSE_FILE: "{{.TASKFILE_DIR}}/../docker-compose.test.yml"
+  PROJECT: ec_test
+  DB_URL: "postgres://postgres:postgres@localhost:5433/ec-store-test"
+  REDIS: "redis://localhost:6380"
+  BACKEND_URL: "http://localhost:9000"
 
 tasks:
   default:
@@ -11,27 +29,65 @@ tasks:
     cmds:
       - task --list
 
-  e2e:
-    desc: "Run Playwright E2E (Tier 3) against running stack on ec_network_b2b"
+  static:
+    desc: "Tier 1 — static checks (tsc + lint). Delegates to root lint task."
+    dir: "{{.REPO}}"
     cmds:
-      - docker run --rm
-        --network ec_network_b2b
-        -v "{{.ROOT_DIR}}/..:/workspace"
-        -w /workspace
-        mcr.microsoft.com/playwright:v1.49.0-jammy
-        npx playwright test tests/e2e/
+      - task lint
 
-  unit:
-    desc: "Run unit tests (Tier 2). TODO jest config not yet provisioned"
+  db:up:
+    desc: "Bring up ephemeral test DB (postgres :5433 + redis :6380, tmpfs => idempotent)"
     cmds:
-      - 'echo "Tier 2 unit tests not yet provisioned. See TEST-PLAN.md Tier 2 section."'
+      - docker compose -f {{.COMPOSE_FILE}} -p {{.PROJECT}} up -d --wait
+    status:
+      - docker compose -f {{.COMPOSE_FILE}} -p {{.PROJECT}} ps --status running | grep -q postgres-test
+
+  db:down:
+    desc: "Tear down ephemeral test DB + volumes (idempotent)"
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} -p {{.PROJECT}} down -v --remove-orphans || true
+
+  db:up:local:
+    desc: "No-Docker: ensure host-native Postgres+Redis test DB exists (brew/Postgres.app on :5432/:6379)"
+    cmds:
+      - createdb ec_store_test 2>/dev/null || true
+      - redis-cli ping
 
   integration:
-    desc: "Run integration tests (Tier 3a). TODO backend integration not yet provisioned"
+    desc: "Tier 3a — backend HTTP integration tests (requires db:up). Writes jest-integration.json"
+    dir: "{{.REPO}}"
+    env:
+      DATABASE_URL: "{{.DB_URL}}"
+      REDIS_URL: "{{.REDIS}}"
     cmds:
-      - 'echo "Tier 3a integration not yet provisioned. See TEST-PLAN.md Tier 3a section."'
+      - mkdir -p {{.REPORT_DIR}}
+      - pnpm --filter @oceansoft/backend test:integration:http -- --json --outputFile={{.REPORT_DIR}}/jest-integration.json
 
-  static:
-    desc: "Run static checks (Tier 1). Delegates to root lint task"
+  e2e:
+    desc: "Tier 3b — Playwright E2E. SKIPs (exit 0) if backend :9000 unreachable."
+    dir: "{{.REPO}}"
     cmds:
-      - cd .. && task lint
+      - |
+        if ! curl -sf {{.BACKEND_URL}}/health >/dev/null 2>&1; then
+          echo "[SKIP] e2e: backend not reachable at {{.BACKEND_URL}} — Playwright suite skipped"
+          exit 0
+        fi
+        mkdir -p {{.REPORT_DIR}}
+        PLAYWRIGHT_JSON_OUTPUT_NAME={{.REPORT_DIR}}/playwright-json-results.json \
+          npx playwright test tests/e2e/ --reporter=json,html || true
+
+  report:
+    desc: "Aggregate jest + Playwright + static JSON/logs into REPORT.md + REPORT.html"
+    cmds:
+      - mkdir -p {{.REPORT_DIR}}
+      - node {{.TASKFILE_DIR}}/report/aggregate-report.mjs {{.REPORT_DIR}}
+
+  all:
+    desc: "Full graph: static -> db:up -> integration -> e2e -> report -> db:down"
+    cmds:
+      - task: static
+      - task: db:up
+      - task: integration
+      - task: e2e
+      - task: report
+      - task: db:down

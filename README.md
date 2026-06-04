@@ -2,7 +2,7 @@
 
 B2B marketplace platform built on Medusa v2 and Next.js 15. Backend modules for company management, employee spending limits, quote negotiation, and approval workflows. Local-first development with Docker + Terraform IaC skeleton for future AWS deployment.
 
-**Status**: Phase 1 (Local Validation) of 6-Phase SDLC. No AWS resources provisioned yet.
+**Status**: v1.1.0 — Release Self-QA Framework; Phase 1 local validation of 6-Phase SDLC. No AWS resources provisioned yet.
 
 ## Quick Start
 
@@ -35,11 +35,13 @@ Services will be live on:
 
 All commands run inside Docker containers. No host-side package installation required.
 
+> **Docker-first is the recommended path.** The same `docker-compose.yml` backs both `task up` and the VS Code **Dev Container** (`.devcontainer/devcontainer.json`) — open the folder in VS Code → "Reopen in Container" for one-click, reproducible onboarding (backend + storefront + Postgres + Redis, identical to CI). The no-Docker path below is a constrained-environment fallback for review/reproduce only.
+
 ## What This Is
 
-**For OceanSoft** — The alpha marketplace at www.oceansoft.io runs this stack in production using the `@oceansoft/medusa-plugin-b2b` v0.1 plugin.
+**For OceanSoft** — The alpha marketplace at www.oceansoft.io runs this stack. B2B modules (company, quote, approval) are built directly into `apps/backend` as Medusa v2 modules (0 packages today).
 
-**For Plugin Licensees** — Dev shops and merchants buy/license the `@oceansoft/medusa-plugin-b2b` plugin to build their own B2B marketplaces on Medusa. This repo is the reference architecture showing how to integrate the plugin + run locally in Docker.
+**For operators** — This repo is the reference architecture for a Medusa v2 B2B marketplace. Clone, configure, and deploy. Plugin packaging into a separate `packages/` workspace is deferred to a future v1.x release.
 
 ## Architecture
 
@@ -47,7 +49,7 @@ All commands run inside Docker containers. No host-side package installation req
 |-------|-----------|------|------|
 | **Storefront** | Next.js 15 App Router | React 19, TypeScript, Tailwind | 8000 |
 | **Backend** | Medusa v2.15+ | Node.js 22, TypeScript, tRPC APIs | 9000 |
-| **Modules** | @oceansoft/medusa-plugin-b2b | Company, Quote, Approval workflows | (internal) |
+| **Modules** | Company, Quote, Approval (built-in) | Medusa v2 modules in `apps/backend/src/modules/` | (internal) |
 | **Data** | PostgreSQL | 15-alpine, per Medusa Docker reference | 5432 |
 | **Cache** | Redis | 7-alpine, per Medusa Docker reference | 6379 |
 
@@ -65,9 +67,8 @@ All services run in a single `docker-compose.yml` file — same file used by VS 
 
 ```
 Digital-Commerce/
-├── apps/backend/              Medusa backend (thin consumer app)
+├── apps/backend/              Medusa backend (B2B modules: company, quote, approval)
 ├── apps/storefront/           Next.js storefront
-├── packages/medusa-plugin-b2b/ B2B modules (company, quote, approval)
 ├── infra/terraform/           AWS IaC skeleton (validate-only at P1)
 ├── tests/                     QA domain (Taskfile + TEST-PLAN + TEST-CASES + e2e/)
 ├── docs/                      Architecture + quickstart + licensing
@@ -82,10 +83,7 @@ Digital-Commerce/
 - Free to use, modify, distribute — standard MIT terms
 - Source: https://github.com/nnthanh101/Digital-Commerce
 
-**OceanSoft Commercial License v1.0** (applies to `packages/medusa-plugin-b2b/` only):
-- Proprietary B2B module package sold separately to licensees
-- Status: DRAFT (finalized before v1.0.0 GA)
-- See `packages/medusa-plugin-b2b/LICENSE.md` and `docs/licensing.md` for boundaries
+**License: MIT (root).** Commercial plugin packaging deferred to a future v1.x when a `packages/` workspace is introduced (0 packages today).
 
 **Third-party attribution**: Medusa v2 framework (`@medusajs/framework`) is OSS (MIT). Initial scaffolding used code patterns from Medusa's `dtc-starter` and `b2b-starter` (MIT, © 2024 Medusa Holdings). See `THIRD-PARTY-NOTICES.md`.
 
@@ -116,6 +114,29 @@ task tf:cost       # Infracost breakdown ($0 at P1 — no resources yet)
 task logs          # Tail all services
 ```
 
+## Minimum reproduction (no Docker — fallback only)
+
+> Prefer **Docker-first** (`task up` or the Dev Container above). Use this fallback only when Docker is unavailable (e.g. a constrained review machine).
+
+```bash
+# Install pg + redis (macOS — Postgres.app also works in place of brew postgresql@15)
+brew install postgresql@15 redis
+brew services start postgresql@15
+brew services start redis
+createdb ec_store_test
+
+# Install dependencies
+pnpm install
+
+# Run integration tests against the local DB
+DATABASE_URL=postgres://postgres@localhost:5432/ec_store_test \
+  REDIS_URL=redis://localhost:6379 \
+  TEST_TYPE=integration \
+  task test:integration
+```
+
+**Review/approve needs NO runtime.** Reading `CHANGELOG.md` + `RELEASE_NOTES.md` + `git diff --stat` + `tmp/Digital-Commerce/test-results/REPORT.md` is sufficient for a HITL REVIEW/APPROVE decision. The commands above are for local REPRODUCE only.
+
 ## Support
 
 - **Bug reports** — Use GitHub Issues
@@ -124,8 +145,8 @@ task logs          # Tail all services
 
 ## Contributing
 
-This repository accepts contributions under the MIT License (public code) and OceanSoft Commercial License (plugin code). See `CONTRIBUTING.md` (if present) for guidelines.
+This repository accepts contributions under the MIT License. See `CONTRIBUTING.md` (if present) for guidelines.
 
 ---
 
-**Copyright** © 2026 OceanSoft. All rights reserved for commercial components; MIT License for public reference implementation.
+**Copyright** © 2026 OceanSoft. MIT License. See LICENSE for details.

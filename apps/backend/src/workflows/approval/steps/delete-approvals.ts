@@ -12,7 +12,11 @@ export const deleteApprovalsStep = createStep(
 
     return new StepResponse(undefined, input);
   },
-  async (approvalIds: string[], { container }) => {
+  async (approvalIds: string[] | undefined, { container }) => {
+    if (!approvalIds) {
+      return;
+    }
+
     const approvalModule =
       container.resolve<IApprovalModuleService>(APPROVAL_MODULE);
 

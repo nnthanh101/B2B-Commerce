@@ -1,27 +1,29 @@
 # TEST-CASES — OceanSoft B2B Commerce
 
-Story-mapped test cases for Cycle 1 (DC-001..DC-050) and Cycle 2 (DC-051..DC-105). Status: covered = implemented in e2e suite; gap = not yet automated.
+Story-mapped test cases for Cycle 1 (DC-001..DC-050) and Cycle 2 (DC-051..DC-105). Status: `covered` = implemented and passing in e2e suite; `target: Tier N` = designed, not yet automated (execution pending container provisioning).
+
+**Persona key**: BE = Buyer-employee · ASM = Admin/Sales-Manager · FIN = Finance (evidence consumer, secondary)
 
 ---
 
 ## Tier 1 — Static (TypeScript + Lint)
 
-| ID | Brief | Given / When / Then | Status |
-|----|-------|---------------------|--------|
-| TC-S01 | Backend TypeScript compiles | Codebase in clean state / run tsc --noEmit / exits 0 | gap |
-| TC-S02 | Storefront TypeScript compiles | Codebase in clean state / run tsc --noEmit in storefront / exits 0 | gap |
-| TC-S03 | Lint passes | All workspace files / run task lint / zero ESLint errors | gap |
+| ID | Persona | Brief | Given / When / Then | Status |
+|----|---------|-------|---------------------|--------|
+| TC-S01 | BE + ASM | Backend TypeScript compiles | Codebase in clean state / run tsc --noEmit in apps/backend / exits 0 | target: Tier 1 |
+| TC-S02 | BE + ASM | Storefront TypeScript compiles | Codebase in clean state / run tsc --noEmit in apps/storefront / exits 0 | target: Tier 1 |
+| TC-S03 | BE + ASM | Lint passes | All workspace files / run task lint / zero ESLint errors | target: Tier 1 |
 
 ---
 
 ## Tier 2 — Unit (Jest — NOT YET PROVISIONED)
 
-| ID | Brief | Given / When / Then | Status |
-|----|-------|---------------------|--------|
-| TC-U01 | Company create validates required fields | Valid company payload / call createCompany() / returns company entity | gap |
-| TC-U02 | Spending limit enforced | Employee with limit=100 / attempt order totalling 150 / throws SpendingLimitExceeded | gap |
-| TC-U03 | Quote state machine: draft → submitted | Quote in draft state / call submitQuote() / state equals submitted | gap |
-| TC-U04 | Approval gate blocks unapproved order | Order requiring approval / call placeOrder() without approval / throws ApprovalRequired | gap |
+| ID | Persona | Brief | Given / When / Then | Status |
+|----|---------|-------|---------------------|--------|
+| TC-U01 | ASM | Company create validates required fields | Valid company payload / call createCompany() / returns company entity | target: Tier 2 integration |
+| TC-U02 | BE | Spending limit enforced | Employee with limit=100 / attempt order totalling 150 / throws SpendingLimitExceeded | target: Tier 2 integration |
+| TC-U03 | BE + ASM | Quote state machine: draft → submitted | Quote in draft state / call submitQuote() / state equals submitted | target: Tier 2 integration |
+| TC-U04 | BE + ASM | Approval gate blocks unapproved order | Order requiring approval / call placeOrder() without approval / throws ApprovalRequired | target: Tier 2 integration |
 
 ---
 
@@ -29,44 +31,70 @@ Story-mapped test cases for Cycle 1 (DC-001..DC-050) and Cycle 2 (DC-051..DC-105
 
 ### DC-001..DC-010: Authentication + Health
 
-| ID | Brief | Given / When / Then | Status |
-|----|-------|---------------------|--------|
-| TC-E01 | Backend health endpoint responds | Stack is running / GET /health / returns 200 OK | covered |
-| TC-E02 | Admin login succeeds | Valid admin credentials / POST /auth/admin / returns JWT token | covered |
-| TC-E03 | Storefront home loads | Stack is running / GET http://localhost:8000 / returns HTML 200 | covered |
+| ID | Persona | Brief | Given / When / Then | Status |
+|----|---------|-------|---------------------|--------|
+| TC-E01 | BE + ASM | Backend health endpoint responds | Stack is running / GET /health / returns 200 OK | covered |
+| TC-E02 | ASM | Admin login succeeds | Valid admin credentials / POST /auth/admin / returns JWT token | covered |
+| TC-E03 | BE | Storefront home loads | Stack is running / GET http://localhost:8000 / returns HTML 200 | covered |
 
 ### DC-011..DC-030: Company + Employee Management
 
-| ID | Brief | Given / When / Then | Status |
-|----|-------|---------------------|--------|
-| TC-E04 | Create B2B company | Authenticated admin / POST /admin/companies / company appears in list | covered |
-| TC-E05 | Add employee to company | Company exists / POST /admin/companies/:id/members / member count increments | gap |
-| TC-E06 | Set employee spending limit | Employee exists / PATCH /admin/companies/:id/members/:eid / limit stored | gap |
+| ID | Persona | Brief | Given / When / Then | Status |
+|----|---------|-------|---------------------|--------|
+| TC-E04 | ASM | Create B2B company | Authenticated admin / POST /admin/companies / company appears in list | covered |
+| TC-E05 | ASM | Add employee to company | Company exists / POST /admin/companies/:id/members / member count increments | target: Tier 3 e2e |
+| TC-E06 | ASM | Set employee spending limit | Employee exists / PATCH /admin/companies/:id/members/:eid / limit stored | target: Tier 3 e2e |
 
 ### DC-031..DC-060: Quote Negotiation
 
-| ID | Brief | Given / When / Then | Status |
-|----|-------|---------------------|--------|
-| TC-E07 | Create quote request | B2B buyer authenticated / POST /store/quotes / quote in draft state | gap |
-| TC-E08 | Admin responds to quote | Quote in submitted state / PATCH /admin/quotes/:id / quote in negotiation state | gap |
-| TC-E09 | Buyer accepts quote | Quote in negotiation / POST /store/quotes/:id/accept / quote accepted | gap |
+| ID | Persona | Brief | Given / When / Then | Status |
+|----|---------|-------|---------------------|--------|
+| TC-E07 | BE | Create quote request | B2B buyer authenticated / POST /store/quotes / quote in draft state | target: Tier 3 e2e |
+| TC-E08 | ASM | Admin responds to quote | Quote in submitted state / PATCH /admin/quotes/:id / quote in negotiation state | target: Tier 3 e2e |
+| TC-E09 | BE | Buyer accepts quote | Quote in negotiation / POST /store/quotes/:id/accept / quote accepted | target: Tier 3 e2e |
 
 ### DC-061..DC-085: Approval Workflows
 
-| ID | Brief | Given / When / Then | Status |
-|----|-------|---------------------|--------|
-| TC-E10 | High-value order triggers approval | Order total > spending limit / place order / status = pending_approval | gap |
-| TC-E11 | Manager approves order | Order pending approval / POST /admin/approvals/:id/approve / order confirmed | gap |
-| TC-E12 | Manager rejects order | Order pending approval / POST /admin/approvals/:id/reject / order cancelled | gap |
+| ID | Persona | Brief | Given / When / Then | Status |
+|----|---------|-------|---------------------|--------|
+| TC-E10 | BE | High-value order triggers approval | Order total > spending limit / place order / status = pending_approval | target: Tier 3 e2e |
+| TC-E11 | ASM | Manager approves order | Order pending approval / POST /admin/approvals/:id/approve / order confirmed | target: Tier 3 e2e |
+| TC-E12 | ASM | Manager rejects order | Order pending approval / POST /admin/approvals/:id/reject / order cancelled | target: Tier 3 e2e |
 
 ### DC-086..DC-105: Bulk Operations + Order Editing
 
-| ID | Brief | Given / When / Then | Status |
-|----|-------|---------------------|--------|
-| TC-E13 | Bulk add-to-cart | Product list with 5 SKUs / POST /store/carts/:id/line-items (batch) / cart has 5 items | gap |
-| TC-E14 | Post-order edit (add item) | Confirmed order / POST /admin/orders/:id/edits / edit request created | gap |
-| TC-E15 | Post-order edit (remove item) | Order edit in progress / DELETE line item / item removed, totals recalculated | gap |
+| ID | Persona | Brief | Given / When / Then | Status |
+|----|---------|-------|---------------------|--------|
+| TC-E13 | BE | Bulk add-to-cart | Product list with 5 SKUs / POST /store/carts/:id/line-items (batch) / cart has 5 items | target: Tier 3 e2e |
+| TC-E14 | ASM | Post-order edit (add item) | Confirmed order / POST /admin/orders/:id/edits / edit request created | target: Tier 3 e2e |
+| TC-E15 | ASM | Post-order edit (remove item) | Order edit in progress / DELETE line item / item removed, totals recalculated | target: Tier 3 e2e |
 
 ---
 
-Coverage summary: 4 covered / 15 total (27%). Target v0.2: >=60% Tier 3b coverage.
+## Negative / Authorization Cases
+
+These cases protect the Control and Auditability business-value pillars. All four are in-scope for v1.1.0 test design; execution is pending container provisioning (target: Tier 2 integration).
+
+| ID | Persona | Brief | Given / When / Then | Business-value pillar | Status |
+|----|---------|-------|---------------------|-----------------------|--------|
+| TC-N01 | BE | Over-limit checkout blocked | Buyer with limit=500 / cart total=600 / POST /store/carts/:id/complete / returns 422 SpendingLimitExceeded + routes to approval CTA | Control | target: Tier 2 integration |
+| TC-N02 | BE | Approval-required cart blocked | Buyer submits cart requiring manager approval / POST /store/carts/:id/complete without prior approval / returns 403 ApprovalRequired + status=pending_approval | Control + Compliance | target: Tier 2 integration |
+| TC-N03 | BE | Cross-company data denied | Buyer from Company A / GET /store/quotes?company_id=B / returns 403 + emits authz.denied event | Auditability + Compliance | target: Tier 2 integration |
+| TC-N04 | — | Unauthenticated request rejected | No auth token / GET /store/quotes / returns 401 Unauthorized | Compliance + Operability | target: Tier 2 integration |
+
+> **Risk surfaces exercised by TC-N01/N02**: `apps/backend/src/workflows/hooks/validate-cart-completion.ts` (spending-limit enforcement). **Risk surface for TC-N03**: cross-company isolation in quote query scope. **Risk surface for TC-N04**: Medusa JWT middleware. These are the three highest-severity authorization defects detectable without full AWS provisioning.
+
+---
+
+## Coverage Summary
+
+| Tier | Cases | Covered | Target (pending execution) |
+|------|-------|---------|---------------------------|
+| Tier 1 Static | 3 | 0 | 3 (target: Tier 1) |
+| Tier 2 Unit / Integration | 4 + 4 neg = 8 | 0 | 8 (target: Tier 2 integration) |
+| Tier 3b E2E | 15 | 4 | 11 (target: Tier 3 e2e) |
+| **Total** | **26** | **4 (15%)** | **22 (target, execution pending Docker)** |
+
+Target v1.2.0: ≥60% Tier 3b coverage (≥9/15 E2E cases covered) + all 4 negative/authz cases green.
+
+> Note: "covered" = passing in the live Playwright suite. "target: Tier N" = designed in this document; automation scripts not yet executed due to pending container provisioning. No case is claimed covered until `task test:<tier>` exits 0 with evidence in `tmp/Digital-Commerce/test-results/`.

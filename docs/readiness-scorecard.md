@@ -4,10 +4,11 @@
 > **Scorer**: product-owner agent (under HITL authority)
 > **Scope**: Phase 1 local-first skeleton, alpha customer OceanSoft
 > **Authority**: PO+CA coordination logs at `tmp/Digital-Commerce/coordination-logs/{product-owner,cloud-architect}-digital-commerce-p1-2026-06-04.json`
+> **Re-scored**: v1.1.0 (2026-06-04) — Technical Architecture +1 for Release Self-QA Framework test-harness design
 
 ## Summary
 
-Honest score: **49 / 100**. Product capability is strong relative to category (built modules + workflows beat all open-core alternatives), but Compliance, Operating Model maturity, and Go-to-Market differentiation are early. The number is intentionally not above 60 — that would be marketing, not assessment.
+Honest score: **50 / 100** (was 49 at v1.0.0). The single-point lift reflects the Release Self-QA Framework (7-phase pipeline, 26 test cases designed, 4 negative/authz cases, repeatable SOP). Product capability is strong relative to category (built modules + workflows beat all open-core alternatives), but Compliance, Operating Model maturity, and Go-to-Market differentiation are early. The number is intentionally not above 60 — that would be marketing, not assessment.
 
 The right read is: "Phase 1 is on track, but no claim of enterprise production-readiness is defensible today." The scorecard below shows where each point lives and the exact roadmap gate that lifts it.
 
@@ -18,11 +19,11 @@ The right read is: "Phase 1 is on track, but no claim of enterprise production-r
 | # | Category | Score | Evidence (1 line) |
 |---|----------|-------|-------------------|
 | 1 | Product Capability | **14 / 20** | 3 Medusa modules wired (`apps/backend/medusa-config.ts`); 22 workflows across quote/approval/company/employee; 23 storefront B2B account components |
-| 2 | Technical Architecture | **11 / 20** | docker-compose 4-service stack works; Terraform skeleton validates; no AWS provisioning yet; no observability beyond stdout |
+| 2 | Technical Architecture | **12 / 20** | docker-compose 4-service stack works; Terraform skeleton validates; no AWS provisioning yet; no observability beyond stdout; Release Self-QA Framework (7-phase RSF, 26 test cases, `docs/release-self-qa-framework.md`) establishes repeatable test-harness design |
 | 3 | Compliance & Governance | **9 / 20** | ADLC v1.2.0 governance enforced via hooks; FOCUS 1.2+ tags planned in IaC; no live audit logs; no APRA CPS 234 evidence bundle |
 | 4 | Operating Model | **8 / 20** | One-HITL + 38 specialist agents; daily ceremonies wired; ADLC AI Gateway aspirational (zero code); no customer-facing on-call yet |
 | 5 | Go-to-Market Differentiation | **7 / 20** | Wedge story clear (quote-assisted B2B for ANZ regulated); 1 alpha customer; 0 paying customers; no proof points against Shopify Plus B2B / BigCommerce |
-| **Total** | | **49 / 100** | |
+| **Total** | | **50 / 100** | |
 
 Roadmap gates that lift each category to the next band are listed per-category below.
 
@@ -54,9 +55,9 @@ Roadmap gates that lift each category to the next band are listed per-category b
 
 ---
 
-## Category 2: Technical Architecture — 11 / 20
+## Category 2: Technical Architecture — 12 / 20
 
-**Current**: docker-compose unified across dev + devcontainer + CI (single source of truth); Terraform skeleton (`infra/terraform/`) validates against AWS provider; container base `nnthanh101/terraform:2.6.0` is reproducible IaC harness; pnpm workspaces + Turborepo 2.3.3+ monorepo; Node 22-alpine LTS.
+**Current**: docker-compose unified across dev + devcontainer + CI (single source of truth); Terraform skeleton (`infra/terraform/`) validates against AWS provider; container base `nnthanh101/terraform:2.6.0` is reproducible IaC harness; pnpm workspaces + Turborepo 2.3.3+ monorepo; Node 22-alpine LTS. v1.1.0 adds the **Release Self-QA Framework** (`docs/release-self-qa-framework.md`): 7-phase P0–P6 pipeline, 26 test cases across 4 tiers, 4 negative/authz cases, and a repeatable SOP with one-command invocation (`task test:all` / `/commerce:release-qa`). This establishes the test-harness design that RQ2 automation (v1.2.0) will execute against.
 
 **Why not 13/20**: No live AWS deployment. Phase 1 is `terraform validate` + `infracost breakdown` only — provider credentials not wired. No multi-region posture. No observability beyond container stdout (no OpenTelemetry, no centralised logs, no metrics dashboards).
 
@@ -181,13 +182,13 @@ Backlog for production hardening after v1.0.0 launch.
 
 ## Next 3 Actions to Lift Readiness 20 Points
 
-Sequenced. Each builds on the prior. Total expected lift: 49 → 69 within 1 quarter of Phase 1 completion.
+Sequenced. Each builds on the prior. Total expected lift: 50 → 69 within 1 quarter of Phase 1 completion (v1.1.0 closed the first +1 via test-harness design).
 
-### Action 1 — Land Phase 1 evidence + v0.2 enablers (lift: +6 pts)
+### Action 1 — Land Phase 1 evidence + v0.2 enablers (lift: +5 pts remaining)
 
-Complete DC-001..DC-040 acceptance criteria; ship v0.2 increment (Stripe mock real + production seed data + companies REST API + admin spending-limit UI). Lifts Product Capability 14→16 (companies API + admin UI), Technical Architecture 11→12 (CI evidence trail), and Go-to-Market 7→9 (demo environment shippable).
+Complete DC-001..DC-040 acceptance criteria; ship v0.2 increment (Stripe mock real + production seed data + companies REST API + admin spending-limit UI). Technical Architecture already at 12 (test-harness design lifted +1 in v1.1.0). Remaining lift: Product Capability 14→16 (companies API + admin UI) and Go-to-Market 7→9 (demo environment shippable).
 
-Evidence: `task tests:all` passes; first prospect demo recorded.
+Evidence: `task test:all` passes (RQ2 execution green twice); first prospect demo recorded.
 
 ### Action 2 — v0.3 single-AWS-account deployment with live audit logs (lift: +8 pts)
 
@@ -220,6 +221,6 @@ A scorecard that only measured the admin side would miss the user who triggers v
 
 ## Conclusion
 
-49/100 is an honest Phase 1 score, not a discouraging one. The category breakdown shows the path to 69 is sequenced and realistic within a quarter post-Phase 1. The gates are explicit; the risks are named; the next three actions are concrete. The number rises with evidence, not with marketing — that discipline is itself a differentiator in a category dominated by SaaS marketing.
+50/100 is an honest Phase 1 score, not a discouraging one. The +1 from v1.1.0 is small by design — test-harness design without execution evidence warrants one point, not five. The category breakdown shows the path to 69 is sequenced and realistic within a quarter post-Phase 1. The gates are explicit; the risks are named; the next three actions are concrete. The number rises with evidence, not with marketing — that discipline is itself a differentiator in a category dominated by SaaS marketing.
 
 This assessment is itself the evidence for DC-040 (documentation pack) and is re-scored each quarterly business review (`/ceremony:qbr`).

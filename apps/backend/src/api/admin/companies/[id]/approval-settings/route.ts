@@ -47,7 +47,7 @@ export const POST = async (
       entity: "approval_settings",
       fields: adminApprovalSettingsFields,
       filters: {
-        id: updatedApprovalSettings.id,
+        id: (updatedApprovalSettings as any).id,
       },
     },
     { throwIfKeyNotFound: true }

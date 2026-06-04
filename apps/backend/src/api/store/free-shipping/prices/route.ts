@@ -37,7 +37,7 @@ export const GET = async (
 
   // Return any valid free shipping prices that can be found for the cart
   const freeShippingPrices = shippingOptions
-    .map((shippingOption) => {
+    .map((shippingOption: any) => {
       const calculatedPrice = shippingOption.calculated_price;
 
       if (!calculatedPrice) {
@@ -48,15 +48,15 @@ export const GET = async (
       // 1. Currency code is same as the cart's
       // 2. Have a rule that is set on item_total
       const validCurrencyPrices = shippingOption.prices.filter(
-        (price) =>
+        (price: any) =>
           price.currency_code === cart.currency_code &&
           (price.price_rules || []).some(
-            (priceRule) => priceRule.attribute === "item_total"
+            (priceRule: any) => priceRule.attribute === "item_total"
           ) &&
           price.amount === 0
       );
 
-      return validCurrencyPrices.map((price) => {
+      return validCurrencyPrices.map((price: any) => {
         return {
           ...price,
           shipping_option_id: shippingOption.id,

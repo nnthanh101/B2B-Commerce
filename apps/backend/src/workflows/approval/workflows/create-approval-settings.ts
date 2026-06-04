@@ -11,8 +11,8 @@ export const createApprovalSettingsWorkflow = createWorkflow(
   function (input: ModuleCompany[]) {
     const approvalSettings = createApprovalSettingsStep(input);
 
-    const linkData = transform(approvalSettings, (settings) =>
-      settings.map((setting) => ({
+    const linkData = transform(approvalSettings, (settings: any) =>
+      settings.map((setting: any) => ({
         [COMPANY_MODULE]: {
           company_id: setting.company_id,
         },

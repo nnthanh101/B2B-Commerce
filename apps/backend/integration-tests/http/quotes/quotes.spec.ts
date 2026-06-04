@@ -15,13 +15,14 @@ import {
   generateStoreHeaders,
 } from "../../utils/store";
 
-jest.setTimeout(60 * 1000);
+// 300s: medusaIntegrationTestRunner in-app boot ~60-70s on local Docker (PDCA 2026-06-04)
+jest.setTimeout(300 * 1000);
 
 medusaIntegrationTestRunner({
   inApp: true,
   env: {},
   testSuite: ({ api, getContainer }) => {
-    let storeHeaders, cart, product, salesChannel, region, customerToken;
+    let storeHeaders: any, cart: any, product: any, salesChannel: any, region: any, customerToken: string;
 
     beforeEach(async () => {
       const container = getContainer();
@@ -30,7 +31,7 @@ medusaIntegrationTestRunner({
       storeHeaders = generateStoreHeaders({ publishableKey });
       const res = await createStoreUser({ api, storeHeaders });
       customerToken = res.token;
-      storeHeaders.headers["Authorization"] = `Bearer ${customerToken}`;
+      (storeHeaders.headers as any)["Authorization"] = `Bearer ${customerToken}`;
       region = await regionSeeder({ api, adminHeaders, data: {} });
 
       salesChannel = await salesChannelSeeder({
@@ -135,7 +136,7 @@ medusaIntegrationTestRunner({
           response: { data },
         } = await api
           .get(`/store/quotes/does-not-exist`, storeHeaders)
-          .catch((e) => e);
+          .catch((e: any) => e);
 
         expect(data).toEqual({
           type: "not_found",
@@ -145,7 +146,7 @@ medusaIntegrationTestRunner({
     });
 
     describe("GET /store/quotes", () => {
-      let cart2;
+      let cart2: any;
 
       beforeEach(async () => {
         cart2 = await cartSeeder({
@@ -202,7 +203,7 @@ medusaIntegrationTestRunner({
     });
 
     describe("POST /store/quotes/:id/accept", () => {
-      let quote1;
+      let quote1: any;
 
       beforeEach(async () => {
         const {
@@ -250,7 +251,7 @@ medusaIntegrationTestRunner({
 
         const { response } = await api
           .post(`/store/quotes/${quote1.id}/accept`, {}, storeHeaders)
-          .catch((e) => e);
+          .catch((e: any) => e);
 
         expect(response.data).toEqual({
           type: "invalid_data",
@@ -260,7 +261,7 @@ medusaIntegrationTestRunner({
     });
 
     describe("POST /store/quotes/:id/reject", () => {
-      let quote1;
+      let quote1: any;
 
       beforeEach(async () => {
         const {

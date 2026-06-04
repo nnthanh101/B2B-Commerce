@@ -15,7 +15,8 @@ import {
   generateStoreHeaders,
 } from "../../../utils/store";
 
-jest.setTimeout(60 * 1000);
+// 300s: medusaIntegrationTestRunner in-app boot ~60-70s on local Docker (PDCA 2026-06-04)
+jest.setTimeout(300 * 1000);
 
 medusaIntegrationTestRunner({
   inApp: true,
@@ -23,7 +24,7 @@ medusaIntegrationTestRunner({
     JWT_SECRET: "supersecret",
   },
   testSuite: ({ api, getContainer }) => {
-    let storeHeaders, cart, product, salesChannel, region, customerToken;
+    let storeHeaders: any, cart: any, product: any, salesChannel: any, region: any, customerToken: string;
 
     beforeEach(async () => {
       const container = getContainer();
@@ -32,7 +33,7 @@ medusaIntegrationTestRunner({
       storeHeaders = generateStoreHeaders({ publishableKey });
       const res = await createStoreUser({ api, storeHeaders });
       customerToken = res.token;
-      storeHeaders.headers["Authorization"] = `Bearer ${customerToken}`;
+      (storeHeaders.headers as any)["Authorization"] = `Bearer ${customerToken}`;
       region = await regionSeeder({ api, adminHeaders, data: {} });
 
       salesChannel = await salesChannelSeeder({
@@ -67,7 +68,7 @@ medusaIntegrationTestRunner({
     });
 
     describe("POST /admin/quotes/:id/messages", () => {
-      let quote1;
+      let quote1: any;
 
       beforeEach(async () => {
         const {

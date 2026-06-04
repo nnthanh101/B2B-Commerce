@@ -15,7 +15,8 @@ import {
   generateStoreHeaders,
 } from "../../utils/store";
 
-jest.setTimeout(60 * 1000);
+// 300s: medusaIntegrationTestRunner in-app boot ~60-70s on local Docker (PDCA 2026-06-04)
+jest.setTimeout(300 * 1000);
 
 medusaIntegrationTestRunner({
   inApp: true,
@@ -23,7 +24,7 @@ medusaIntegrationTestRunner({
     JWT_SECRET: "supersecret",
   },
   testSuite: ({ api, getContainer }) => {
-    let storeHeaders, cart, product, salesChannel, region, customerToken;
+    let storeHeaders: any, cart: any, product: any, salesChannel: any, region: any, customerToken: string;
 
     beforeEach(async () => {
       const container = getContainer();
@@ -32,9 +33,7 @@ medusaIntegrationTestRunner({
       storeHeaders = generateStoreHeaders({ publishableKey });
       const res = await createStoreUser({ api, storeHeaders });
       customerToken = res.token;
-      console.log("vic logs customerToken", customerToken);
-      storeHeaders.headers["Authorization"] = `Bearer ${customerToken}`;
-      console.log("vic logs storeHeaders", storeHeaders);
+      (storeHeaders.headers as any)["Authorization"] = `Bearer ${customerToken}`;
       region = await regionSeeder({ api, adminHeaders, data: {} });
 
       salesChannel = await salesChannelSeeder({
@@ -148,7 +147,7 @@ medusaIntegrationTestRunner({
       it("should throw error when company does not exist", async () => {
         const { response } = await api
           .get(`/store/companies/does-not-exist`, storeHeaders)
-          .catch((e) => e);
+          .catch((e: any) => e);
 
         expect(response.data).toMatchObject({
           type: "not_found",
@@ -157,7 +156,7 @@ medusaIntegrationTestRunner({
     });
 
     describe("POST /store/companies/:id", () => {
-      let company1;
+      let company1: any;
 
       beforeEach(async () => {
         const response = await api.post(
@@ -222,7 +221,7 @@ medusaIntegrationTestRunner({
             { name: "Nonexistent Company" },
             storeHeaders
           )
-          .catch((e) => e);
+          .catch((e: any) => e);
 
         expect(response.data).toMatchObject({
           type: "not_found",
@@ -231,8 +230,7 @@ medusaIntegrationTestRunner({
     });
 
     describe("DELETE /store/companies/:id", () => {
-      console.log("vic logs storeHeaders", storeHeaders);
-      let company1;
+      let company1: any;
 
       beforeEach(async () => {
         const response = await api.post(
@@ -266,11 +264,13 @@ medusaIntegrationTestRunner({
       });
 
       it("should throw an error when company does not exist", async () => {
-        const response = await api
+        const { response } = await api
           .delete(`/store/companies/does-not-exist`, storeHeaders)
-          .catch((e) => e);
+          .catch((e: any) => e);
 
-        expect(response.status).toEqual(204);
+        expect(response.data).toMatchObject({
+          type: "not_found",
+        });
       });
     });
   },

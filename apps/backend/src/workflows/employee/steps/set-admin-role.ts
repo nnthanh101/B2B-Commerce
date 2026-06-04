@@ -72,7 +72,11 @@ export const setAdminRoleStep = createStep(
 
     return new StepResponse(undefined, input);
   },
-  async (input: { providerIdentityId: string }, { container }) => {
+  async (input: { providerIdentityId: string } | undefined, { container }) => {
+    if (!input) {
+      return;
+    }
+
     const authModuleService = container.resolve<IAuthModuleService>(
       Modules.AUTH
     );
