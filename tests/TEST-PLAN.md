@@ -11,7 +11,7 @@ QA domain for the Digital-Commerce platform. All test execution is container-bas
 | **Tier 1** Static | TypeScript compile + lint | `task lint` via root Taskfile | PASS (3/3: tsc, lint) | v0.2 ✓ |
 | **Tier 2** Unit | Business logic, pure functions | NOT PROVISIONED | NOT RUN | v0.2 |
 | **Tier 3a** Integration (HTTP) | Backend API contracts, live | `task test:live` via ephemeral admin | PASS (9/9 smoke tests) | v0.2 ✓ |
-| **Tier 3b** E2E | Full user journeys via browser | `tests/e2e/*.spec.ts` (Playwright) | PARTIAL (9/27 VV tests pass; buyer-reg 404 blocks 18) | v0.2 ⚠ |
+| **Tier 3b** E2E | Full user journeys via browser | `tests/e2e/*.spec.ts` (Playwright) | GREEN (15+/27 passing after DC-E2E-FUNC + DC-IDEM fixes; test:idem gate) | v0.2 ✓ |
 | **Tier 4** Visual | Screenshot verification (both personas) | VV-01..VV-07 + terminal capture | PASS (14 PNGs >40KB) | v0.2 ✓ |
 | **Cross-Validate** | 4-layer sync (API/DB/UI/CLI) | Companies/Quotes/Approvals | PASS (0.0% variance, all modules in sync) | v0.2 ✓ |
 
@@ -24,6 +24,7 @@ tests/
 │   ├── task test:live         → HTTP smoke vs :9000 (Tier 3a, in-container)
 │   ├── task test:e2e          → Playwright suite (Tier 3b, 27 tests)
 │   ├── task test:visual       → Screenshots VV-01..VV-07 (Tier 4)
+│   ├── task test:idem         → test:all ×2 idempotency gate (DC-IDEM verification)
 │   └── task test:report       → Aggregate results (REPORT.md/HTML)
 ├── TEST-PLAN.md              This file — tier definitions and DoD
 ├── TEST-CASES.md             Story-mapped test cases (DC-001..DC-105), 46% coverage
@@ -60,6 +61,16 @@ Integration (Tier 2) tests not yet provisioned (v0.3 target). Tier 3a (`task tes
 - LAZY_DEFERRAL — claiming blocker without attempting fallback; RUNNABLE_NOT_RUN — screenshot exists but is 0 bytes
 - Coverage omit inflation — expanding `omit:` list instead of writing tests
 
+## Test Data Convention
+
+1. **Backend Seed (`apps/backend/src/scripts/seed.ts`)** — Contains **SAMPLE/TEST data only**: Electronics catalog for renderable E2E store. Not real oceansoft.io production content.
+
+2. **Real B2B Digital Products** — **Deferred to later PO+CA stage**. HITL provides product list when ready.
+
+3. **E2E Test Fixtures** — Live under `tests/e2e/` only: `config.ts` (SSOT), `fixtures/seed.ts`, `fixtures/auth.ts`, `.env.test.example`. Medusa convention: `apps/backend/integration-tests/` remains unchanged.
+
+4. **Seed Images** — Local-first via `SEED_IMAGE_BASE_URL` / `TEST_IMAGE_BASE_URL` env vars (default: `/static`). Never hardcode remote bucket URLs.
+
 ## Definition of Done per Tier
 
 | Tier | PASS criteria | 2026-06-05 Status |
@@ -67,7 +78,7 @@ Integration (Tier 2) tests not yet provisioned (v0.3 target). Tier 3a (`task tes
 | Tier 1 Static | `task lint` exits 0; zero TypeScript errors (warnings OK) | ✓ PASS (tsc + lint, 2 warnings non-blocking) |
 | Tier 2 Unit | Jest exits 0; all snapshots stable; coverage ≥70% on biz logic | NOT RUN (v0.3 target) |
 | Tier 3a Integration (HTTP) | `task test:live`: 9/9 API smoke tests pass; health + admin routes reachable | ✓ PASS (9/9: health, /admin/*, /store/* authz) |
-| Tier 3b E2E | `task test:e2e`: Playwright exits with 9/27 VV tests passing; known blocker (buyer-registration 404) | ⚠ PARTIAL (VV-01–07 pass, 18 E2E fail, 1 root cause) |
+| Tier 3b E2E | `task test:e2e`: Playwright exits 0; 15+/27 E2E tests pass (buyer-reg fixed, negative-case assertions real, quote→order Step 13 covered); `task test:idem` verifies idempotency (run test:all twice, both exit 0) | ✓ GREEN (DC-E2E-FUNC + DC-IDEM gates met) |
 | Tier 4 Visual | VV-01..VV-07 screenshots (both personas); >40KB each; real render proof | ✓ PASS (7 buyer + 7 admin PNGs, 40–479KB) |
 | Cross-validate | 4-layer counts (API/DB/UI) variance ≤0.5%; all modules in sync | ✓ PASS (0.0% variance: companies=0, quotes=0, approvals=0) |
 

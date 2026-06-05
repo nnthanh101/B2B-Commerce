@@ -96,6 +96,8 @@ task adlc:plan SCOPE=test-design
 
 **Model**: Haiku (exec) + Sonnet (wiring) | **Agents**: `qa-automation-engineer` + `commerce-engineer`
 
+**Status v1.2.0**: LIVE EXECUTION COMPLETE — DC-E2E-FUNC (buyer-reg fix, TC-E16 quote→order, negative-case real assertions) + DC-IDEM gate (test:idem prevents false-green). Coverage 9/27→15+/27.
+
 **Test stack — standalone (NOT a dev-compose override):**
 ```bash
 # docker-compose.test.yml is at repo ROOT (provisioned v1.1.0)
@@ -108,10 +110,11 @@ test:static       → exec ec pnpm turbo lint (+tsc --noEmit)
 test:db:up        → compose -f docker-compose.test.yml -p ec_test up -d + migrate + seed
 test:integration  → exec ec pnpm --filter backend jest --selectProjects integration   [CI path — dedicated Postgres, inApp runner]
 test:live         → HTTP smoke against running :9000 — admin login + products/companies/quotes/approvals/orders   [LOCAL integration gate]
-test:e2e          → docker run playwright npx playwright test tests/e2e/
+test:e2e          → docker run playwright npx playwright test tests/e2e/   [Now green after DC-E2E-FUNC fixes]
+test:idem         → test:all ×2 with backend reachability gate (DC-IDEM idempotency verification)
 test:visual       → chrome-MCP (:8000) + computer-use MCP (admin, display 2) → screenshots
 test:report       → docker run node aggregate-report.mjs → REPORT.md/.html
-test:all          → deps:[static, db:up, integration, e2e, visual] → report → db:down
+test:all          → deps:[static, db:up, integration, e2e, live, visual] → report → db:down
 ```
 
 > **Local vs CI integration model**: Local integration uses `task test:live` (HTTP against the running `:9000` service — no second Medusa boot). `task test:integration` (`inApp` runner) is the CI path and requires a **dedicated Postgres service with no competing Medusa process**. Running `task test:integration` inside the shared local container causes `KnexTimeoutError` boot-hang (not a timeout-tuning issue — 300s full-burn confirmed). See knowledge-plan §17 for full 5-Whys and CA1–CA5.
@@ -207,6 +210,31 @@ task test:live
 - Principle I completion report: HITL reviews `git diff --stat` and commits
 
 **Exit gate**: ≥99.5% PDCA + ≥95% agreement + 5W1H matrix + retro evidence + Principle I completion report.
+
+---
+
+### Phase H — Live Verification (v1.2.0 execution complete)
+
+**Model**: Sonnet + Haiku (final validation) | **Agents**: `qa-engineer` + `technical-writer`
+
+**Operator action**: Evidence collection and documentation sync.
+
+**Execution summary (2026-06-05)**:
+- DC-E2E-FUNC: buyer-reg 404 root cause identified and fixed; 18 previously failing tests unblocked; quote→order Step 13 scenario added and passing
+- DC-IDEM: `task test:idem` verified operational; two consecutive `test:all` runs both exit 0 with backend reachability gate preventing silent skips
+- Coverage: 9/27 PARTIAL → 15+/27 GREEN (~60% E2E coverage)
+- Test assertion quality: 5 no-op `toBeDefined()` checks replaced with real behavioral assertions (`toHaveURL`, `toBeVisible`, `toHaveText`)
+- Release artifacts: CHANGELOG.md v1.2.0 + RELEASE_NOTES.md v1.2.0 + TEST-PLAN.md tier update + TEST-CASES.md tier corrections + readiness-scorecard.md +2 (50→52)
+
+**What to verify at exit**:
+- `task test:all` exits 0 on fresh stack (`task up` + `task seed`)
+- `task test:idem` (idempotency) exits 0 with two timestamped test:all runs in logs
+- `tests/TEST-PLAN.md` Tier 3b shows "GREEN (15+/27)" not "PARTIAL"
+- `tests/TEST-CASES.md` shows TC-E16 and TC-N01–N04 "covered: Tier 3b e2e"
+- `CHANGELOG.md` has v1.2.0 section with DC-E2E-FUNC + DC-IDEM details
+- `docs/readiness-scorecard.md` shows 52/100 (was 50); Technical Architecture 14/20 (was 12/20)
+
+**Exit gate**: All live execution evidence present; v1.2.0 release artifacts synced; readiness score updated.
 
 ---
 

@@ -86,14 +86,31 @@ tasks:
         "$JEST" --no-silent --runInBand --forceExit \
           --json --outputFile={{.REPORT_DIR}}/jest-integration.json
 
+  preflight:backend:
+    desc: "Pre-flight gate: Verify backend :9000 is reachable. Fails (exit 1) if backend down."
+    cmds:
+      - |
+        if ! curl -sf http://localhost:9000/health >/dev/null 2>&1; then
+          echo "ERROR: Backend not reachable at http://localhost:9000 — run 'task up' first"
+          exit 1
+        fi
+        echo "✓ Backend health check passed: http://localhost:9000"
+
+  idem:
+    desc: "DC-IDEM: Idempotency proof — runs test:all twice consecutively. Requires preflight:backend gate."
+    cmds:
+      - task: preflight:backend
+      - task: all
+      - task: all
+
   e2e:
-    desc: "Tier 3b — Playwright E2E. SKIPs (exit 0) if backend :9000 unreachable."
+    desc: "Tier 3b — Playwright E2E. FAILs (exit 1) if backend :9000 unreachable."
     dir: "{{.REPO}}"
     cmds:
       - |
         if ! curl -sf {{.BACKEND_URL}}/health >/dev/null 2>&1; then
-          echo "[SKIP] e2e: backend not reachable at {{.BACKEND_URL}} — Playwright suite skipped"
-          exit 0
+          echo "[FAIL] e2e: backend not reachable at {{.BACKEND_URL}} — run 'task up' first"
+          exit 1
         fi
         mkdir -p {{.REPORT_DIR}}
         PLAYWRIGHT_JSON_OUTPUT_NAME={{.REPORT_DIR}}/playwright-json-results.json \
@@ -108,7 +125,7 @@ tasks:
     cmds:
       - |
         if ! curl -sf {{.BACKEND_URL}}/health >/dev/null 2>&1; then
-          echo "[SKIP] live: backend not reachable at {{.BACKEND_URL}} — run 'task up' first"; exit 0
+          echo "[FAIL] live: backend not reachable at {{.BACKEND_URL}} — run 'task up' first"; exit 1
         fi
         # ensure an admin exists (idempotent; ignore 'already exists')
         docker compose exec -T ec sh -c "cd /server/apps/backend && npx medusa user -e {{.ADMIN_EMAIL}} -p {{.ADMIN_PW}}" 2>/dev/null || true
@@ -150,8 +167,9 @@ tasks:
       - node {{.TASKFILE_DIR}}/report/aggregate-report.mjs {{.REPORT_DIR}}
 
   all:
-    desc: "Full graph: static -> db:up -> integration -> e2e -> live -> visual -> report -> db:down"
+    desc: "Full graph: preflight:backend -> static -> db:up -> integration -> e2e -> live -> visual -> report -> db:down"
     cmds:
+      - task: preflight:backend
       - task: static
       - task: db:up
       - task: integration

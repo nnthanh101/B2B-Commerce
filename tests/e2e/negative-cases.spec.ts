@@ -13,90 +13,86 @@ const TEST_REGION_COUNTRY = process.env.TEST_REGION_COUNTRY || "dk";
  */
 
 test.describe("B2B Negative Cases — Security & Authorization", () => {
-  test("Negative-1: Unauthenticated access to /quotes → redirects to /login", async ({
-    browser,
-  }) => {
-    // Create a fresh context with NO authentication
-    const context = await browser.newContext();
-    const page = await context.newPage();
+  test("Negative-1: Unauthenticated access to /account/quotes is protected", async ({ page }) => {
+    /**
+     * REAL AUTH GUARD: /account/quotes layout uses retrieveCustomer().
+     * If retrieveCustomer() returns null (unauthenticated), calls notFound() → 404 page.
+     * This proves the route is auth-protected (unauthenticated users cannot access quotes).
+     *
+     * Expected behavior: Unauthenticated navigation to /account/quotes results in 404 page.
+     */
+    // Create a fresh page (no auth cookies) and navigate to protected route
+    const response = await page.goto(`${STOREFRONT_URL}/${TEST_REGION_COUNTRY}/account/quotes`);
 
-    // Try to access protected quotes page
-    await page.goto(`${STOREFRONT_URL}/${TEST_REGION_COUNTRY}/quotes`);
-    await page.waitForLoadState("networkidle");
+    // Verify the page is protected: should be 404 (or rendered 404 page)
+    const pageContent = await page.content();
+    const isNotFoundPage = pageContent.includes("404") || pageContent.includes("not found") || pageContent.includes("not-found");
 
-    // Verify: either redirect to login OR access denied message
-    const currentUrl = page.url();
-    const accessDenied = page.locator('text="Access Denied", text="Unauthorized"');
+    // If not a 404 page, check for login form (alternative auth UI)
+    const emailInput = page.locator('input[type="email"]');
+    const hasLoginForm = (await emailInput.count()) > 0;
 
-    if (!currentUrl.includes("/login")) {
-      // Not redirected; check for denial message
-      if ((await accessDenied.count()) === 0) {
-        // Neither redirect nor message — might be service-specific behavior
-        // For now, just verify page loaded (loose assertion for flexibility)
-        await expect(page).toBeDefined();
-      }
-    }
+    // Should be either 404 page OR login form (both prove route is protected)
+    expect(isNotFoundPage || hasLoginForm).toBeTruthy();
 
     await page.screenshot({
-      path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/negative-1-unauthenticated.png",
+      path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/negative-1-quotes-protected-404.png",
     });
-
-    await context.close();
   });
 
-  test("Negative-2: Unauthenticated access to /account → redirects to /login", async ({
-    browser,
-  }) => {
-    const context = await browser.newContext();
-    const page = await context.newPage();
-
-    // Try account page (requires login)
+  test("Negative-2: Unauthenticated access to /account → shows login", async ({ page }) => {
+    /**
+     * REAL AUTH GUARD: /account layout uses retrieveCustomer() and shows login if not authenticated.
+     * Expected behavior: Unauthenticated user sees login form on /account.
+     */
+    // Create a fresh page (no auth cookies)
     await page.goto(`${STOREFRONT_URL}/${TEST_REGION_COUNTRY}/account`);
     await page.waitForLoadState("networkidle");
 
-    const currentUrl = page.url();
-
-    // Should redirect to login or show access denied
-    const isRedirected = currentUrl.includes("/login");
-    const accessDenied = page.locator(
-      'text="Access Denied", text="Unauthorized", text="Please sign in"'
+    // Verify we see login form
+    const emailInput = page.locator('input[type="email"], input[name="email"]');
+    const dashboardContent = page.locator('[data-testid="dashboard-content"]').or(
+      page.locator('h1:has-text("Profile"), h1:has-text("Account")')
     );
 
-    if (!isRedirected) {
-      await expect(accessDenied.first()).toBeDefined();
-    }
+    const hasLoginForm = (await emailInput.count()) > 0;
+    const hasDashboard = (await dashboardContent.count()) > 0;
+
+    // Should see login, NOT dashboard
+    expect(hasLoginForm || !hasDashboard).toBeTruthy();
 
     await page.screenshot({
-      path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/negative-2-account-unauth.png",
+      path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/negative-2-account-unauth-login.png",
     });
-
-    await context.close();
   });
 
-  test("Negative-3: Cross-company quote access (403 Forbidden behavior)", async ({
+  test("Negative-3: Cross-company quote access (404/notFound behavior)", async ({
     buyerPage,
   }) => {
+    /**
+     * REAL BEHAVIOR: When buyer tries to access quote ID that doesn't belong to them,
+     * fetchQuote() fails (returns null or throws 404), so page renders notFound().
+     * Expected: 404 page or "Not Found" message.
+     */
     // Buyer is logged in as Company A
-    // Try to access a quote URL that belongs to Company B (hypothetically)
-    // Since we don't have a real Company B quote, construct a fake ID
-
+    // Try to access a quote ID that doesn't exist or belongs to another company
     const fakeQuoteId = "fake-company-b-quote-999";
     await buyerPage.goto(
-      `${STOREFRONT_URL}/${TEST_REGION_COUNTRY}/quotes/${fakeQuoteId}`
+      `${STOREFRONT_URL}/${TEST_REGION_COUNTRY}/account/quotes/details/${fakeQuoteId}`
     );
     await buyerPage.waitForLoadState("networkidle");
 
-    // Verify: should get 403 or "Not Found" or "Not Authorized"
-    const notAuthorized = buyerPage.locator(
-      'text="Not Authorized", text="Forbidden", text="Not Found", text="Access Denied"'
-    );
+    // Verify: should get 404 or "Not Found" page
+    const notFoundIndicators = buyerPage
+      .getByText("Not Found")
+      .or(buyerPage.getByText("not found"))
+      .or(buyerPage.getByText("404"));
 
-    if ((await notAuthorized.count()) > 0) {
-      await expect(notAuthorized.first()).toBeDefined();
-    } else {
-      // If no explicit error, just verify page loaded (some frontends show empty state)
-      await expect(buyerPage).toBeDefined();
-    }
+    const hasNotFound = (await notFoundIndicators.count()) > 0;
+    const urlHas404 = buyerPage.url().includes("404") || buyerPage.url().includes("not-found");
+
+    // REAL ASSERTION: should see not-found page
+    expect(hasNotFound || urlHas404).toBeTruthy();
 
     await buyerPage.screenshot({
       path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/negative-3-cross-company-denial.png",
@@ -115,41 +111,47 @@ test.describe("B2B Negative Cases — Security & Authorization", () => {
     await buyerPage.waitForLoadState("networkidle");
 
     // Look for spending limit warning (if cart triggers it)
-    const limitWarning = buyerPage.locator(
-      '[data-testid="spending-limit-warning"], text="Spending limit", text="exceeds"'
-    );
+    const limitWarning = buyerPage
+      .locator('[data-testid="spending-limit-warning"]')
+      .or(buyerPage.getByText(/Spending limit/))
+      .or(buyerPage.getByText(/exceeds/));
 
-    // If warning exists, verify it's visible
-    if ((await limitWarning.count()) > 0) {
-      await expect(limitWarning.first()).toBeDefined();
+    // REAL ASSERTION: warning is visible OR cart is empty/within limit
+    const warningVisible = (await limitWarning.count()) > 0 && (await limitWarning.first().isVisible());
+    const cartEmpty = (await buyerPage.locator('[data-testid="cart-item"]').count()) === 0;
 
-      await buyerPage.screenshot({
-        path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/negative-4-spending-limit-warning.png",
-      });
-    } else {
-      // No warning (cart may be within limit)
-      // Just log and proceed
-      console.log("No spending limit warning detected (cart within limit)");
-    }
+    expect(warningVisible || cartEmpty).toBeTruthy();
+
+    await buyerPage.screenshot({
+      path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/negative-4-spending-limit-warning.png",
+    });
   });
 
   test("Negative-5: Direct URL tampering (order ID), access denied", async ({
     buyerPage,
   }) => {
+    /**
+     * REAL BEHAVIOR: When buyer tries to access order ID that doesn't belong to them,
+     * retrieveOrder() fails or returns wrong company's order, so page renders notFound().
+     * Expected: 404 page or "Not Found" message.
+     */
     // Try to access another buyer's order via URL manipulation
     const fakeOrderId = "order-from-another-company-xyz";
     await buyerPage.goto(
-      `${STOREFRONT_URL}/${TEST_REGION_COUNTRY}/account/orders/${fakeOrderId}`
+      `${STOREFRONT_URL}/${TEST_REGION_COUNTRY}/account/orders/details/${fakeOrderId}`
     );
     await buyerPage.waitForLoadState("networkidle");
 
-    const denied = buyerPage.locator(
-      'text="Not Authorized", text="Not Found", text="Access Denied", text="Forbidden"'
-    );
+    const notFoundIndicators = buyerPage
+      .getByText("Not Found")
+      .or(buyerPage.getByText("not found"))
+      .or(buyerPage.getByText("404"));
 
-    if ((await denied.count()) > 0) {
-      await expect(denied.first()).toBeDefined();
-    }
+    const hasNotFound = (await notFoundIndicators.count()) > 0;
+    const urlHas404 = buyerPage.url().includes("404") || buyerPage.url().includes("not-found");
+
+    // REAL ASSERTION: should see not-found page or error message
+    expect(hasNotFound || urlHas404).toBeTruthy();
 
     await buyerPage.screenshot({
       path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/negative-5-order-tampering-denied.png",

@@ -7,6 +7,7 @@ import PendingCustomerApprovals from "@/modules/account/components/pending-custo
 import { ApprovalStatusType } from "@/types/approval"
 import { Heading } from "@medusajs/ui"
 import { Metadata } from "next"
+import { notFound } from "next/navigation"
 
 export const metadata: Metadata = {
   title: "Orders",
@@ -15,6 +16,11 @@ export const metadata: Metadata = {
 
 export default async function Orders() {
   const customer = await retrieveCustomer()
+
+  if (!customer) {
+    notFound()
+  }
+
   const orders = await listOrders()
 
   const { approval_settings } =

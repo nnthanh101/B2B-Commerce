@@ -1,3 +1,4 @@
+import { retrieveCustomer } from "@/lib/data/customer"
 import { fetchQuote, fetchQuotePreview } from "@/lib/data/quotes"
 import { notFound } from "next/navigation"
 import QuoteDetails from "../../components/quote-details"
@@ -7,6 +8,11 @@ type Props = {
 }
 
 export default async function QuoteDetailsPage(props: Props) {
+  const customer = await retrieveCustomer()
+  if (!customer) {
+    notFound()
+  }
+
   const params = await props.params
   const { quote } = await fetchQuote(params.id, {})
   const {

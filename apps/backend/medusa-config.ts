@@ -31,6 +31,10 @@ module.exports = defineConfig({
     [APPROVAL_MODULE]: {
       resolve: "./modules/approval",
     },
+    // [Modules.FILE] is intentionally omitted: Medusa v2 framework (express-loader.js L124)
+    // unconditionally mounts express.static(baseDir/static) at /static — no module config needed.
+    // Configuring @medusajs/file-local as the module resolve (not as a provider) causes
+    // "No service found in module File" on startup. Ref: @medusajs/framework/dist/http/express-loader.js:124
   },
   admin: {
     vite: (config) => ({

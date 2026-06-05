@@ -1,3 +1,22 @@
+/**
+ * SAMPLE / TEST BASE-SEED DATA — NOT REAL OCEANSOFT.IO PRODUCTION CONTENT
+ * -------------------------------------------------------------------------
+ * This electronics catalog (laptop, phone, camera, monitor, headset, keyboard,
+ * mouse, speaker) is borrowed from the Medusa starter and is used ONLY to give
+ * the store a working catalog so E2E tests render correctly.
+ *
+ * Do NOT treat these products as OceanSoft offerings.
+ *
+ * This is NOT the real oceansoft.io product catalog.
+ * The real oceansoft.io B2B digital-products catalog is DEFERRED to a later
+ * PO+CA stage — HITL will provide the product list (names, types, prices,
+ * imagery) at that time.
+ *
+ * Images are served locally via SEED_IMAGE_BASE_URL
+ * (default: http://localhost:9000/static), zero remote dependency.
+ *
+ * HITL directive: 2026-06-05
+ */
 import fs from "node:fs"
 import path from "node:path"
 import { MedusaContainer } from "@medusajs/framework"
@@ -23,6 +42,15 @@ import {
   linkSalesChannelsToStockLocationWorkflow,
 } from "@medusajs/medusa/core-flows"
 import { createUserAccountWorkflow } from "@medusajs/core-flows"
+
+// SEED_IMAGE_BASE_URL controls where product images are fetched from at seed time.
+// Default: local Medusa /static directory (offline-safe, no S3 dependency).
+// Override: set SEED_IMAGE_BASE_URL=https://medusa-public-images.s3.eu-west-1.amazonaws.com
+//   in your .env to seed from the reference bucket (reference fallback only — never hardcoded).
+// Forward pattern: all future products/categories read their image base from this const.
+const IMG =
+  process.env.SEED_IMAGE_BASE_URL?.replace(/\/$/, "") ||
+  "http://localhost:9000/static"
 
 export default async function seed({
   container,
@@ -341,7 +369,7 @@ export default async function seed({
             status: ProductStatus.PUBLISHED,
             images: [
               {
-                url: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/laptop-front.png",
+                url: `${IMG}/laptop-front.png`,
               },
             ],
             options: [
@@ -380,7 +408,7 @@ export default async function seed({
             status: ProductStatus.PUBLISHED,
             images: [
               {
-                url: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/camera-front.png",
+                url: `${IMG}/camera-front.png`,
               },
             ],
             options: [{ title: "Color", values: ["Black", "White"] }],
@@ -418,7 +446,7 @@ export default async function seed({
             status: ProductStatus.PUBLISHED,
             images: [
               {
-                url: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/phone-front.png",
+                url: `${IMG}/phone-front.png`,
               },
             ],
             options: [
@@ -459,7 +487,7 @@ export default async function seed({
             status: ProductStatus.PUBLISHED,
             images: [
               {
-                url: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/screen-front.png",
+                url: `${IMG}/screen-front.png`,
               },
             ],
             options: [{ title: "Color", values: ["White", "Black"] }],
@@ -497,7 +525,7 @@ export default async function seed({
             status: ProductStatus.PUBLISHED,
             images: [
               {
-                url: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/headphone-front.png",
+                url: `${IMG}/headphone-front.png`,
               },
             ],
             options: [{ title: "Color", values: ["Black", "White"] }],
@@ -534,7 +562,7 @@ export default async function seed({
             status: ProductStatus.PUBLISHED,
             images: [
               {
-                url: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/keyboard-front.png",
+                url: `${IMG}/keyboard-front.png`,
               },
             ],
             options: [{ title: "Color", values: ["Black", "White"] }],
@@ -571,7 +599,7 @@ export default async function seed({
             status: ProductStatus.PUBLISHED,
             images: [
               {
-                url: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/mouse-top.png",
+                url: `${IMG}/mouse-top.png`,
               },
             ],
             options: [{ title: "Color", values: ["Black", "White"] }],
@@ -608,7 +636,7 @@ export default async function seed({
             status: ProductStatus.PUBLISHED,
             images: [
               {
-                url: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/speaker-top.png",
+                url: `${IMG}/speaker-top.png`,
               },
             ],
             options: [{ title: "Color", values: ["Black", "White"] }],

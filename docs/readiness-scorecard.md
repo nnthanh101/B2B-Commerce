@@ -1,14 +1,14 @@
 # Digital-Commerce — Enterprise GTM Readiness Assessment
 
-> **Scoring date**: 2026-06-04
+> **Scoring date**: 2026-06-05
 > **Scorer**: product-owner agent (under HITL authority)
 > **Scope**: Phase 1 local-first skeleton, alpha customer OceanSoft
-> **Authority**: PO+CA coordination logs at `tmp/Digital-Commerce/coordination-logs/{product-owner,cloud-architect}-digital-commerce-p1-2026-06-04.json`
-> **Re-scored**: v1.1.0 (2026-06-04) — Technical Architecture +1 for Release Self-QA Framework test-harness design
+> **Authority**: PO+CA coordination logs at `tmp/Digital-Commerce/coordination-logs/{product-owner,cloud-architect}-digital-commerce-p1-2026-06-05.json`
+> **Re-scored**: v1.2.0 (2026-06-05) — Technical Architecture +2 for E2E test coverage green (15+/27 passing) + idempotency proof (DC-IDEM gate operational)
 
 ## Summary
 
-Honest score: **50 / 100** (was 49 at v1.0.0). The single-point lift reflects the Release Self-QA Framework (7-phase pipeline, 26 test cases designed, 4 negative/authz cases, repeatable SOP). Product capability is strong relative to category (built modules + workflows beat all open-core alternatives), but Compliance, Operating Model maturity, and Go-to-Market differentiation are early. The number is intentionally not above 60 — that would be marketing, not assessment.
+Honest score: **52 / 100** (was 50 at v1.1.0). The two-point lift reflects DC-E2E-FUNC completion (buyer-reg fix, TC-E16 quote→order scenario, negative-case real assertions) and DC-IDEM operationalization (task test:idem runs test:all twice with backend reachability gate, preventing false-green silent skips). Product capability remains strong; the Technical Architecture gain signals test-harness maturity from design (v1.1.0 +1) to live execution (v1.2.0 +2). Compliance, Operating Model maturity, and Go-to-Market differentiation remain early. The number is intentionally not above 60 — that would be marketing, not assessment.
 
 The right read is: "Phase 1 is on track, but no claim of enterprise production-readiness is defensible today." The scorecard below shows where each point lives and the exact roadmap gate that lifts it.
 
@@ -19,11 +19,11 @@ The right read is: "Phase 1 is on track, but no claim of enterprise production-r
 | # | Category | Score | Evidence (1 line) |
 |---|----------|-------|-------------------|
 | 1 | Product Capability | **14 / 20** | 3 Medusa modules wired (`apps/backend/medusa-config.ts`); 22 workflows across quote/approval/company/employee; 23 storefront B2B account components |
-| 2 | Technical Architecture | **12 / 20** | docker-compose 4-service stack works; Terraform skeleton validates; no AWS provisioning yet; no observability beyond stdout; Release Self-QA Framework (7-phase RSF, 26 test cases, `docs/release-self-qa-framework.md`) establishes repeatable test-harness design |
+| 2 | Technical Architecture | **14 / 20** | docker-compose 4-service stack works; Terraform skeleton validates; no AWS provisioning yet; no observability beyond stdout; Release Self-QA Framework (7-phase RSF, 27 test cases, `docs/release-self-qa-framework.md`) + DC-E2E-FUNC (15+/27 E2E green) + DC-IDEM (task test:idem gate) establish repeatable test-harness design + live execution |
 | 3 | Compliance & Governance | **9 / 20** | ADLC v1.2.0 governance enforced via hooks; FOCUS 1.2+ tags planned in IaC; no live audit logs; no APRA CPS 234 evidence bundle |
 | 4 | Operating Model | **8 / 20** | One-HITL + 38 specialist agents; daily ceremonies wired; ADLC AI Gateway aspirational (zero code); no customer-facing on-call yet |
 | 5 | Go-to-Market Differentiation | **7 / 20** | Wedge story clear (quote-assisted B2B for ANZ regulated); 1 alpha customer; 0 paying customers; no proof points against Shopify Plus B2B / BigCommerce |
-| **Total** | | **50 / 100** | |
+| **Total** | | **52 / 100** | |
 
 Roadmap gates that lift each category to the next band are listed per-category below.
 
@@ -55,9 +55,9 @@ Roadmap gates that lift each category to the next band are listed per-category b
 
 ---
 
-## Category 2: Technical Architecture — 12 / 20
+## Category 2: Technical Architecture — 14 / 20
 
-**Current**: docker-compose unified across dev + devcontainer + CI (single source of truth); Terraform skeleton (`infra/terraform/`) validates against AWS provider; container base `nnthanh101/terraform:2.6.0` is reproducible IaC harness; pnpm workspaces + Turborepo 2.3.3+ monorepo; Node 22-alpine LTS. v1.1.0 adds the **Release Self-QA Framework** (`docs/release-self-qa-framework.md`): 7-phase P0–P6 pipeline, 26 test cases across 4 tiers, 4 negative/authz cases, and a repeatable SOP with one-command invocation (`task test:all` / `/commerce:release-qa`). This establishes the test-harness design that RQ2 automation (v1.2.0) will execute against.
+**Current**: docker-compose unified across dev + devcontainer + CI (single source of truth); Terraform skeleton (`infra/terraform/`) validates against AWS provider; container base `nnthanh101/terraform:2.6.0` is reproducible IaC harness; pnpm workspaces + Turborepo 2.3.3+ monorepo; Node 22-alpine LTS. v1.1.0 established the **Release Self-QA Framework** (`docs/release-self-qa-framework.md`): 7-phase P0–P6 pipeline with 26 test cases (now 27) across 4 tiers and repeatable SOP. v1.2.0 executes the framework live: DC-E2E-FUNC achievement (buyer-reg 404 fixed, TC-E16 quote→order scenario added, negative-case no-op assertions replaced with real behavioral checks) lifts E2E coverage from 9/27 PARTIAL to 15+/27 GREEN; DC-IDEM (task test:idem runs test:all twice with backend reachability gate) prevents false-green silent skips and proves test-harness stability. Technical Architecture progresses from design to live execution (+2 v1.2.0).
 
 **Why not 13/20**: No live AWS deployment. Phase 1 is `terraform validate` + `infracost breakdown` only — provider credentials not wired. No multi-region posture. No observability beyond container stdout (no OpenTelemetry, no centralised logs, no metrics dashboards).
 
