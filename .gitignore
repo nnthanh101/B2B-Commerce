@@ -62,6 +62,8 @@ crash.*.log
 # Playwright
 playwright-report/
 test-results/
+# transient autotest.sh capture scratch; named generated specs (e.g. cart-to-quote.spec.ts) ARE tracked
+tests/e2e/generated/_*.spec.ts
 
 # Observability secrets (ADR-007 §9 — MF-4 secrets hygiene)
 observability/prometheus/.auth

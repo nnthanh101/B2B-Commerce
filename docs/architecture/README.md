@@ -33,3 +33,4 @@ This directory contains accepted architectural decisions for the Digital-Commerc
 - [golden-path.md](../golden-path.md) — local Golden Path demo
 - [b2b-blueprint.md](../b2b-blueprint.md) — positioning + unfair advantage stack
 - [local-mvp.md](./local-mvp.md) — Phase 1 4-service topology
+- [v0.3-deploy-release-reference.md](./v0.3-deploy-release-reference.md) — salvaged multi-stage backend Dockerfile + tag-only release pipeline (reinstate at v0.3)

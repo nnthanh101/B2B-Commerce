@@ -50,9 +50,21 @@ test.describe("B2B cart-to-quote flow [generated]", () => {
       path: path.join(SCREENSHOTS_DIR, "generated-ctq-01-product-page.png"),
     });
 
-    // Step 2: add to cart — real assertion (anti TESTING_THEATER: toBeVisible not toBeDefined)
+    // Step 2a: select variant quantity (B2B variant table requires qty > 0 to enable Add to Cart)
+    // The product uses a variants table (SKU/size/price/qty). Click increment on first variant row.
+    const incrementBtn = buyerPage.locator("table tbody tr:first-child button:last-child")
+      .or(buyerPage.locator("table tbody tr").first().locator("button").last());
+    const hasVariantTable = await incrementBtn.first().isVisible().catch(() => false);
+    if (hasVariantTable) {
+      await incrementBtn.first().click();
+      await buyerPage.waitForLoadState("domcontentloaded");
+      console.log("[cart-to-quote] Variant quantity incremented");
+    }
+
+    // Step 2b: add to cart — real assertion (anti TESTING_THEATER: toBeVisible not toBeDefined)
+    // After variant selection, "Add to cart" button becomes enabled
     const addToCartBtn = buyerPage.getByRole("button", { name: /add to cart/i });
-    await expect(addToCartBtn.first()).toBeVisible();
+    await expect(addToCartBtn.first()).toBeVisible({ timeout: 8000 });
     await addToCartBtn.first().click();
     await buyerPage.waitForLoadState("networkidle");
     console.log("[cart-to-quote] Product added to cart");
