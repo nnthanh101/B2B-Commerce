@@ -43,32 +43,33 @@ run_assert "s3:bootstrap-created-tfstate-bucket" \
 run_assert "s3:workload-state-object-in-bucket" \
   "${LS} s3api head-object --bucket digital-commerce-sandbox-tfstate --key digital-commerce/local/terraform.tfstate"
 
-# Assert 2: media bucket exists
+# Assert 3: media bucket exists (environment=sandbox)
 run_assert "s3:media-bucket-exists" \
-  "${LS} s3api head-bucket --bucket digital-commerce-local-media"
+  "${LS} s3api head-bucket --bucket digital-commerce-sandbox-media"
 
-# Assert 3: media bucket has Application tag = digital-commerce
+# Assert 4: media bucket has Application tag = digital-commerce
 run_assert "s3:media-application-tag" \
-  "${LS} s3api get-bucket-tagging --bucket digital-commerce-local-media \
+  "${LS} s3api get-bucket-tagging --bucket digital-commerce-sandbox-media \
     --query 'TagSet[?Key==\`Application\`].Value' --output text | grep -q 'digital-commerce'"
 
-# Assert 4: secrets list contains DATABASE_URL
+# Assert 5: secrets list contains DATABASE_URL
 run_assert "secretsmanager:database-url-exists" \
   "${LS} secretsmanager list-secrets --query 'SecretList[].Name' --output text | grep -q 'DATABASE_URL'"
 
-# Assert 5: secrets list has >= 4 secrets
+# Assert 6: secrets list has >= 4 secrets
 run_assert "secretsmanager:all-4-secrets" \
   "${LS} secretsmanager list-secrets --query 'length(SecretList)' --output text | grep -qE '^[4-9]$|^[1-9][0-9]'"
 
-# Assert 6: SQS queue exists
+# Assert 7: SQS queue exists (environment=sandbox)
 run_assert "sqs:events-queue-exists" \
-  "${LS} sqs get-queue-url --queue-name digital-commerce-local-events"
+  "${LS} sqs get-queue-url --queue-name digital-commerce-sandbox-events"
 
-# Assert 7: SNS topic exists
+# Assert 8: SNS topic exists (environment=sandbox)
 run_assert "sns:events-topic-exists" \
-  "${LS} sns list-topics --query 'Topics[].TopicArn' --output text | grep -q 'digital-commerce-local-events'"
+  "${LS} sns list-topics --query 'Topics[].TopicArn' --output text | grep -q 'digital-commerce-sandbox-events'"
 
-# Assert 8: AppRegistry NOT in terraform state (count=0 => enable_appregistry=false)
+# Assert 9: AppRegistry NOT in terraform state (count=0 => enable_appregistry=false)
+# Uses S3 backend init (workload root uses S3 backend now, not -backend=false).
 # Rule 8: grep -c || true (never grep -c || echo N in pipefail)
 run_assert "appregistry:count-is-zero" \
   "docker run --rm --network digital-commerce_ls_net \
@@ -76,9 +77,10 @@ run_assert "appregistry:count-is-zero" \
     -w /workspace/local \
     -e AWS_ACCESS_KEY_ID=test \
     -e AWS_SECRET_ACCESS_KEY=test \
+    -e AWS_ENDPOINT_URL=http://localstack:4566 \
     -e AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1} \
     nnthanh101/terraform:slim \
-    sh -c 'terraform init -backend=false -no-color 2>/dev/null; count=\$(terraform state list 2>/dev/null | grep -c servicecatalogappregistry || true); count=\${count:-0}; test \$count -eq 0'"
+    sh -c 'terraform init -reconfigure -backend-config=backend-local.hcl -no-color 2>/dev/null; count=\$(terraform state list 2>/dev/null | grep -c servicecatalogappregistry || true); count=\${count:-0}; test \$count -eq 0'"
 
 TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 echo ""

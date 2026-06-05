@@ -42,37 +42,22 @@ yarn-error.log*
 coverage/
 .nyc_output/
 
-# ───────── Terraform (HashiCorp canonical .gitignore + enterprise lock policy) ─────────
-# Provider/plugin cache & module install dir — never committed (any depth).
-.terraform/
-# State — may contain secrets; use the remote S3 backend, never commit.
-*.tfstate
+# ───────── Terraform ─────────
+.terraform/            # provider/module cache
+*.tfstate              # state → S3 remote backend; never commit
 *.tfstate.*
-# Plan output (may contain secrets) + crash logs.
-*.tfplan
+*.tfplan               # plan output (may contain secrets)
 crash.log
 crash.*.log
-# .tfvars may hold sensitive values — keep out of VCS (commit *.tfvars.example instead).
-*.tfvars
+*.tfvars               # sensitive values (commit *.tfvars.example instead)
 *.tfvars.json
-# Local CLI + override files.
-.terraformrc
-terraform.rc
-override.tf
-override.tf.json
-*_override.tf
-*_override.tf.json
-#
-# Dependency lock files (.terraform.lock.hcl): IGNORE ALL except the bootstrap lock.
-#   HITL decision 2026-06-05: only ONE lock is committed — the bootstrap config that
-#   provisions the S3 terraform-state bucket on a clean machine (the genesis step,
-#   run once before any remote backend exists). Its providers must be hash-pinned so
-#   the first-time `init`/`apply` is reproducible. All other locks regenerate on `init`.
+
+# Lock files: ignore all EXCEPT the bootstrap genesis lock (pins providers for the
+# one-time S3 state-bucket creation). All other locks regenerate on `terraform init`.
 .terraform.lock.hcl
 !infra/terraform/aws/bootstrap/.terraform.lock.hcl
-#
-# Still TRACKED (not ignored) — required to init + lint + test on AWS, NOT lock noise:
-#   backend-*.hcl (needed by `init -backend-config=`), .tflint.hcl (CI lint), *.tftest.hcl (test source)
+
+# Tracked by default (NOT ignored): backend-*.hcl, .tflint.hcl, *.tftest.hcl
 
 # Playwright
 playwright-report/

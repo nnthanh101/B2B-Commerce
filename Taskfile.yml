@@ -69,7 +69,7 @@ tasks:
   lint:scripts:
     desc: "Shellcheck all helper scripts in scripts/ for syntax and safety"
     cmds:
-      - shellcheck -x scripts/lib/common.sh scripts/preflight-backend.sh scripts/e2e.sh scripts/live-smoke.sh scripts/visual-verify.sh scripts/localstack-up.sh scripts/localstack-assert.sh scripts/db-local-up.sh
+      - shellcheck -x scripts/lib/common.sh scripts/preflight-backend.sh scripts/e2e.sh scripts/live-smoke.sh scripts/visual-verify.sh scripts/localstack-up.sh scripts/localstack-assert.sh scripts/db-local-up.sh scripts/preflight-images.sh scripts/lint-test-paths.sh
 
   test:unit:
     desc: "Run unit tests across all workspaces"
@@ -80,6 +80,16 @@ tasks:
   # Terraform — infrastructure validation (no cloud credentials required for local)
   # ENV default = local (Tier-2 LocalStack). Override: task tf:validate ENV=dev
   # ---------------------------------------------------------------------------
+
+  tf:preflight:
+    desc: "ACT-TF-004: Verify all referenced nnthanh101/* image tags are pullable (fail-fast on ghost tags)"
+    cmds:
+      - bash scripts/preflight-images.sh
+
+  tf:lint:paths:
+    desc: "ACT-TF-005: Fail if playwright.config.* or test files contain machine-absolute or repo-escaping paths"
+    cmds:
+      - bash scripts/lint-test-paths.sh
 
   tf:init:
     desc: "Initialise Terraform for ENV (default: local)"
