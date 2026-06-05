@@ -2,7 +2,7 @@
 
 B2B marketplace platform built on Medusa v2 and Next.js 15. Backend modules for company management, employee spending limits, quote negotiation, and approval workflows. Local-first development with Docker + Terraform IaC skeleton for future AWS deployment.
 
-**Status**: v1.1.0 — Release Self-QA Framework; Phase 1 local validation of 6-Phase SDLC. No AWS resources provisioned yet.
+**Status**: v1.1.0 (2026-06-04 release) — Release Self-QA Framework; Phase 1 local validation of 6-Phase SDLC. No AWS resources provisioned yet.
 
 ## Quick Start
 
@@ -114,28 +114,69 @@ task tf:cost       # Infracost breakdown ($0 at P1 — no resources yet)
 task logs          # Tail all services
 ```
 
-## Minimum reproduction (no Docker — fallback only)
+<details>
+<summary><strong>Alternative: Local PostgreSQL without Docker (not recommended for production)</strong></summary>
 
-> Prefer **Docker-first** (`task up` or the Dev Container above). Use this fallback only when Docker is unavailable (e.g. a constrained review machine).
+**For REVIEW/APPROVE workflows and local reproduction without Docker:**
+
+> Prefer **Docker-first** (`task up` or the Dev Container above). Use this path only when Docker is unavailable (e.g. a constrained review machine, or when validating database logic locally without containerization).
+
+**Prerequisites**: macOS with Homebrew (or Postgres.app), Node.js 22+, pnpm 10.11.1+
+
+**1. Install and start PostgreSQL + Redis locally**
 
 ```bash
-# Install pg + redis (macOS — Postgres.app also works in place of brew postgresql@15)
+# macOS — Postgres.app also works in place of brew postgresql@15
 brew install postgresql@15 redis
 brew services start postgresql@15
 brew services start redis
 createdb ec_store_test
-
-# Install dependencies
-pnpm install
-
-# Run integration tests against the local DB
-DATABASE_URL=postgres://postgres@localhost:5432/ec_store_test \
-  REDIS_URL=redis://localhost:6379 \
-  TEST_TYPE=integration \
-  task test:integration
 ```
 
-**Review/approve needs NO runtime.** Reading `CHANGELOG.md` + `RELEASE_NOTES.md` + `git diff --stat` + `tmp/Digital-Commerce/test-results/REPORT.md` is sufficient for a HITL REVIEW/APPROVE decision. The commands above are for local REPRODUCE only.
+**2. Configure environment**
+
+```bash
+export DATABASE_URL=postgres://postgres@localhost:5432/ec_store_test
+export REDIS_URL=redis://localhost:6379
+```
+
+**3. Install dependencies and run services**
+
+```bash
+pnpm install
+
+# Start backend (Medusa, port :9000)
+cd apps/backend && npm run dev
+
+# In a new terminal, start storefront (Next.js, port :8000)
+cd apps/storefront && npm run dev
+
+# In another terminal, start admin (Medusa Admin, port :9000/app)
+cd apps/admin && npm run dev
+```
+
+**4. Run integration tests against local DB**
+
+```bash
+task test:integration
+```
+
+**5. View test results**
+
+- Results are written to `tmp/Digital-Commerce/test-results/REPORT.md` (evidence for REVIEW/APPROVE)
+- See `docs/release-self-qa-framework.md` for full test strategy
+
+**When you need FULL automated testing** (CI-grade, with clean isolated Postgres):
+
+```bash
+# Use the Docker Compose stack instead (cleaner isolation)
+docker compose -f docker-compose.test.yml -p ec_test up -d
+task test:integration
+```
+
+**For REVIEW/APPROVE decisions**: Reading `CHANGELOG.md` + `RELEASE_NOTES.md` + `git diff --stat` + `tmp/Digital-Commerce/test-results/REPORT.md` is sufficient. The commands above are for local REPRODUCE only — no need to run them unless you're debugging locally.
+
+</details>
 
 ## Support
 

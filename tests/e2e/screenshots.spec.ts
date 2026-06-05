@@ -1,4 +1,4 @@
-import { test, expect, chromium } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -6,7 +6,7 @@ import * as fs from 'fs';
  * Visual Verification Screenshot Suite — B2B Journeys
  *
  * Produces VV-01 through VV-07 PNG evidence of the live stack.
- * Buyer-employee (VV-01..VV-03) and Admin/sales-manager (VV-04..VV-07).
+ * Buyer-employee (VV-01..VV-03) + Admin/sales-manager (VV-04..VV-07).
  * Both personas captured — anti-INVISIBLE_PRIMARY_USER compliance.
  *
  * Run (Option A — host Playwright, from repo root):
@@ -20,17 +20,18 @@ const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || 'admin@test.local';
 const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD || 'Test1234!';
 const REGION = process.env.TEST_REGION_COUNTRY || 'dk';
 
-// Absolute path — no relative traversal needed at runtime
-const SCREENSHOT_DIR = process.env.SCREENSHOT_OUTPUT_DIR || '/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/test-results/screenshots';
+// Absolute path — avoids relative traversal at runtime
+const SCREENSHOT_DIR = process.env.SCREENSHOT_OUTPUT_DIR ||
+  '/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/test-results/screenshots';
 
 function screenshotPath(filename: string): string {
   fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
   return path.join(SCREENSHOT_DIR, filename);
 }
 
-// ─────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 // PERSONA 1: Buyer-employee (storefront journeys)
-// ─────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('Buyer-employee persona — storefront journeys', () => {
   test('VV-01: Storefront home page (/dk)', async ({ page }) => {
@@ -59,83 +60,58 @@ test.describe('Buyer-employee persona — storefront journeys', () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 // PERSONA 2: Admin / sales-manager (admin dashboard journeys)
-// ─────────────────────────────────────────────────────────────────
+// Uses UI form login — most reliable against React SPA localStorage timing.
+// ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('Admin/sales-manager persona — admin dashboard journeys', () => {
-  let adminToken: string | null = null;
 
-  test.beforeAll(async () => {
-    const browser = await chromium.launch();
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    try {
-      const res = await page.request.post(`${ADMIN_URL}/auth/user/emailpass`, {
-        data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
-      });
-      if (res.ok()) {
-        const body = await res.json();
-        adminToken = body.token || body.access_token || null;
-        console.log(adminToken
-          ? 'Admin JWT obtained via /auth/user/emailpass'
-          : `Login 200 but no token field — keys: ${JSON.stringify(Object.keys(body))}`
-        );
-      } else {
-        console.warn(`Admin login HTTP ${res.status()} — will fall back to UI login`);
-      }
-    } catch (err) {
-      console.warn(`Admin API login error: ${err}`);
-    }
-    await browser.close();
-  });
+  /**
+   * Log in via the Medusa admin UI form.
+   * After submit, wait for the URL to leave /app/login (dashboard loaded).
+   */
+  async function adminLogin(page: import('@playwright/test').Page): Promise<void> {
+    page.setDefaultTimeout(25000);
+    page.setDefaultNavigationTimeout(30000);
 
-  async function prepareAdminPage(page: import("@playwright/test").Page): Promise<void> {
-    if (adminToken) {
-      await page.goto(`${ADMIN_URL}/app`);
-      await page.evaluate((tok) => {
-        localStorage.setItem('_medusa_jwt', tok);
-        localStorage.setItem('medusa_auth_token', tok);
-      }, adminToken);
-      await page.reload();
-      await page.waitForLoadState('networkidle');
-    } else {
-      await page.goto(`${ADMIN_URL}/app/login`);
-      await page.waitForLoadState('networkidle');
-      const emailInput = page.locator(
-        'input[type="email"], input[name="email"], input[placeholder*="mail" i]'
-      );
-      if ((await emailInput.count()) > 0) {
-        await emailInput.first().fill(ADMIN_EMAIL);
-        await page
-          .locator('input[type="password"], input[name="password"]')
-          .first()
-          .fill(ADMIN_PASSWORD);
-        const submit = page.locator(
-          'button[type="submit"], button:has-text("Sign in"), button:has-text("Log in"), button:has-text("Login")'
-        );
-        if ((await submit.count()) > 0) {
-          await submit.first().click();
-          await page.waitForLoadState('networkidle');
-        }
-      }
-    }
+    await page.goto(`${ADMIN_URL}/app/login`);
+    await page.waitForLoadState('domcontentloaded');
+
+    // Wait for React SPA to hydrate and render the login form
+    const emailInput = page.locator(
+      'input[type="email"], input[name="email"], input[id="email"]'
+    );
+    await emailInput.waitFor({ state: 'visible', timeout: 20000 });
+    await emailInput.fill(ADMIN_EMAIL);
+
+    const pwInput = page.locator('input[type="password"], input[name="password"]');
+    await pwInput.first().fill(ADMIN_PASSWORD);
+
+    const submitBtn = page.locator(
+      'button[type="submit"], button:has-text("Sign in"), button:has-text("Log in"), button:has-text("Login"), button:has-text("Continue")'
+    );
+    await submitBtn.first().click();
+
+    // Poll until URL leaves login page (navigated to dashboard)
+    await page.waitForFunction(
+      () => {
+        const p = window.location.pathname;
+        return p.startsWith('/app') && p !== '/app/login' && !p.startsWith('/app/login');
+      },
+      { timeout: 20000 }
+    );
+    await page.waitForLoadState('networkidle');
   }
 
   test('VV-04: Admin dashboard (/app)', async ({ page }) => {
-    page.setDefaultTimeout(20000);
-    page.setDefaultNavigationTimeout(25000);
-    await prepareAdminPage(page);
-    await page.goto(`${ADMIN_URL}/app`);
-    await page.waitForLoadState('networkidle');
+    await adminLogin(page);
     await expect(page.locator('body')).toBeVisible();
     await page.screenshot({ path: screenshotPath('VV-04-admin-dashboard.png'), fullPage: true });
   });
 
   test('VV-05: Admin companies page (/app/companies)', async ({ page }) => {
-    page.setDefaultTimeout(20000);
-    page.setDefaultNavigationTimeout(25000);
-    await prepareAdminPage(page);
+    await adminLogin(page);
     await page.goto(`${ADMIN_URL}/app/companies`);
     await page.waitForLoadState('networkidle');
     await expect(page.locator('body')).toBeVisible();
@@ -143,9 +119,7 @@ test.describe('Admin/sales-manager persona — admin dashboard journeys', () => 
   });
 
   test('VV-06: Admin quotes page (/app/quotes)', async ({ page }) => {
-    page.setDefaultTimeout(20000);
-    page.setDefaultNavigationTimeout(25000);
-    await prepareAdminPage(page);
+    await adminLogin(page);
     await page.goto(`${ADMIN_URL}/app/quotes`);
     await page.waitForLoadState('networkidle');
     await expect(page.locator('body')).toBeVisible();
@@ -153,9 +127,7 @@ test.describe('Admin/sales-manager persona — admin dashboard journeys', () => 
   });
 
   test('VV-07: Admin approvals page (/app/approvals)', async ({ page }) => {
-    page.setDefaultTimeout(20000);
-    page.setDefaultNavigationTimeout(25000);
-    await prepareAdminPage(page);
+    await adminLogin(page);
     await page.goto(`${ADMIN_URL}/app/approvals`);
     await page.waitForLoadState('networkidle');
     await expect(page.locator('body')).toBeVisible();

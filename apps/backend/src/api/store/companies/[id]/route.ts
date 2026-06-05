@@ -1,5 +1,5 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework";
-import { ContainerRegistrationKeys } from "@medusajs/utils";
+import { ContainerRegistrationKeys, MedusaError } from "@medusajs/utils";
 import {
   deleteCompaniesWorkflow,
   updateCompaniesWorkflow,
@@ -59,6 +59,20 @@ export const POST = async (
 
 export const DELETE = async (req: MedusaRequest, res: MedusaResponse) => {
   const { id } = req.params;
+
+  const query = req.scope.resolve(ContainerRegistrationKeys.QUERY);
+  const { data } = await query.graph({
+    entity: "companies",
+    fields: ["id"],
+    filters: { id },
+  });
+
+  if (!data.length) {
+    throw new MedusaError(
+      MedusaError.Types.NOT_FOUND,
+      `Company with id "${id}" not found`
+    );
+  }
 
   await deleteCompaniesWorkflow.run({
     input: { id },

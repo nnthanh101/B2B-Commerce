@@ -48,10 +48,22 @@ tasks:
       - docker compose -f {{.COMPOSE_FILE}} -p {{.PROJECT}} down -v --remove-orphans || true
 
   db:up:local:
-    desc: "No-Docker: ensure host-native Postgres+Redis test DB exists (brew/Postgres.app on :5432/:6379)"
+    desc: "Provision local test DB (PostgreSQL) without Docker — no containers required"
     cmds:
+      - |
+        if ! which psql >/dev/null 2>&1; then
+          echo "PostgreSQL not found. Run: brew install postgresql@15"
+          exit 1
+        fi
       - createdb ec_store_test 2>/dev/null || true
-      - redis-cli ping
+      - |
+        export DATABASE_URL=postgres://postgres@localhost:5432/ec_store_test
+        export REDIS_URL=redis://localhost:6379
+        cd {{.REPO}}/apps/backend && npm run db:migrate
+      - |
+        export DATABASE_URL=postgres://postgres@localhost:5432/ec_store_test
+        export REDIS_URL=redis://localhost:6379
+        cd {{.REPO}}/apps/backend && npm run db:seed
 
   integration:
     desc: "Tier 3a — backend HTTP integration tests (requires db:up). Writes jest-integration.json"
@@ -92,6 +104,34 @@ tasks:
         # run the fetch-based live smoke in-container (jest + global fetch; backend at localhost:9000)
         docker compose exec -T ec sh -c "cd /server/apps/backend && ADMIN_EMAIL={{.ADMIN_EMAIL}} ADMIN_PW={{.ADMIN_PW}} npx jest --runInBand --forceExit integration-tests/live/live-api-smoke.spec.ts"
 
+  visual:
+    desc: "Tier 4 visual — browser (Playwright screenshots) + terminal (native screencapture, no MCP/extension)"
+    dir: "{{.REPO}}"
+    cmds:
+      - mkdir -p {{.REPORT_DIR}}/screenshots
+      - |
+        # Browser surface — headless Playwright (works without any extension)
+        if curl -sf {{.BACKEND_URL}}/health >/dev/null 2>&1; then
+          TEST_ADMIN_EMAIL=admin@test.local TEST_ADMIN_PASSWORD=Test1234! \
+            npx playwright test tests/e2e/screenshots.spec.ts --project=chromium || true
+        else
+          echo "[SKIP] visual-browser: backend not reachable — run 'task up'"
+        fi
+      - |
+        # Terminal surface — native macOS screencapture of the iTerm2 window (proven method; no MCP, no approval prompt once Screen Recording is granted)
+        if command -v screencapture >/dev/null 2>&1; then
+          WID=$(bash .claude/hooks/scripts/capture-terminal-gif.sh --get-window-id iTerm 2>/dev/null || true)
+          if [ -n "$WID" ]; then
+            screencapture -l "$WID" -x -o "{{.REPORT_DIR}}/screenshots/VV-terminal-iterm2.png" && \
+              echo "terminal capture: $(stat -f%z {{.REPORT_DIR}}/screenshots/VV-terminal-iterm2.png) bytes"
+          else
+            screencapture -x -o "{{.REPORT_DIR}}/screenshots/VV-terminal-fullscreen.png" && echo "fullscreen fallback captured"
+          fi
+        else
+          echo "[SKIP] visual-terminal: screencapture not available (non-macOS)"
+        fi
+      - ls -la {{.REPORT_DIR}}/screenshots/VV-*.png 2>/dev/null || true
+
   report:
     desc: "Aggregate jest + Playwright + static JSON/logs into REPORT.md + REPORT.html"
     cmds:
@@ -99,12 +139,13 @@ tasks:
       - node {{.TASKFILE_DIR}}/report/aggregate-report.mjs {{.REPORT_DIR}}
 
   all:
-    desc: "Full graph: static -> db:up -> integration -> e2e -> live -> report -> db:down"
+    desc: "Full graph: static -> db:up -> integration -> e2e -> live -> visual -> report -> db:down"
     cmds:
       - task: static
       - task: db:up
       - task: integration
       - task: e2e
       - task: live
+      - task: visual
       - task: report
       - task: db:down

@@ -1,9 +1,13 @@
 import {
+  AuthenticatedMedusaRequest,
+  MedusaNextFunction,
+  MedusaResponse,
   MiddlewareRoute,
   validateAndTransformBody,
   validateAndTransformQuery,
 } from "@medusajs/framework";
 import { authenticate } from "@medusajs/medusa";
+import { ContainerRegistrationKeys } from "@medusajs/utils";
 import { ensureRole } from "../../middlewares/ensure-role";
 import {
   storeCompanyQueryConfig,
@@ -17,6 +21,34 @@ import {
   StoreUpdateApprovalSettings,
   StoreUpdateEmployee,
 } from "./validators";
+
+const ensureCompanyMember = async (
+  req: AuthenticatedMedusaRequest,
+  res: MedusaResponse,
+  next: MedusaNextFunction
+) => {
+  const { customer_id } = req.auth_context.app_metadata as {
+    customer_id: string;
+  };
+
+  const query = req.scope.resolve(ContainerRegistrationKeys.QUERY);
+
+  const {
+    data: [customer],
+  } = await query.graph({
+    entity: "customer",
+    fields: ["employee.company.id"],
+    filters: { id: customer_id },
+  });
+
+  const memberCompanyId = customer?.employee?.company?.id as string | undefined;
+
+  if (memberCompanyId !== req.params.id) {
+    return res.status(404).json({ message: "Company not found" });
+  }
+
+  next();
+};
 
 export const storeCompaniesMiddlewares: MiddlewareRoute[] = [
   /* Company middlewares */
@@ -50,6 +82,7 @@ export const storeCompaniesMiddlewares: MiddlewareRoute[] = [
     method: ["GET"],
     matcher: "/store/companies/:id",
     middlewares: [
+      ensureCompanyMember,
       validateAndTransformQuery(
         StoreGetCompanyParams,
         storeCompanyQueryConfig.retrieve

@@ -124,6 +124,13 @@ medusaIntegrationTestRunner({
           storeHeaders
         );
 
+        const me = (await api.get("/store/customers/me", storeHeaders)).data.customer;
+        await api.post(
+          `/store/companies/${response1.data.companies[0].id}/employees`,
+          { customer_id: me.id, is_admin: true },
+          storeHeaders
+        );
+
         const response2 = await api.get(
           `/store/companies/${response1.data.companies[0].id}`,
           storeHeaders
@@ -150,7 +157,7 @@ medusaIntegrationTestRunner({
           .catch((e: any) => e);
 
         expect(response.data).toMatchObject({
-          type: "not_found",
+          message: "Company not found",
         });
       });
     });

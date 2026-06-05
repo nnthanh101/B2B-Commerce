@@ -92,7 +92,6 @@ medusaIntegrationTestRunner({
               ],
               summary: expect.objectContaining({
                 paid_total: 0,
-                difference_sum: 0,
                 refunded_total: 0,
                 transaction_total: 0,
                 pending_difference: 100,

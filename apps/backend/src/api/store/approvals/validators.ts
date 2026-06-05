@@ -3,7 +3,7 @@ import {
   createOperatorMap,
 } from "@medusajs/medusa/api/utils/validators";
 import { z } from "zod";
-import { ApprovalType } from "../../../types/approval";
+import { ApprovalStatusType, ApprovalType } from "../../../types/approval";
 
 export type StoreGetApprovalsType = z.infer<typeof StoreGetApprovals>;
 export const StoreGetApprovals = createFindParams()
@@ -25,5 +25,5 @@ export const StoreGetApprovals = createFindParams()
 
 export type StoreUpdateApprovalType = z.infer<typeof StoreUpdateApproval>;
 export const StoreUpdateApproval = z.object({
-  status: z.string(),
+  status: z.nativeEnum(ApprovalStatusType),
 });

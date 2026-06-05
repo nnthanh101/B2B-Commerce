@@ -9,9 +9,7 @@ export const POST = async (
   req: AuthenticatedMedusaRequest<AdminUpdateApproval>,
   res: MedusaResponse
 ) => {
-  const { user_id } = req.auth_context.app_metadata as {
-    user_id: string;
-  };
+  const user_id = req.auth_context.actor_id;
 
   const { id: approvalId } = req.params;
   const { status } = req.validatedBody;
