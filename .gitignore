@@ -52,3 +52,7 @@ coverage/
 # Playwright
 playwright-report/
 test-results/
+
+# Observability secrets (ADR-007 §9 — MF-4 secrets hygiene)
+observability/prometheus/.auth
+.env.observability

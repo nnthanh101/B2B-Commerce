@@ -1,47 +1,34 @@
 /**
  * Prometheus /admin/metrics endpoint for Medusa v2 backend.
  *
- * scope_id: commerce-plugin-sprint-3-5-tracks-bc-2026-06-03
+ * Emits:
+ *   - medusa_http_requests_total{method,route,status}   (counter)
+ *   - medusa_http_request_duration_seconds{method,route,status} (histogram)
+ *   - prom-client collectDefaultMetrics() (process/node defaults)
  *
- * Auth strategy:
- *   - Development (NODE_ENV != "production"): open — no auth required
- *   - Production: Bearer token gate via METRICS_BEARER_TOKEN env var
+ * Metric-name SSOT: these names must match the Grafana dashboard PromQL
+ * (ADR-007 delta 7: medusa_http_requests_total, medusa_http_request_duration_seconds).
  *
- * prom-client registration is process-singleton via globalThis to survive
- * Medusa's hot-reload module re-evaluation without duplicate-metric errors.
+ * Auth:
+ *   - Development (NODE_ENV != "production"): open — no auth required.
+ *   - Production: Bearer token gate via METRICS_BEARER_TOKEN env var.
+ *
+ * Singleton + metric definitions live in src/lib/metrics.ts (shared with the
+ * HTTP middleware so both use exactly ONE registry/counter/histogram).
  */
 
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework"
-import { register, collectDefaultMetrics, Counter, Histogram } from "prom-client"
+import { register } from "../../../lib/metrics"
 
-// Process-singleton guard — prevents duplicate metric registration on hot-reload
-const g = globalThis as unknown as {
-  __dcMetricsInit?: boolean
-  httpReq?: Counter<string>
-  httpDur?: Histogram<string>
-}
+// Opt out of Medusa's built-in admin JWT authentication.
+// This route enforces its own auth: open in dev, Bearer token in production.
+// See: Medusa v2 AUTHENTICATE export flag (routes-loader.js AUTHTHENTICATION_FLAG).
+export const AUTHENTICATE = false
 
-if (!g.__dcMetricsInit) {
-  collectDefaultMetrics({ register })
-
-  g.httpReq = new Counter({
-    name: "medusa_http_requests_total",
-    help: "Total Medusa HTTP requests",
-    labelNames: ["method", "route", "status"],
-  })
-
-  g.httpDur = new Histogram({
-    name: "medusa_http_request_duration_seconds",
-    help: "Medusa HTTP request duration in seconds",
-    labelNames: ["method", "route", "status"],
-    buckets: [0.005, 0.01, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
-  })
-
-  g.__dcMetricsInit = true
-}
-
+// ---------------------------------------------------------------------------
+// GET /admin/metrics — Prometheus text format scrape endpoint
+// ---------------------------------------------------------------------------
 export async function GET(req: MedusaRequest, res: MedusaResponse): Promise<void> {
-  // Production: require Bearer token auth
   if (process.env.NODE_ENV === "production") {
     const expected = process.env.METRICS_BEARER_TOKEN
     const auth = req.headers["authorization"] as string | undefined

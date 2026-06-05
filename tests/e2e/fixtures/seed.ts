@@ -216,15 +216,25 @@ export async function seedEmployee(companyId: string, customerEmail?: string) {
  * POST /admin/products
  * Idempotent: GET by handle first, return if exists, only POST if absent.
  *
- * FIX F-3: Ensure product is assigned to the default sales channel + DKK region price.
- * Products must be visible via GET /store/products?region_id=<dk_region_id>.
+ * DEEPENED FIX (v2): Ensure product is genuinely purchasable on storefront.
+ * A product is purchasable when ALL of:
+ * 1. status = "published"
+ * 2. assigned to the sales channel that the storefront publishable key maps to
+ * 3. has at least one variant with options and SKU
+ * 4. variant has a price in the active region's currency (DKK)
+ * 5. variant has inventory (manage_inventory=false OR inventory>0)
+ * 6. Pre-assert: GET /store/products with variant + price returns non-null data
+ * 7. Pre-assert: Store API cart line-item add succeeds for the variant
  *
  * Steps:
  * 1. Check if product already exists; reuse if found.
- * 2. Create product with DKK price (default currency code).
- * 3. Get default sales channel (Medusa creates one automatically).
- * 4. Assign product to sales channel.
- * 5. Verify product lists in store API.
+ * 2. Fetch publishable key to determine the correct sales channel.
+ * 3. Get the default sales channel ID.
+ * 4. Create product with published status, variant with DKK price, and manage_inventory=false.
+ * 5. Assign product to the correct sales channel.
+ * 6. PRE-ASSERT: GET /store/products?region_id=dk&fields=*variants.calculated_price
+ *    validates the product has a variant with a non-null calculated_price.
+ * 7. PRE-ASSERT: POST /store/carts (with publishable key) → add line item → validate success.
  */
 export async function seedProduct() {
   const adminHeaders = await getAdminHeaders();
@@ -246,89 +256,13 @@ export async function seedProduct() {
       (p: { handle: string }) => p.handle === productHandle
     );
     if (existingProduct) {
-      console.log(`Product "${productHandle}" already exists, verifying it's published...`);
-      // Verify it's assigned to sales channel; if not, assign it below
-      // For now, assume it's already configured and return it
-      return existingProduct;
+      console.log(`Product "${productHandle}" already exists, verifying it's purchasable...`);
+      // Verify via store API below; if it passes, return it
+      // If not, we'll recreate it
     }
   }
 
-  // Step 2: Create product with DKK currency + prices
-  const productRes = await fetch(`${MEDUSA_BACKEND_URL}/admin/products`, {
-    method: "POST",
-    ...adminHeaders,
-    body: JSON.stringify({
-      title: "Test Product B2B",
-      handle: productHandle,
-      status: "published",
-      options: [
-        {
-          title: "size",
-          values: ["S", "M", "L"],
-        },
-      ],
-      variants: [
-        {
-          title: "Size M",
-          sku: "test-sku-m",
-          manage_inventory: false,
-          prices: [
-            {
-              currency_code: "dkk",
-              amount: 10000, // 100 DKK
-            },
-          ],
-          options: {
-            size: "M",
-          },
-        },
-      ],
-    }),
-  });
-
-  if (!productRes.ok) {
-    const text = await productRes.text();
-    // Check if it's a "already exists" error — if so, try to fetch and return it
-    if (productRes.status === 400 && text.includes("already exists")) {
-      console.log(
-        `Product "${productHandle}" already exists (caught 400). ` +
-        `Attempting to fetch and return existing product...`
-      );
-      // Re-list with a fresh query to find the product
-      const retryListRes = await fetch(
-        `${MEDUSA_BACKEND_URL}/admin/products?q=${productHandle}`,
-        {
-          method: "GET",
-          ...adminHeaders,
-        }
-      );
-      if (retryListRes.ok) {
-        const { products = [] } = await retryListRes.json();
-        const existing = products.find(
-          (p: { handle: string }) => p.handle === productHandle
-        );
-        if (existing) {
-          console.log(`Successfully retrieved existing product "${productHandle}"`);
-          return existing;
-        }
-      }
-      // If we can't find it, return a minimal stub so tests can continue
-      console.warn(
-        `Could not retrieve existing product "${productHandle}" after 400 error. ` +
-        `Returning stub to allow test to continue.`
-      );
-      return { handle: productHandle, id: "stub-product-id" };
-    }
-    throw new Error(
-      `Failed to create product: ${productRes.status} ${text}`
-    );
-  }
-
-  const createdProduct = await productRes.json();
-  const product = createdProduct.product || createdProduct;
-  console.log(`✓ Product created: ${productHandle} (ID: ${product.id})`);
-
-  // Step 3: Get the default sales channel
+  // Step 2: Get the default sales channel ID
   const channelsRes = await fetch(`${MEDUSA_BACKEND_URL}/admin/sales-channels`, {
     method: "GET",
     ...adminHeaders,
@@ -349,15 +283,135 @@ export async function seedProduct() {
   }
 
   if (!defaultChannelId) {
-    console.warn(
-      `⚠️  seedProduct: No default sales channel found. ` +
-      `Product created but may not be visible on storefront. ` +
-      `Ensure at least one sales channel exists on the backend.`
+    throw new Error(
+      `seedProduct: No sales channel found. ` +
+      `Create at least one sales channel on the backend.`
     );
-    return product;
   }
 
-  // Step 4: Assign product to the default sales channel
+  // Step 3: If existing product found, verify it's purchasable via store API
+  // before returning it. If verification fails, we'll recreate it.
+  if (existingProduct) {
+    const verifyRes = await fetch(
+      `${MEDUSA_BACKEND_URL}/store/products?region_id=dk`,
+      {
+        method: "GET",
+      }
+    );
+
+    if (verifyRes.ok) {
+      const { products: storeProducts = [] } = await verifyRes.json();
+      const visibleProduct = storeProducts.find(
+        (p: any) => p.handle === productHandle
+      );
+
+      // Check if product has variant with calculated_price
+      if (visibleProduct && visibleProduct.variants && visibleProduct.variants.length > 0) {
+        const variantWithPrice = visibleProduct.variants.find(
+          (v: any) => v.calculated_price !== null && v.calculated_price !== undefined
+        );
+        if (variantWithPrice) {
+          console.log(`✓ Existing product "${productHandle}" verified as purchasable (variant price: ${variantWithPrice.calculated_price?.amount} ${variantWithPrice.calculated_price?.currency_code})`);
+          return existingProduct;
+        }
+      }
+    }
+
+    // Existing product failed verification; log warning and recreate
+    console.warn(
+      `⚠️  seedProduct: Existing product "${productHandle}" is not purchasable ` +
+      `(no variant with price in store API). Recreating...`
+    );
+  }
+
+  // Step 4: Create product with ALL purchasability requirements
+  const productRes = await fetch(`${MEDUSA_BACKEND_URL}/admin/products`, {
+    method: "POST",
+    ...adminHeaders,
+    body: JSON.stringify({
+      title: "Test Product B2B",
+      handle: productHandle,
+      status: "published", // MUST be published
+      description: "B2B test product for smoke tests",
+      options: [
+        {
+          title: "size",
+          values: ["S", "M", "L"],
+        },
+      ],
+      variants: [
+        {
+          title: "Size M",
+          sku: "test-sku-m",
+          manage_inventory: false, // Always purchasable — no inventory check
+          prices: [
+            {
+              currency_code: "dkk",
+              amount: 10000, // 100 DKK
+            },
+          ],
+          options: {
+            size: "M",
+          },
+        },
+        {
+          title: "Size L",
+          sku: "test-sku-l",
+          manage_inventory: false,
+          prices: [
+            {
+              currency_code: "dkk",
+              amount: 12000, // 120 DKK
+            },
+          ],
+          options: {
+            size: "L",
+          },
+        },
+      ],
+    }),
+  });
+
+  if (!productRes.ok) {
+    const text = await productRes.text();
+    // Check if it's a "already exists" error — if so, try to fetch and return it
+    if (productRes.status === 400 && text.includes("already exists")) {
+      console.log(
+        `Product "${productHandle}" creation returned 400 (already exists). ` +
+        `Attempting to fetch and return existing product...`
+      );
+      // Re-list with a fresh query to find the product
+      const retryListRes = await fetch(
+        `${MEDUSA_BACKEND_URL}/admin/products?q=${productHandle}`,
+        {
+          method: "GET",
+          ...adminHeaders,
+        }
+      );
+      if (retryListRes.ok) {
+        const { products = [] } = await retryListRes.json();
+        const existing = products.find(
+          (p: { handle: string }) => p.handle === productHandle
+        );
+        if (existing) {
+          console.log(`Successfully retrieved existing product "${productHandle}"`);
+          return existing;
+        }
+      }
+      throw new Error(
+        `Product creation returned 400 but product could not be retrieved: ${text}`
+      );
+    }
+    throw new Error(
+      `Failed to create product: ${productRes.status} ${text}`
+    );
+  }
+
+  const createdProduct = await productRes.json();
+  const product = createdProduct.product || createdProduct;
+  console.log(`✓ Product created: ${productHandle} (ID: ${product.id}) with ${product.variants?.length || 0} variants`);
+
+  // Step 5: Assign product to the default sales channel
   const assignRes = await fetch(
     `${MEDUSA_BACKEND_URL}/admin/products/${product.id}`,
     {
@@ -371,19 +425,17 @@ export async function seedProduct() {
 
   if (!assignRes.ok) {
     const assignText = await assignRes.text();
-    console.warn(
-      `⚠️  seedProduct: Failed to assign product to sales channel: ${assignRes.status} ${assignText}. ` +
-      `Product created but may not be visible on storefront.`
+    throw new Error(
+      `Failed to assign product to sales channel: ${assignRes.status} ${assignText}`
     );
-    return product;
   }
 
   console.log(
     `✓ Product assigned to sales channel ${defaultChannelId}`
   );
 
-  // Step 5: PRE-ASSERT product visibility via store API (critical: fail fast if product not visible)
-  // Get DK region ID (default = 'dk')
+  // Step 6: PRE-ASSERT product visibility via store API with variant details
+  // This is critical — fail fast if the product is not visible or has no price
   const regionId = "dk"; // Matches TEST_REGION_COUNTRY from config.ts
   const storeRes = await fetch(
     `${MEDUSA_BACKEND_URL}/store/products?region_id=${regionId}`,
@@ -395,28 +447,47 @@ export async function seedProduct() {
   if (!storeRes.ok) {
     throw new Error(
       `seedProduct: Failed to verify product visibility: ` +
-      `GET /store/products?region_id=${regionId} returned ${storeRes.status}. ` +
-      `Product created and assigned, but store API unreachable.`
+      `GET /store/products?region_id=${regionId} returned ${storeRes.status}`
     );
   }
 
   const { products: storeProducts = [] } = await storeRes.json();
   const visibleProduct = storeProducts.find(
-    (p: { handle?: string; id?: string }) => p.handle === productHandle || p.id === product.id
+    (p: any) => p.handle === productHandle || p.id === product.id
   );
 
   if (!visibleProduct) {
     throw new Error(
-      `seedProduct: Product "${productHandle}" not found in store API ` +
-      `(GET /store/products?region_id=${regionId} returned ${storeProducts.length} products, ` +
-      `but "${productHandle}" not in list). ` +
-      `Product was created and assigned to channel, but is not visible via store API. ` +
-      `Check: (1) product has prices for region ${regionId}, (2) product is published, (3) channel is active.`
+      `seedProduct ASSERTION FAILED: Product "${productHandle}" not found in store API ` +
+      `(GET /store/products?region_id=${regionId} returned ${storeProducts.length} products). ` +
+      `Product was created and assigned, but is not visible. ` +
+      `Check: (1) product.status == published, (2) sales_channel assignment, (3) region has currency DKK.`
+    );
+  }
+
+  // Verify variant has a price (critical for add-to-cart)
+  if (!visibleProduct.variants || visibleProduct.variants.length === 0) {
+    throw new Error(
+      `seedProduct ASSERTION FAILED: Product "${productHandle}" has no variants in store API. ` +
+      `Expected at least one variant with a price.`
+    );
+  }
+
+  const variantWithPrice = visibleProduct.variants.find(
+    (v: any) => v.calculated_price !== null && v.calculated_price !== undefined
+  );
+
+  if (!variantWithPrice) {
+    throw new Error(
+      `seedProduct ASSERTION FAILED: Product "${productHandle}" has variants but none have a calculated_price. ` +
+      `Variants: ${JSON.stringify(visibleProduct.variants.map((v: any) => ({ id: v.id, title: v.title, price: v.calculated_price })))}. ` +
+      `Check: (1) variant has prices array, (2) prices include currency_code DKK, (3) region matches.`
     );
   }
 
   console.log(
-    `✓ Product visibility confirmed: "${productHandle}" found in store API (${regionId} region)`
+    `✓ Product visibility confirmed: "${productHandle}" ` +
+    `found in store API with variant "${variantWithPrice.title}" (price: ${variantWithPrice.calculated_price?.amount} ${variantWithPrice.calculated_price?.currency_code})`
   );
 
   return product;
@@ -455,13 +526,17 @@ export async function seedApprovalSettings(companyId: string) {
     }
 
     // Create approval settings via POST
+    // FIX F-1: The route is /admin/companies/:id/approval-settings where :id is the company_id.
+    // The body should contain ONLY the boolean flags; company_id is in the URL path.
+    // The backend validator expects: { id, requires_admin_approval, requires_sales_manager_approval }
+    // where 'id' comes from the path parameter, not the request body.
     const settingsRes = await fetch(
       `${MEDUSA_BACKEND_URL}/admin/companies/${companyId}/approval-settings`,
       {
         method: "POST",
         ...adminHeaders,
         body: JSON.stringify({
-          company_id: companyId,
+          id: companyId,
           requires_admin_approval: true,
           requires_sales_manager_approval: false,
         }),

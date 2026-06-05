@@ -1,70 +1,158 @@
 version: "3"
 
+# =============================================================================
+# Digital-Commerce — Manager Menu (HITL-readable)
+# =============================================================================
+# This file is the top-level control panel for the platform.
+# Each task is named for WHAT it does, not HOW it does it.
+#
+# Quick reference:
+#   task up          — start everything
+#   task down        — stop everything
+#   task seed        — load product + image data into the database
+#   task test:all    — run the full test suite (needs Docker up)
+#   task tf:validate — check Terraform config for the local environment
+#   task lint:scripts — shellcheck all helper scripts in scripts/
+#
+# Full list: task --list
+# =============================================================================
+
 includes:
   test:
     taskfile: ./tests/Taskfile.yml
     dir: ./tests
 
 tasks:
+
+  # ---------------------------------------------------------------------------
+  # Platform lifecycle
+  # ---------------------------------------------------------------------------
+
   up:
-    desc: "Start all services (build + detach)"
+    desc: "Start all platform services (builds images if needed)"
     cmds:
       - docker compose up --build -d
 
   down:
-    desc: "Stop and remove all containers"
+    desc: "Stop and remove all platform containers"
     cmds:
       - docker compose down
 
   logs:
-    desc: "Tail logs for all services"
+    desc: "Stream live logs from all services"
     cmds:
       - docker compose logs -f
 
   ps:
-    desc: "Show container status"
+    desc: "Show which containers are running and their status"
     cmds:
       - docker compose ps
 
+  # ---------------------------------------------------------------------------
+  # Data management
+  # ---------------------------------------------------------------------------
+
+  seed:images:
+    desc: "Copy product images into the backend static folder (local, no network required)"
+    cmds:
+      - mkdir -p apps/backend/static
+      - cp -f tests/fixtures/seed-images/*.png apps/backend/static/ 2>/dev/null || true
+
   seed:
-    desc: "Run database seed inside backend container"
+    desc: "Load the database with products, users, and categories"
+    deps: [seed:images]
     cmds:
       - docker compose exec ec sh -c "cd /server/apps/backend && pnpm seed"
 
+  # ---------------------------------------------------------------------------
+  # Code quality
+  # ---------------------------------------------------------------------------
+
   lint:
-    desc: "Run lint across all workspaces"
+    desc: "Check all code for style and type errors"
     cmds:
       - docker compose exec ec sh -c "cd /server && pnpm turbo lint"
 
-  test:
+  lint:scripts:
+    desc: "Shellcheck all helper scripts in scripts/ for syntax and safety"
+    cmds:
+      - shellcheck -x scripts/lib/common.sh scripts/preflight-backend.sh scripts/e2e.sh scripts/live-smoke.sh scripts/visual-verify.sh scripts/localstack-up.sh scripts/localstack-assert.sh scripts/db-local-up.sh
+
+  test:unit:
     desc: "Run unit tests across all workspaces"
     cmds:
       - docker compose exec ec sh -c "cd /server && pnpm turbo test"
 
+  # ---------------------------------------------------------------------------
+  # Terraform — infrastructure validation (no cloud credentials required for local)
+  # ENV default = local (Tier-2 LocalStack). Override: task tf:validate ENV=dev
+  # ---------------------------------------------------------------------------
+
   tf:init:
-    desc: "Terraform init (no backend)"
+    desc: "Initialise Terraform for ENV (default: local)"
+    vars:
+      ENV: '{{.ENV | default "local"}}'
     cmds:
       - docker run --rm
-        -v "{{.ROOT_DIR}}/infra/terraform:/workspace"
-        -w /workspace
-        nnthanh101/terraform:2.6.0
+        -v "{{.ROOT_DIR}}/infra/terraform/aws:/workspace"
+        -w /workspace/{{.ENV}}
+        nnthanh101/terraform:slim
         sh -c "terraform init -backend=false"
 
   tf:validate:
-    desc: "Terraform validate"
+    desc: "Validate Terraform config for ENV (default: local)"
+    vars:
+      ENV: '{{.ENV | default "local"}}'
     cmds:
       - docker run --rm
-        -v "{{.ROOT_DIR}}/infra/terraform:/workspace"
-        -w /workspace
-        nnthanh101/terraform:2.6.0
+        -v "{{.ROOT_DIR}}/infra/terraform/aws:/workspace"
+        -w /workspace/{{.ENV}}
+        nnthanh101/terraform:slim
         sh -c "terraform init -backend=false && terraform validate"
 
   tf:cost:
-    desc: "Infracost breakdown"
+    desc: "Estimate monthly cloud cost for ENV (default: local)"
+    vars:
+      ENV: '{{.ENV | default "local"}}'
     cmds:
       - docker run --rm
-        -v "{{.ROOT_DIR}}/infra/terraform:/workspace"
-        -w /workspace
+        -v "{{.ROOT_DIR}}/infra/terraform/aws:/workspace"
+        -v "{{.ROOT_DIR}}/tmp/Digital-Commerce/test-results:/out"
+        -w /workspace/{{.ENV}}
         infracost/infracost:ci-latest
-        breakdown --path /workspace --format json
-        --out-file /workspace/../../tmp/Digital-Commerce/test-results/infracost-breakdown.json
+        breakdown --path /workspace/{{.ENV}} --format json
+        --out-file /out/infracost-breakdown.json
+
+  # ---------------------------------------------------------------------------
+  # LocalStack — Tier-2 local AWS simulation (no real cloud account needed)
+  # Requires: AWS_DEFAULT_REGION env var
+  # ---------------------------------------------------------------------------
+
+  tf:local:up:
+    desc: "Start LocalStack (local AWS simulator) and wait until healthy"
+    cmds:
+      - bash scripts/localstack-up.sh
+
+  tf:local:provision:
+    desc: "Apply Terraform to LocalStack — provisions S3, SQS, SNS, Secrets"
+    cmds:
+      - |
+        docker run --rm \
+          --network digital-commerce_ls_net \
+          -v "{{.ROOT_DIR}}/infra/terraform/aws:/workspace" \
+          -w /workspace/local \
+          -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION}" \
+          -e AWS_ACCESS_KEY_ID=test \
+          -e AWS_SECRET_ACCESS_KEY=test \
+          nnthanh101/terraform:slim \
+          sh -c "terraform init -reconfigure && terraform apply -auto-approve"
+
+  tf:local:assert:
+    desc: "Run 8 resource checks against LocalStack and write evidence file"
+    cmds:
+      - bash scripts/localstack-assert.sh "{{.ROOT_DIR}}"
+
+  tf:local:down:
+    desc: "Stop LocalStack and clean up containers and volumes"
+    cmds:
+      - docker compose -f docker-compose.localstack.yml down -v

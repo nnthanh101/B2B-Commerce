@@ -1,9 +1,36 @@
 # ADR-007: Grafana + Prometheus Observability Stack (Local-First)
 
-**Status**: Accepted (Phase 1 local docker-compose, Phase 2 roadmap)
-**Date**: 2026-06-04
+**Status**: Accepted (Phase 1 local docker-compose, Phase 2 roadmap) — **AMENDED 2026-06-05 (hybrid-cloud premise; execution NOW)**
+**Date**: 2026-06-04 (amended 2026-06-05)
 **Deciders**: cloud-architect, product-owner, HITL
-**Authority**: `tmp/Digital-Commerce/coordination-logs/cloud-architect-batch-2-order-1-2026-06-04.json`
+**Authority**: `tmp/Digital-Commerce/coordination-logs/cloud-architect-batch-2-order-1-2026-06-04.json`; amendment: `product-owner-2026-06-05-observability-rev.json` + `cloud-architect-2026-06-05-observability-rev.json`
+
+---
+
+## AMENDMENT 2026-06-05 — Hybrid-Cloud SSOT, Execute NOW (PO 92% / CA 94% consensus)
+
+**Trigger:** HITL critical-thinking challenge — the platform is **hybrid-cloud (AWS + Azure)** (root `CLAUDE.md`), so CloudWatch is invalid as the observability SSOT (AWS-only; blind to Azure). Grafana/Prometheus is the **vendor-neutral multi-cloud SSOT** and, unlike CloudWatch, **runs local-first in docker-compose now**. This makes the stack choice a *foundational, expensive-to-reverse* architectural decision that must precede AWS/Azure provisioning — not a Phase-2 deferral.
+
+**Deltas to the original decision below:**
+
+1. **CloudWatch is now PERMANENTLY REJECTED as SSOT** (was "deferred to Phase 2 / Option C"). Reason: hybrid-cloud lock-in. CloudWatch may remain a *destination* for AWS-native signals fed into Grafana, never the source of truth.
+2. **Execution flips LATER → NOW.** Ship a LEAN local-first stack this increment: **5 containers** (`prometheus`, `grafana`, `postgres-exporter`, `redis-exporter`, `node-exporter`) in an **opt-in `docker-compose.observability.yml`** override (keeps the app `docker-compose.yml` runtime clean).
+3. **LGTM roadmap** (Grafana stack): **Prometheus (metrics) now**; **Loki (logs)** + **Tempo (traces)** in later slices; **Mimir/AMP** only if long-term metric storage demands it. Logs are deferred (no Loki container now) to stay lean.
+4. **Multi-cloud topology (1-operator):** *managed-per-cloud, federated* — each cloud's Prometheus scrapes its own workloads; **one PRIMARY managed Grafana** (AMG **or** Azure Managed Grafana) adds both clouds' Prometheus as datasources = single pane of glass without cross-cloud federation. Self-hosting Grafana/Prometheus on *both* clouds is rejected (1-operator toil). Local docker-compose is the dev mirror. Promotion path: identical stack local → AWS (AMP+AMG) → Azure (Azure Monitor managed Prometheus + Azure Managed Grafana); FOCUS `external_labels` carry through unchanged.
+5. **Deleted Grafana configs → RESTORE-AND-CURATE.** The prior `observability/grafana/*` configs (removed ~commit `027dc62`) are CA-vetted (deterministic datasource `uid`, `password_file` basic-auth, FOCUS `external_labels`, Docker-DNS service names). Restore them and **curate out** the 2 dashboard panels that query never-wired business counters (the over-build that prompted the original deletion).
+6. **Producer restore required (honest gap).** Infra exporters scrape real local targets today, but the Medusa `/admin/metrics` producer (`apps/backend/src/api/admin/metrics/route.ts`) was deleted and `prom-client` is not in `apps/backend/package.json`. App metrics need a 1-file producer restore + 1 dependency before "scrape the backend" is real.
+7. **Metric-name SSOT = the producer.** Must-fix: align dashboard PromQL to the producer's emitted names (`medusa_http_request_duration_seconds`, `medusa_http_requests_total{status}`) — the restored `medusa.json` queried mismatched names (`http_request_duration_ms_bucket`, `..._total{status_code}`).
+8. **Corrected scrape target.** The live backend container is **`ec` on network `ec_network`** (not `backend:9000`). The override must join `ec_network` and target `ec:9000` (or alias `backend`). The original ADR's `ec_backend_b2b:8000` / `ec_network_b2b` names below are superseded by the live `ec` / `ec_network` names.
+9. **Secrets hygiene.** Grafana `.auth` / admin password: local-dev only, mount read-only, gitignore, set a non-default admin password; cloud promotion swaps to Secrets Manager / Key Vault.
+10. **FOCUS tags** for observability now follow the **8-tag superset** governed by [ADR-015](./ADR-015-local-first-terraform-iac.md) (the original 9-key list below, incl. `BillingTag`/`Project`, is superseded). Local containers carry FOCUS-equivalent labels; cloud observability resources (AMP/AMG) tag `Service=async` (telemetry pipeline) pending a v0.3 confirmation.
+
+**Terraform impact:** the foundation slice **drops the CloudWatch log group**; the `infra/terraform/aws/modules/observability/` module is repurposed as the AMP/AMG (and Azure Managed Grafana) destination provisioner at v0.3. See [ADR-015 §D6](./ADR-015-local-first-terraform-iac.md).
+
+**Smallest valuable increment (INVEST):** DC-OBS-01 infra exporters · DC-OBS-02 Medusa producer restore · DC-OBS-03 dashboard curate + PromQL align · DC-OBS-04 Terraform LGTM reconciliation.
+
+> The original 2026-06-04 decision (below) remains the baseline; where it conflicts with this amendment, the amendment governs.
+
+---
 
 ## Summary
 

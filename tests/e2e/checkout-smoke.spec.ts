@@ -37,37 +37,25 @@ test.describe("Buyer-employee — checkout smoke (browse → cart → checkout �
 
   test("CS-2: add product to cart", async ({ buyerPage }) => {
     // Seed product and navigate to product detail
-    let productHandle = "test-product-b2b";
-    try {
-      const product = await seedProduct();
-      productHandle = product.handle || productHandle;
-    } catch (err) {
-      console.warn(`seedProduct failed: ${err}`);
-    }
+    const product = await seedProduct();
+    const productHandle = product.handle || "test-product-b2b";
 
     await buyerPage.goto(`${STOREFRONT_URL}/${CC}/products/${productHandle}`, {
       waitUntil: "networkidle",
       timeout: 15000
     });
 
-    // Try to find and click Add to Cart button
-    const addBtn = buyerPage.locator('[data-testid="add-to-cart"]')
-      .or(buyerPage.getByRole('button', { name: /add to cart/i }))
-      .or(buyerPage.locator('button:has-text("Add to cart")'));
+    // Real assertion: "Add to cart" button MUST be visible
+    // The seed now ensures the product is published + has variants with prices
+    // so the button should render on the storefront
+    const addBtn = buyerPage.getByRole('button', { name: /add to cart/i });
 
-    if (await addBtn.first().isVisible().catch(() => false)) {
-      await addBtn.first().click();
-      await buyerPage.waitForLoadState("networkidle");
-      console.log("✓ Product added to cart");
-    } else {
-      console.log("⚠️  Add to cart button not visible");
-    }
+    await expect(addBtn.first()).toBeVisible();
+    await addBtn.first().click();
+    await buyerPage.waitForLoadState("networkidle");
+    console.log("✓ Product added to cart");
 
     await buyerPage.screenshot({ path: `${SHOT}/cs-2-add-to-cart.png` });
-
-    // Page should load regardless of button availability
-    const pageContent = await buyerPage.content();
-    expect(pageContent.length > 0).toBeTruthy();
   });
 
   test("CS-3: proceed to checkout", async ({ buyerPage }) => {
@@ -77,26 +65,22 @@ test.describe("Buyer-employee — checkout smoke (browse → cart → checkout �
       timeout: 15000
     });
 
-    // Look for checkout button/link
-    const checkout = buyerPage.locator('[data-testid="checkout-button"]')
-      .or(buyerPage.getByRole('button', { name: /checkout/i }))
-      .or(buyerPage.getByRole('link', { name: /checkout/i }))
-      .or(buyerPage.locator('button:has-text("Checkout")'));
+    // Real assertion: Checkout button MUST be visible
+    // The seed now ensures the product is purchasable, so checkout button should render
+    const checkout = buyerPage.getByRole('button', { name: /checkout/i })
+      .or(buyerPage.getByRole('link', { name: /checkout/i }));
 
-    if (await checkout.first().isVisible().catch(() => false)) {
-      await checkout.first().click();
-      await buyerPage.waitForLoadState("networkidle");
-      console.log("✓ Clicked checkout button");
-    } else {
-      console.log("⚠️  Checkout button not visible");
-    }
+    await expect(checkout.first()).toBeVisible();
+    await checkout.first().click();
+    await buyerPage.waitForLoadState("networkidle");
+    console.log("✓ Clicked checkout button");
 
     await buyerPage.screenshot({ path: `${SHOT}/cs-3-checkout.png` });
 
-    // Should be on cart or checkout page
+    // Real assertion: We should be on checkout or payment page
     const currentUrl = buyerPage.url();
-    const isValidPage = currentUrl.includes("/cart") || currentUrl.includes("/checkout") || currentUrl.includes(CC);
-    expect(isValidPage).toBeTruthy();
+    const isCheckoutPage = currentUrl.includes("/checkout") || currentUrl.includes("/payment");
+    expect(isCheckoutPage).toBeTruthy();
   });
 
   test(

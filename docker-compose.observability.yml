@@ -1,0 +1,149 @@
+# docker-compose.observability.yml — Digital-Commerce opt-in observability stack
+#
+# ADR-007 AMENDMENT 2026-06-05: hybrid-cloud SSOT, execute NOW
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d
+#   OR standalone (observability-only, app containers must already be running):
+#   docker compose -f docker-compose.observability.yml up -d
+#
+# Registry exemption (ADR-007 §8): prom/*, grafana/*, prometheuscommunity/*, oliver006/*
+#   are semver-pinned observability images with no nnthanh101/* equivalent.
+#   Pinned tags prevent supply-chain drift. Review at each quarterly version reconciliation.
+#
+# Network: joins ec_network (external) — created by docker-compose.yml.
+#   All targets use Docker DNS service names (ec, postgres-exporter, redis-exporter, node-exporter).
+#
+# Secrets hygiene (ADR-007 §9): GF_SECURITY_ADMIN_PASSWORD set via env var only.
+#   Set in shell or .env (gitignored). Default "admin" is blocked here — must be overridden.
+#   Cloud promotion: swap to Secrets Manager / Key Vault.
+
+services:
+
+  # ─── Prometheus ────────────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.55.0
+    container_name: ec_prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+      - "--web.enable-lifecycle"
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - ec_network
+    labels:
+      application: digital-commerce
+      service: observability
+      environment: local
+      managed-by: adlc
+
+  # ─── Grafana ───────────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: ec_grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GF_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_ADMIN_PASSWORD:-Adm1n@Local2026}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/dashboards/commerce.json
+      # Anonymous viewer — local demo + screenshot capture only (ADR-007 §local-demo)
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_NAME=Main Org.
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./observability/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./observability/grafana/dashboards:/etc/grafana/dashboards:ro
+    networks:
+      - ec_network
+    depends_on:
+      - prometheus
+    labels:
+      application: digital-commerce
+      service: observability
+      environment: local
+      managed-by: adlc
+
+  # ─── Postgres exporter ────────────────────────────────────────────────────────
+  # Connects to the ec_postgres container (postgres:5432 inside ec_network)
+  # DSN uses Docker DNS: postgres resolves to the postgres service in ec_network
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: ec_postgres_exporter
+    restart: unless-stopped
+    environment:
+      - DATA_SOURCE_NAME=postgresql://postgres:postgres@postgres:5432/ec-store?sslmode=disable
+    ports:
+      - "9187:9187"
+    networks:
+      - ec_network
+    labels:
+      application: digital-commerce
+      service: postgres
+      environment: local
+      managed-by: adlc
+
+  # ─── Redis exporter ───────────────────────────────────────────────────────────
+  # Connects to the ec_redis container (redis:6379 inside ec_network)
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.62.0
+    container_name: ec_redis_exporter
+    restart: unless-stopped
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    ports:
+      - "9121:9121"
+    networks:
+      - ec_network
+    labels:
+      application: digital-commerce
+      service: redis
+      environment: local
+      managed-by: adlc
+
+  # ─── Node exporter ────────────────────────────────────────────────────────────
+  # Scrapes host metrics (CPU, memory, disk) via /proc and /sys bind mounts
+  # macOS: pid_filesystem not available — node-exporter runs in degraded mode (expected)
+  node-exporter:
+    image: prom/node-exporter:v1.8.0
+    container_name: ec_node_exporter
+    restart: unless-stopped
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    networks:
+      - ec_network
+    labels:
+      application: digital-commerce
+      service: node
+      environment: local
+      managed-by: adlc
+
+volumes:
+  prometheus_data:
+    name: ec_prometheus_data
+  grafana_data:
+    name: ec_grafana_data
+
+networks:
+  ec_network:
+    external: true

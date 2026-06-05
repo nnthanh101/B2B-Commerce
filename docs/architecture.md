@@ -56,12 +56,12 @@ Digital-Commerce/                   (MIT licensed public monorepo)
 │   ├── src/links/                 Module relationships + event handlers
 │   ├── src/index.ts               Public API exports (COMPANY_MODULE, etc.)
 │   └── LICENSE.md                 OceanSoft Commercial v1.0 DRAFT
-├── infra/terraform/               AWS IaC skeleton (validate-only at Phase 1)
-│   ├── providers.tf               AWS provider + FOCUS 1.2+ tags
-│   ├── versions.tf                Terraform ≥1.9 requirement
-│   ├── environments/{dev,staging,prod}/
-│   ├── modules/{network,compute,data,observability}/
-│   └── README.md                  (cites AWS myApplications blog)
+├── infra/terraform/aws/           AWS IaC, local-first via LocalStack (see ADR-015)
+│   ├── modules/{tags,foundation,observability,appregistry,network,compute,data}/
+│   ├── local/                     Tier-2 LocalStack root module (foundation slice, real apply)
+│   ├── dev/                       Real-AWS root module (AppRegistry on; deferred apply)
+│   └── staging/, prod/            LLD / plan-only (deferred v0.3)
+├── docker-compose.observability.yml  Opt-in Grafana/Prometheus + exporters (see ADR-007)
 ├── tests/e2e/                     Playwright golden-path tests
 │   └── b2b-smoke.spec.ts          Login → create company → quote → approval
 ├── docs/                          adlc.oceansoft.io documentation skeleton
@@ -82,8 +82,9 @@ Node.js 22 (Medusa 2.15.5+) • Next.js 15 App Router • PostgreSQL 15 • Redi
 
 1. **Single docker-compose.yml** — Dev Containers reuse same file as bare-metal to eliminate environment drift
 2. **Plugin extracted day-1** — `packages/medusa-plugin-b2b/` enforces clean boundaries; justifies v0.3 split
-3. **Terraform validate-only** — No AWS credentials needed at P1; cost visibility before spend
-4. **No backward compatibility** — Node 22 only; Next.js 15 App Router only; modern stack, no legacy support
+3. **Terraform local-first (LocalStack)** — the AWS foundation slice (S3/Secrets/SQS/SNS) applies *real* on LocalStack Community at $0; same modules promote to AWS by swapping provider endpoints + one flag. FOCUS 1.2+ superset tags + AppRegistry. See [ADR-015](./architecture/ADR-015-local-first-terraform-iac.md).
+4. **Observability = Grafana/Prometheus (hybrid-cloud SSOT), NOW** — vendor-neutral, multi-cloud (AWS+Azure), local-first in docker-compose. CloudWatch rejected as SSOT. See [ADR-007](./architecture/ADR-007-grafana-prometheus-local-first.md).
+5. **No backward compatibility** — Node 22 only; Next.js 15 App Router only; modern stack, no legacy support
 
 ## AWS Deployment Roadmap
 
@@ -93,18 +94,21 @@ Node.js 22 (Medusa 2.15.5+) • Next.js 15 App Router • PostgreSQL 15 • Redi
 - Terraform IaC skeleton (validate-only, no resources)
 - Infracost reporting (cost forecasting)
 
+**Foundation slice (real on LocalStack now, AWS-ready):** S3 (tfstate + media), Secrets Manager, SQS+SNS — applied via `tflocal` per [AWS Prescriptive Guidance: LocalStack + Terraform](https://docs.aws.amazon.com/prescriptive-guidance/latest/patterns/test-aws-infra-localstack-terraform.html). AppRegistry (myApplications) is AWS-only (count-guarded). S3-native state lock (`use_lockfile`, no DynamoDB).
+
 ### Phase 3 (v0.3 Milestone): AWS Provisioning
 
-Real infrastructure planned (see `infra/terraform/README.md` v0.3 checklist):
+Real infrastructure planned (see [ADR-015](./architecture/ADR-015-local-first-terraform-iac.md) + `infra/terraform/aws/README.md`):
 - **ECS Fargate** cluster for Medusa backend + storefront
 - **RDS Postgres** managed database (replaces local postgres)
 - **ElastiCache Redis** for sessions and job queue
 - **Application Load Balancer** (ALB) with Route53 DNS
 - **S3** for media storage (product images, documents)
-- **AWS myApplications** registration for cost aggregation
+- **AWS myApplications** (AppRegistry) registration for cost aggregation
+- **Managed Grafana + Prometheus** (AMP/AMG) federated with Azure Managed Grafana — hybrid-cloud single pane of glass ([ADR-007](./architecture/ADR-007-grafana-prometheus-local-first.md))
 - GitHub Actions OIDC role (no long-lived credentials)
 
-**Reference**: [AWS myApplications for Terraform](https://aws.amazon.com/blogs/mt/getting-started-with-myapplications-for-terraform-managed-applications/)
+**Reference**: [AWS myApplications tagging for Terraform](https://aws.amazon.com/blogs/mt/tag-your-aws-resources-for-cost-allocation-with-aws-myapplications/)
 
 ## Why We Forked (IP Boundary)
 
@@ -118,9 +122,9 @@ This repository was initially scaffolded from Medusa's public `dtc-starter` and 
 
 ## Observability & Security
 
-**Phase 1 (now)**: Container logging via `task logs`; dev-only credentials in `.env`.
+**Phase 1 (now)**: **Grafana + Prometheus local-first** (opt-in `docker-compose.observability.yml`: prometheus, grafana, postgres/redis/node exporters) — the hybrid-cloud, vendor-neutral observability SSOT ([ADR-007](./architecture/ADR-007-grafana-prometheus-local-first.md)). Metrics scrape real local targets (`ec:9000` Medusa producer + infra exporters). Container logging via `task logs`; dev-only credentials in `.env` (Grafana admin password non-default, `.auth` gitignored).
 
-**Phase 3+**: VPC isolation, IAM roles (OIDC), CloudWatch dashboards, X-Ray tracing, WAF rules on ALB.
+**Phase 3+ (hybrid-cloud)**: VPC isolation, IAM roles (OIDC), WAF on ALB. Observability promotes to **managed Grafana/Prometheus** (AWS AMP+AMG federated with Azure Managed Grafana) — *not* CloudWatch (rejected as SSOT for vendor lock-in). LGTM roadmap: Loki (logs) + Tempo (traces) added as later slices.
 
 ---
 

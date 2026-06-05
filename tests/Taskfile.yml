@@ -1,18 +1,29 @@
 version: "3"
 
-# OceanSoft B2B Commerce — Tests domain Taskfile (RQ2 automation harness)
-# Delegated from root Taskfile (includes: test: ./tests/Taskfile.yml)
-# Tiers: 1 static · 3a integration (HTTP, @medusajs/test-utils) · 3b e2e (Playwright) · report
+# =============================================================================
+# Digital-Commerce — Test Suite Menu (HITL-readable)
+# =============================================================================
+# Included from root Taskfile.yml as the "test:" namespace.
+# All tasks here run under: task test:<name>
 #
-# Full graph (needs Docker):   task test:all
-# Step-by-step:
-#   task test:static
-#   task test:db:up && task test:integration && task test:db:down
-#   task test:e2e        # SKIPs if backend :9000 unreachable
-#   task test:report
+# Typical flows:
+#   Full suite (needs Docker):   task test:all
+#   Step-by-step:
+#     task test:preflight        — confirm backend is up
+#     task test:static           — type-check and lint (no Docker needed)
+#     task test:db:up            — start ephemeral test database
+#     task test:integration      — backend HTTP integration tests
+#     task test:e2e              — Playwright browser tests
+#     task test:live             — live API smoke against running backend
+#     task test:visual           — screenshots (browser + terminal)
+#     task test:report           — aggregate results into REPORT.md
+#     task test:db:down          — clean up test database
 #
-# Integration env: DATABASE_URL -> :5433/ec-store-test, REDIS_URL -> :6380 (docker-compose.test.yml)
-#   No-Docker: export DATABASE_URL=postgres://postgres@localhost:5432/ec_store_test REDIS_URL=redis://localhost:6379 ; then task test:db:up:local && task test:integration
+# No-Docker path (host postgres + redis):
+#   export DATABASE_URL=postgres://postgres@localhost:5432/ec_store_test
+#   export REDIS_URL=redis://localhost:6379
+#   task test:db:up:local && task test:integration
+# =============================================================================
 
 vars:
   REPO: "{{.TASKFILE_DIR}}/.."
@@ -24,54 +35,62 @@ vars:
   BACKEND_URL: "http://localhost:9000"
 
 tasks:
+
   default:
-    desc: "List available test targets"
+    desc: "List all available test targets"
     cmds:
       - task --list
 
+  # ---------------------------------------------------------------------------
+  # Pre-flight gate
+  # ---------------------------------------------------------------------------
+
+  preflight:
+    desc: "Confirm the backend API is up before running tests (exits 1 if not)"
+    cmds:
+      - bash {{.REPO}}/scripts/preflight-backend.sh "{{.BACKEND_URL}}"
+
+  # ---------------------------------------------------------------------------
+  # Tier 1 — static checks (no Docker, no database)
+  # ---------------------------------------------------------------------------
+
   static:
-    desc: "Tier 1 — static checks (tsc + lint). Delegates to root lint task."
+    desc: "Tier 1 — type-check and lint all workspaces (no Docker needed)"
     dir: "{{.REPO}}"
     cmds:
       - task lint
 
+  # ---------------------------------------------------------------------------
+  # Database lifecycle (ephemeral test database)
+  # ---------------------------------------------------------------------------
+
   db:up:
-    desc: "Bring up ephemeral test DB (postgres :5433 + redis :6380, tmpfs => idempotent)"
+    desc: "Start ephemeral test database (Postgres :5433 + Redis :6380)"
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} -p {{.PROJECT}} up -d --wait
     status:
       - docker compose -f {{.COMPOSE_FILE}} -p {{.PROJECT}} ps --status running | grep -q postgres-test
 
   db:down:
-    desc: "Tear down ephemeral test DB + volumes (idempotent)"
+    desc: "Remove ephemeral test database and volumes (safe to run anytime)"
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} -p {{.PROJECT}} down -v --remove-orphans || true
 
   db:up:local:
-    desc: "Provision local test DB (PostgreSQL) without Docker — no containers required"
+    desc: "Provision local test database on host Postgres (no Docker required)"
     cmds:
-      - |
-        if ! which psql >/dev/null 2>&1; then
-          echo "PostgreSQL not found. Run: brew install postgresql@15"
-          exit 1
-        fi
-      - createdb ec_store_test 2>/dev/null || true
-      - |
-        export DATABASE_URL=postgres://postgres@localhost:5432/ec_store_test
-        export REDIS_URL=redis://localhost:6379
-        cd {{.REPO}}/apps/backend && npm run db:migrate
-      - |
-        export DATABASE_URL=postgres://postgres@localhost:5432/ec_store_test
-        export REDIS_URL=redis://localhost:6379
-        cd {{.REPO}}/apps/backend && npm run db:seed
+      - bash {{.REPO}}/scripts/db-local-up.sh
+
+  # ---------------------------------------------------------------------------
+  # Tier 3a — integration tests
+  # ---------------------------------------------------------------------------
 
   integration:
-    desc: "Tier 3a — backend HTTP integration tests (requires db:up). Writes jest-integration.json"
+    desc: "Tier 3a — backend HTTP integration tests (requires test:db:up)"
     dir: "{{.REPO}}"
     env:
       DATABASE_URL: "{{.DB_URL}}"
       REDIS_URL: "{{.REDIS}}"
-      # pg-god (medusaIntegrationTestRunner) needs individual DB_* vars to create ephemeral per-suite DBs
       DB_HOST: "localhost"
       DB_PORT: "5433"
       DB_USERNAME: "postgres"
@@ -86,90 +105,60 @@ tasks:
         "$JEST" --no-silent --runInBand --forceExit \
           --json --outputFile={{.REPORT_DIR}}/jest-integration.json
 
-  preflight:backend:
-    desc: "Pre-flight gate: Verify backend :9000 is reachable. Fails (exit 1) if backend down."
-    cmds:
-      - |
-        if ! curl -sf http://localhost:9000/health >/dev/null 2>&1; then
-          echo "ERROR: Backend not reachable at http://localhost:9000 — run 'task up' first"
-          exit 1
-        fi
-        echo "✓ Backend health check passed: http://localhost:9000"
-
-  idem:
-    desc: "DC-IDEM: Idempotency proof — runs test:all twice consecutively. Requires preflight:backend gate."
-    cmds:
-      - task: preflight:backend
-      - task: all
-      - task: all
+  # ---------------------------------------------------------------------------
+  # Tier 3b — E2E + live smoke
+  # ---------------------------------------------------------------------------
 
   e2e:
-    desc: "Tier 3b — Playwright E2E. FAILs (exit 1) if backend :9000 unreachable."
+    desc: "Tier 3b — Playwright browser tests (exits 1 if backend is unreachable)"
     dir: "{{.REPO}}"
     cmds:
-      - |
-        if ! curl -sf {{.BACKEND_URL}}/health >/dev/null 2>&1; then
-          echo "[FAIL] e2e: backend not reachable at {{.BACKEND_URL}} — run 'task up' first"
-          exit 1
-        fi
-        mkdir -p {{.REPORT_DIR}}
-        PLAYWRIGHT_JSON_OUTPUT_NAME={{.REPORT_DIR}}/playwright-json-results.json \
-          npx playwright test tests/e2e/ --reporter=json,html || true
+      - bash scripts/e2e.sh "{{.BACKEND_URL}}" "tmp/Digital-Commerce/test-results" "."
 
   live:
-    desc: "Tier 3a-live — HTTP integration smoke vs the RUNNING backend (no inApp boot). Needs `task up`."
+    desc: "Tier 3a-live — HTTP smoke against the running backend (needs 'task up')"
     dir: "{{.REPO}}"
     vars:
       ADMIN_EMAIL: '{{.ADMIN_EMAIL | default "admin@test.local"}}'
       ADMIN_PW: '{{.ADMIN_PW | default "Test1234!"}}'
     cmds:
-      - |
-        if ! curl -sf {{.BACKEND_URL}}/health >/dev/null 2>&1; then
-          echo "[FAIL] live: backend not reachable at {{.BACKEND_URL}} — run 'task up' first"; exit 1
-        fi
-        # ensure an admin exists (idempotent; ignore 'already exists')
-        docker compose exec -T ec sh -c "cd /server/apps/backend && npx medusa user -e {{.ADMIN_EMAIL}} -p {{.ADMIN_PW}}" 2>/dev/null || true
-        # run the fetch-based live smoke in-container (jest + global fetch; backend at localhost:9000)
-        docker compose exec -T ec sh -c "cd /server/apps/backend && ADMIN_EMAIL={{.ADMIN_EMAIL}} ADMIN_PW={{.ADMIN_PW}} npx jest --runInBand --forceExit integration-tests/live/live-api-smoke.spec.ts"
+      - bash scripts/live-smoke.sh "{{.BACKEND_URL}}" "{{.ADMIN_EMAIL}}" "{{.ADMIN_PW}}"
+
+  # ---------------------------------------------------------------------------
+  # Tier 4 — visual verification
+  # ---------------------------------------------------------------------------
 
   visual:
-    desc: "Tier 4 visual — browser (Playwright screenshots) + terminal (native screencapture, no MCP/extension)"
+    desc: "Tier 4 — browser screenshots (Playwright) + terminal capture (screencapture)"
     dir: "{{.REPO}}"
     cmds:
-      - mkdir -p {{.REPORT_DIR}}/screenshots
-      - |
-        # Browser surface — headless Playwright (works without any extension)
-        if curl -sf {{.BACKEND_URL}}/health >/dev/null 2>&1; then
-          TEST_ADMIN_EMAIL=admin@test.local TEST_ADMIN_PASSWORD=Test1234! \
-            npx playwright test tests/e2e/screenshots.spec.ts --project=chromium || true
-        else
-          echo "[SKIP] visual-browser: backend not reachable — run 'task up'"
-        fi
-      - |
-        # Terminal surface — native macOS screencapture of the iTerm2 window (proven method; no MCP, no approval prompt once Screen Recording is granted)
-        if command -v screencapture >/dev/null 2>&1; then
-          WID=$(bash .claude/hooks/scripts/capture-terminal-gif.sh --get-window-id iTerm 2>/dev/null || true)
-          if [ -n "$WID" ]; then
-            screencapture -l "$WID" -x -o "{{.REPORT_DIR}}/screenshots/VV-terminal-iterm2.png" && \
-              echo "terminal capture: $(stat -f%z {{.REPORT_DIR}}/screenshots/VV-terminal-iterm2.png) bytes"
-          else
-            screencapture -x -o "{{.REPORT_DIR}}/screenshots/VV-terminal-fullscreen.png" && echo "fullscreen fallback captured"
-          fi
-        else
-          echo "[SKIP] visual-terminal: screencapture not available (non-macOS)"
-        fi
-      - ls -la {{.REPORT_DIR}}/screenshots/VV-*.png 2>/dev/null || true
+      - bash scripts/visual-verify.sh "{{.BACKEND_URL}}" "tmp/Digital-Commerce/test-results"
+
+  # ---------------------------------------------------------------------------
+  # Reporting + idempotency
+  # ---------------------------------------------------------------------------
 
   report:
-    desc: "Aggregate jest + Playwright + static JSON/logs into REPORT.md + REPORT.html"
+    desc: "Aggregate all test results into REPORT.md and REPORT.html"
     cmds:
       - mkdir -p {{.REPORT_DIR}}
       - node {{.TASKFILE_DIR}}/report/aggregate-report.mjs {{.REPORT_DIR}}
 
-  all:
-    desc: "Full graph: preflight:backend -> static -> db:up -> integration -> e2e -> live -> visual -> report -> db:down"
+  idem:
+    desc: "Idempotency proof — runs the full test suite twice back-to-back (needs backend up)"
     cmds:
-      - task: preflight:backend
+      - task: preflight
+      - task: all
+      - task: all
+
+  # ---------------------------------------------------------------------------
+  # Full graph
+  # ---------------------------------------------------------------------------
+
+  all:
+    desc: "Full suite: preflight → static → db:up → integration → e2e → live → visual → report → db:down"
+    cmds:
+      - task: preflight
       - task: static
       - task: db:up
       - task: integration

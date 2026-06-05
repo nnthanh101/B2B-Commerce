@@ -2,7 +2,7 @@
 #
 # CA condition grafana-provisioning-files-required:
 #   This file tells Grafana to auto-load all JSON files from /etc/grafana/dashboards
-#   on startup. Without this file, medusa.json requires manual import via UI.
+#   on startup. Without this file, commerce.json requires manual import via UI.
 #
 # Volume mount in docker-compose.observability.yml:
 #   ./observability/grafana/dashboards:/etc/grafana/dashboards:ro

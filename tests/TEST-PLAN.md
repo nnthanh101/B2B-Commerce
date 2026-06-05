@@ -69,7 +69,7 @@ Integration (Tier 2) tests not yet provisioned (v0.3 target). Tier 3a (`task tes
 
 3. **E2E Test Fixtures** — Live under `tests/e2e/` only: `config.ts` (SSOT), `fixtures/seed.ts`, `fixtures/auth.ts`, `.env.test.example`. Medusa convention: `apps/backend/integration-tests/` remains unchanged.
 
-4. **Seed Images** — Local-first via `SEED_IMAGE_BASE_URL` / `TEST_IMAGE_BASE_URL` env vars (default: `/static`). Never hardcode remote bucket URLs.
+4. **Seed Images** — **TEST data, local-first source**: Sample product images (camera-front.png, headphone-front.png, keyboard-front.png, laptop-front.png, mouse-top.png, phone-front.png, screen-front.png, speaker-top.png) are committed to `tests/fixtures/seed-images/` as the CANONICAL local-first copy. The apps/backend/static/ directory holds GITIGNORED runtime copies, materialized at `task seed` time by copying from `tests/fixtures/seed-images/`. The electronics catalog (laptop/phone/camera/…) is SAMPLE data, NOT the real oceansoft.io production catalogue — real digital catalog deferred to PO+CA coordination stage. Reference via `SEED_IMAGE_BASE_URL` / `TEST_IMAGE_BASE_URL` env vars (default: `/static`). Never hardcode remote bucket URLs.
 
 ## Definition of Done per Tier
 

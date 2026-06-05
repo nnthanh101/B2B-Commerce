@@ -23,6 +23,7 @@
     "test:integration:modules": "TEST_TYPE=integration:modules NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit"
   },
   "dependencies": {
+    "prom-client": "^15.1.3",
     "@hookform/resolvers": "3.4.2",
     "@medusajs/admin-sdk": "2.15.5",
     "@medusajs/admin-shared": "2.15.5",
