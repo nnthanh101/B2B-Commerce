@@ -12,12 +12,15 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    # Container-first: nnthanh101/terraform:2.6.0 bundles terraform, tflint,
+    # Container-first: nnthanh101/terraform:slim bundles terraform, tflint,
     # checkov, trivy, shellcheck — no host-side tool installs.
     # Reference: ADLC docker-image-strategy (nnthanh101/* images only).
     container:
-      image: nnthanh101/terraform:2.6.0
+      image: nnthanh101/terraform:slim
       options: --user 0
+    strategy:
+      matrix:
+        env: [local, dev]
     steps:
       - uses: actions/checkout@v4
 
@@ -25,11 +28,11 @@ jobs:
         run: terraform fmt -check -recursive infra/terraform/
 
       - name: terraform init (backend disabled)
-        working-directory: infra/terraform/environments/dev
+        working-directory: infra/terraform/aws/${{ matrix.env }}
         run: terraform init -backend=false
 
       - name: terraform validate
-        working-directory: infra/terraform/environments/dev
+        working-directory: infra/terraform/aws/${{ matrix.env }}
         run: terraform validate -json
 
       # tflint: non-blocking at P1 (|| true) — rules will tighten at v0.3
@@ -41,6 +44,27 @@ jobs:
       # Remove || true and add --soft-fail-on LOW,MEDIUM when going to production.
       - name: checkov
         run: checkov -d infra/terraform/ --quiet || true
+
+  test:
+    runs-on: ubuntu-latest
+    needs: validate
+    container:
+      image: nnthanh101/terraform:slim
+      options: --user 0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: terraform test — foundation module
+        working-directory: infra/terraform/aws/modules/foundation
+        run: terraform init -backend=false && terraform test
+
+      - name: terraform test — tags module
+        working-directory: infra/terraform/aws/modules/tags
+        run: terraform init -backend=false && terraform test
+
+      - name: terraform test — appregistry module
+        working-directory: infra/terraform/aws/modules/appregistry
+        run: terraform init -backend=false && terraform test
 
   infracost:
     runs-on: ubuntu-latest
@@ -56,7 +80,7 @@ jobs:
         env:
           INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
         with:
-          args: breakdown --path infra/terraform/environments/dev --format json --out-file /tmp/infracost.json
+          args: breakdown --path infra/terraform/aws/dev --format json --out-file /tmp/infracost.json
 
       - uses: actions/upload-artifact@v4
         with:

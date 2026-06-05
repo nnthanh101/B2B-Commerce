@@ -52,15 +52,8 @@ tasks:
   # Data management
   # ---------------------------------------------------------------------------
 
-  seed:images:
-    desc: "Copy product images into the backend static folder (local, no network required)"
-    cmds:
-      - mkdir -p apps/backend/static
-      - cp -f tests/fixtures/seed-images/*.png apps/backend/static/ 2>/dev/null || true
-
   seed:
     desc: "Load the database with products, users, and categories"
-    deps: [seed:images]
     cmds:
       - docker compose exec ec sh -c "cd /server/apps/backend && pnpm seed"
 
@@ -110,6 +103,25 @@ tasks:
         nnthanh101/terraform:slim
         sh -c "terraform init -backend=false && terraform validate"
 
+  tf:test:
+    desc: "Run native terraform test for all modules (foundation, tags, appregistry)"
+    cmds:
+      - docker run --rm
+        -v "{{.ROOT_DIR}}/infra/terraform/aws:/workspace"
+        -w /workspace/modules/foundation
+        nnthanh101/terraform:slim
+        sh -c "terraform init -backend=false && terraform test"
+      - docker run --rm
+        -v "{{.ROOT_DIR}}/infra/terraform/aws:/workspace"
+        -w /workspace/modules/tags
+        nnthanh101/terraform:slim
+        sh -c "terraform init -backend=false && terraform test"
+      - docker run --rm
+        -v "{{.ROOT_DIR}}/infra/terraform/aws:/workspace"
+        -w /workspace/modules/appregistry
+        nnthanh101/terraform:slim
+        sh -c "terraform init -backend=false && terraform test"
+
   tf:cost:
     desc: "Estimate monthly cloud cost for ENV (default: local)"
     vars:
@@ -133,8 +145,26 @@ tasks:
     cmds:
       - bash scripts/localstack-up.sh
 
+  tf:bootstrap:local:
+    desc: "Bootstrap: create the Terraform state S3 bucket in LocalStack (genesis step)"
+    cmds:
+      - |
+        docker run --rm \
+          --network digital-commerce_ls_net \
+          -v "{{.ROOT_DIR}}/infra/terraform/aws:/workspace" \
+          -w /workspace/bootstrap \
+          -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION}" \
+          -e AWS_ENDPOINT_URL=http://localstack:4566 \
+          -e AWS_ACCESS_KEY_ID=test \
+          -e AWS_SECRET_ACCESS_KEY=test \
+          nnthanh101/terraform:slim \
+          sh -c "terraform init -reconfigure && terraform apply -auto-approve -var='environment=sandbox'"
+      - |
+        echo "--- bootstrap bucket verification ---"
+        docker exec -i dc-localstack awslocal s3 ls | grep tfstate
+
   tf:local:provision:
-    desc: "Apply Terraform to LocalStack — provisions S3, SQS, SNS, Secrets"
+    desc: "Provision workload resources to LocalStack (bootstrap bucket must exist first)"
     cmds:
       - |
         docker run --rm \
@@ -142,13 +172,14 @@ tasks:
           -v "{{.ROOT_DIR}}/infra/terraform/aws:/workspace" \
           -w /workspace/local \
           -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION}" \
+          -e AWS_ENDPOINT_URL=http://localstack:4566 \
           -e AWS_ACCESS_KEY_ID=test \
           -e AWS_SECRET_ACCESS_KEY=test \
           nnthanh101/terraform:slim \
-          sh -c "terraform init -reconfigure && terraform apply -auto-approve"
+          sh -c "terraform init -reconfigure -backend-config=backend-local.hcl && terraform apply -auto-approve"
 
   tf:local:assert:
-    desc: "Run 8 resource checks against LocalStack and write evidence file"
+    desc: "Run resource checks against LocalStack — proves bootstrap bucket + state object + workload resources"
     cmds:
       - bash scripts/localstack-assert.sh "{{.ROOT_DIR}}"
 

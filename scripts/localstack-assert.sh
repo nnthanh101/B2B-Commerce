@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # scripts/localstack-assert.sh
-# Run 8 awslocal assertions against LocalStack (Tier-2 evidence).
+# Run resource checks against LocalStack (Tier-2 evidence).
+# ADR-015 D3 amendment (2026-06-05): Assert 1 now proves bootstrap created the state bucket;
+#   Assert 2 proves the workload state object physically landed in that bucket.
+#   Combined: these prove the full genesis flow (bootstrap → S3 backend → workload apply).
 # Writes evidence to tmp/Digital-Commerce/test-results/tier2-localstack-YYYY-MM-DD.txt
 #
 # Usage: bash scripts/localstack-assert.sh [ROOT_DIR]
@@ -30,9 +33,15 @@ run_assert() {
 
 LS="docker exec -i dc-localstack awslocal"
 
-# Assert 1: tfstate bucket exists
-run_assert "s3:tfstate-bucket-exists" \
-  "${LS} s3api head-bucket --bucket digital-commerce-local-tfstate"
+# Assert 1: bootstrap created the tfstate bucket (genesis proof)
+# Bucket name = digital-commerce-sandbox-tfstate (environment=sandbox per local/variables.tf)
+run_assert "s3:bootstrap-created-tfstate-bucket" \
+  "${LS} s3api head-bucket --bucket digital-commerce-sandbox-tfstate"
+
+# Assert 2: workload state object exists in the bootstrap bucket (remote-state round-trip proof)
+# Key = digital-commerce/local/terraform.tfstate (from backend-local.hcl)
+run_assert "s3:workload-state-object-in-bucket" \
+  "${LS} s3api head-object --bucket digital-commerce-sandbox-tfstate --key digital-commerce/local/terraform.tfstate"
 
 # Assert 2: media bucket exists
 run_assert "s3:media-bucket-exists" \

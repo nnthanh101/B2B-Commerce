@@ -43,6 +43,7 @@ services:
       - .:/server
       - /server/node_modules
       - /server/apps/backend/node_modules
+      - ./tests/fixtures/seed-images:/server/apps/backend/static:ro
     networks:
       - ec_network
 

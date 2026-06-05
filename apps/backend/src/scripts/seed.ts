@@ -369,7 +369,7 @@ export default async function seed({
             status: ProductStatus.PUBLISHED,
             images: [
               {
-                url: `${IMG}/laptop-front.png`,
+                url: `${IMG}/laptop.png`,
               },
             ],
             options: [
@@ -408,7 +408,7 @@ export default async function seed({
             status: ProductStatus.PUBLISHED,
             images: [
               {
-                url: `${IMG}/camera-front.png`,
+                url: `${IMG}/camera.png`,
               },
             ],
             options: [{ title: "Color", values: ["Black", "White"] }],
@@ -446,7 +446,7 @@ export default async function seed({
             status: ProductStatus.PUBLISHED,
             images: [
               {
-                url: `${IMG}/phone-front.png`,
+                url: `${IMG}/phone.png`,
               },
             ],
             options: [
@@ -487,7 +487,7 @@ export default async function seed({
             status: ProductStatus.PUBLISHED,
             images: [
               {
-                url: `${IMG}/screen-front.png`,
+                url: `${IMG}/screen.png`,
               },
             ],
             options: [{ title: "Color", values: ["White", "Black"] }],
@@ -525,7 +525,7 @@ export default async function seed({
             status: ProductStatus.PUBLISHED,
             images: [
               {
-                url: `${IMG}/headphone-front.png`,
+                url: `${IMG}/headphone.png`,
               },
             ],
             options: [{ title: "Color", values: ["Black", "White"] }],
@@ -562,7 +562,7 @@ export default async function seed({
             status: ProductStatus.PUBLISHED,
             images: [
               {
-                url: `${IMG}/keyboard-front.png`,
+                url: `${IMG}/keyboard.png`,
               },
             ],
             options: [{ title: "Color", values: ["Black", "White"] }],
@@ -599,7 +599,7 @@ export default async function seed({
             status: ProductStatus.PUBLISHED,
             images: [
               {
-                url: `${IMG}/mouse-top.png`,
+                url: `${IMG}/mouse.png`,
               },
             ],
             options: [{ title: "Color", values: ["Black", "White"] }],
@@ -636,7 +636,7 @@ export default async function seed({
             status: ProductStatus.PUBLISHED,
             images: [
               {
-                url: `${IMG}/speaker-top.png`,
+                url: `${IMG}/speaker.png`,
               },
             ],
             options: [{ title: "Color", values: ["Black", "White"] }],

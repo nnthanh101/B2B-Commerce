@@ -41,7 +41,7 @@ If any check fails → see [Troubleshooting](#troubleshooting-top-5) below.
 ### Step 1 — Provision the demo company (admin/sales-manager persona, 2 min)
 
 1. Open **http://localhost:9000/app** → login with seeded admin (`admin@oceansoft.io` / `admin`).
-2. Navigate to `/admin/companies` → click **Add company**.
+2. Navigate to `/app/companies` → click **Add company**.
 3. Fields: name `Test Corp`, industry `Energy`, country `AU`.
 4. Add employee: email `buyer@testcorp.example`, role `buyer-employee`, spending limit `10000`.
 
@@ -49,10 +49,10 @@ You are now the **admin** who just onboarded a customer company with a regulated
 
 ### Step 2 — Submit a quote request (buyer-employee persona, 3 min)
 
-1. Open **http://localhost:8000/account/login** in a fresh incognito window → login as `buyer@testcorp.example`.
+1. Open **http://localhost:8000/gb/account** in a fresh incognito window → login as `buyer@testcorp.example` (the login form renders at `/account`, not `/account/login`).
 2. Browse the storefront, add 2–3 SKUs to cart (total under 10000 AUD to stay within spending cap).
 3. Click **Request Quote** on the cart page.
-4. Confirm the quote appears at `/account/quotes` with status `pending_approval`.
+4. Confirm the quote appears at `/gb/account/quotes` with status `pending_approval`.
 
 You have now executed the **buyer-employee** half of the wedge. The cart never converted to an order; it was routed to approval per Digital-Commerce's "every cart enters an approval workflow by default" design.
 
@@ -65,7 +65,7 @@ You have now executed the **buyer-employee** half of the wedge. The cart never c
 
 ### Step 4 — Verify the PO appeared on the buyer side (buyer-employee persona, 1 min)
 
-1. Return to the buyer storefront window at **http://localhost:8000/account/orders**.
+1. Return to the buyer storefront window at **http://localhost:8000/gb/account/orders**.
 2. New order is visible with an auto-generated PO number derived from the approved quote.
 
 ### Demo passes if

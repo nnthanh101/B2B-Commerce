@@ -1,3 +1,4 @@
+import path from "node:path";
 import { test, expect } from "./fixtures/auth";
 import {
   seedCompany,
@@ -5,6 +6,7 @@ import {
   seedProduct,
   seedApprovalSettings,
 } from "./fixtures/seed";
+import { SCREENSHOTS_DIR } from "./config";
 
 const STOREFRONT_URL = process.env.STOREFRONT_URL || "http://localhost:8000";
 const TEST_REGION_COUNTRY = process.env.TEST_REGION_COUNTRY || "dk";
@@ -58,7 +60,7 @@ test.describe("Admin/sales-manager persona — B2B company & approval workflow",
     await expect(companiesHeader).toBeVisible(); // Just verify page loaded
 
     await adminPage.screenshot({
-      path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/step-02-admin-companies.png",
+      path: path.join(SCREENSHOTS_DIR, "step-02-admin-companies.png"),
     });
   });
 
@@ -78,7 +80,7 @@ test.describe("Admin/sales-manager persona — B2B company & approval workflow",
     await expect(companyRow).toBeVisible();
 
     await adminPage.screenshot({
-      path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/step-03-company-created.png",
+      path: path.join(SCREENSHOTS_DIR, "step-03-company-created.png"),
     });
   });
 
@@ -102,7 +104,7 @@ test.describe("Admin/sales-manager persona — B2B company & approval workflow",
     }
 
     await adminPage.screenshot({
-      path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/step-04-approval-settings.png",
+      path: path.join(SCREENSHOTS_DIR, "step-04-approval-settings.png"),
     });
   });
 
@@ -116,7 +118,7 @@ test.describe("Admin/sales-manager persona — B2B company & approval workflow",
 
       // Screenshot
       await adminPage.screenshot({
-        path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/step-08-admin-approval-requests.png",
+        path: path.join(SCREENSHOTS_DIR, "step-08-admin-approval-requests.png"),
       });
 
       // Look for pending approval requests (multiple selector variants)
@@ -152,7 +154,7 @@ test.describe("Admin/sales-manager persona — B2B company & approval workflow",
 
       // Screenshot before approval
       await adminPage.screenshot({
-        path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/step-09-admin-approve-action.png",
+        path: path.join(SCREENSHOTS_DIR, "step-09-admin-approve-action.png"),
       });
 
       if (btnVisible) {
@@ -162,7 +164,7 @@ test.describe("Admin/sales-manager persona — B2B company & approval workflow",
 
         // Screenshot after approval
         await adminPage.screenshot({
-          path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/step-09b-after-approval.png",
+          path: path.join(SCREENSHOTS_DIR, "step-09b-after-approval.png"),
         });
       } else {
         console.log("⚠️  Approve button not found — approval workflow may not be fully implemented");
@@ -192,7 +194,7 @@ test.describe("B2B buyer-employee persona — Product browse, cart, & approval r
 
       // Screenshot
       await buyerPage.screenshot({
-        path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/step-05-buyer-company-card.png",
+        path: path.join(SCREENSHOTS_DIR, "step-05-buyer-company-card.png"),
       });
 
       // If company card not found, this is a storefront implementation gap — but test still documents the state
@@ -228,7 +230,7 @@ test.describe("B2B buyer-employee persona — Product browse, cart, & approval r
 
       // Screenshot
       await buyerPage.screenshot({
-        path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/step-06-product-add-to-cart.png",
+        path: path.join(SCREENSHOTS_DIR, "step-06-product-add-to-cart.png"),
       });
 
       // Real assertion: button exists and is enabled
@@ -249,7 +251,7 @@ test.describe("B2B buyer-employee persona — Product browse, cart, & approval r
 
       // Screenshot: Cart page
       await buyerPage.screenshot({
-        path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/step-07a-cart-page.png",
+        path: path.join(SCREENSHOTS_DIR, "step-07a-cart-page.png"),
       });
 
       // Look for checkout button
@@ -270,7 +272,7 @@ test.describe("B2B buyer-employee persona — Product browse, cart, & approval r
 
       // Screenshot: Checkout page
       await buyerPage.screenshot({
-        path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/step-07b-checkout-page.png",
+        path: path.join(SCREENSHOTS_DIR, "step-07b-checkout-page.png"),
       });
 
       // At minimum, we should see one of the approval status messages
@@ -295,7 +297,7 @@ test.describe("B2B buyer-employee persona — Product browse, cart, & approval r
 
       // Screenshot: Orders page
       await buyerPage.screenshot({
-        path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/step-10-order-completion.png",
+        path: path.join(SCREENSHOTS_DIR, "step-10-order-completion.png"),
       });
 
       // Real assertion from source-verify (order-completed-template.tsx L28-29):
@@ -382,7 +384,7 @@ test.describe("B2B buyer-employee persona — Cart to Quote request", () => {
 
     // Screenshot 1: Cart page (before request quote)
     await buyerPage.screenshot({
-      path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/step-11a-cart-page.png",
+      path: path.join(SCREENSHOTS_DIR, "step-11a-cart-page.png"),
     });
 
     // Step 11c: Click "Request Quote" button
@@ -402,7 +404,7 @@ test.describe("B2B buyer-employee persona — Cart to Quote request", () => {
 
     // Screenshot 2: After clicking Request Quote (modal should be open)
     await buyerPage.screenshot({
-      path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/step-11b-quote-modal-opened.png",
+      path: path.join(SCREENSHOTS_DIR, "step-11b-quote-modal-opened.png"),
     });
 
     // Real assertion: Modal must be visible
@@ -424,7 +426,7 @@ test.describe("B2B buyer-employee persona — Cart to Quote request", () => {
 
     // Screenshot 3: Final state
     await buyerPage.screenshot({
-      path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/step-11c-quote-submitted-final.png",
+      path: path.join(SCREENSHOTS_DIR, "step-11c-quote-submitted-final.png"),
     });
 
     // Real assertion: After submission, we should be on the quote details page
@@ -476,7 +478,7 @@ test.describe("B2B buyer-employee persona — Quote details page", () => {
     // Screenshot 1: Quotes list
     try {
       await buyerPage.screenshot({
-        path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/step-12a-quotes-list.png",
+        path: path.join(SCREENSHOTS_DIR, "step-12a-quotes-list.png"),
       });
     } catch {
       // Page may be closed — skip gracefully
@@ -512,7 +514,7 @@ test.describe("B2B buyer-employee persona — Quote details page", () => {
     // Screenshot 2: Quote detail page
     try {
       await buyerPage.screenshot({
-        path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/step-12b-quote-detail.png",
+        path: path.join(SCREENSHOTS_DIR, "step-12b-quote-detail.png"),
       });
     } catch {
       test.skip(true, "Page closed while trying to screenshot quote detail");
@@ -582,7 +584,7 @@ test.describe("B2B quote fulfillment — buyer accepts quote, converts to order"
 
     // Step 13c: Verify quote detail loads
     await buyerPage.screenshot({
-      path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/step-13a-quote-detail-for-accept.png",
+      path: path.join(SCREENSHOTS_DIR, "step-13a-quote-detail-for-accept.png"),
     });
 
     // Step 13d: Look for "Accept Quote" button (visible if status == "pending_customer")
@@ -628,7 +630,7 @@ test.describe("B2B quote fulfillment — buyer accepts quote, converts to order"
 
       // Screenshot 2: After acceptance
       await buyerPage.screenshot({
-        path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/step-13b-quote-accepted.png",
+        path: path.join(SCREENSHOTS_DIR, "step-13b-quote-accepted.png"),
       });
 
       // Step 13f: After acceptance, "View Order" button should appear
@@ -650,7 +652,7 @@ test.describe("B2B quote fulfillment — buyer accepts quote, converts to order"
     expect(isOrderPage).toBeTruthy();
 
     await buyerPage.screenshot({
-      path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/step-13c-order-detail-page.png",
+      path: path.join(SCREENSHOTS_DIR, "step-13c-order-detail-page.png"),
     });
 
     // Step 13h: Look for order confirmation (either we're on order detail, or
@@ -672,7 +674,7 @@ test.describe("B2B quote fulfillment — buyer accepts quote, converts to order"
 
     // Final screenshot
     await buyerPage.screenshot({
-      path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/step-13d-order-conversion-complete.png",
+      path: path.join(SCREENSHOTS_DIR, "step-13d-order-conversion-complete.png"),
     });
   });
 });

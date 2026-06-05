@@ -75,7 +75,14 @@ export const test = base.extend<{
   },
 
   buyerContext: async ({ browser }, use) => {
-    const context = await browser.newContext();
+    // Enable video recording for buyer context (1280x720 resolution)
+    const context = await browser.newContext({
+      recordVideo: {
+        dir: "./tmp/Digital-Commerce/test-results/videos",
+        size: { width: 1280, height: 720 },
+      },
+      viewport: { width: 1280, height: 720 },
+    });
     const page = await context.newPage();
 
     // Resolve publishable key from config (backend)

@@ -1,8 +1,0 @@
-# Copy to terraform.tfvars and adjust. Secrets should come from the environment
-# (TF_VAR_postgres_password=...) rather than being committed.
-project       = "digital-commerce"
-postgres_db   = "digital_commerce"
-postgres_user = "medusa"
-postgres_port = 5432
-redis_port    = 6379
-# postgres_password is intentionally omitted — set TF_VAR_postgres_password instead.

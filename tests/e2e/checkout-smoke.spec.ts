@@ -1,5 +1,7 @@
+import path from "node:path";
 import { test, expect } from "./fixtures/auth";
 import { seedProduct } from "./fixtures/seed";
+import { SCREENSHOTS_DIR } from "./config";
 
 /**
  * checkout-smoke.spec.ts — Tier 3b E2E (RQ2/RQ3)
@@ -16,7 +18,6 @@ import { seedProduct } from "./fixtures/seed";
 
 const STOREFRONT_URL = process.env.STOREFRONT_URL || "http://localhost:8000";
 const CC = process.env.TEST_REGION_COUNTRY || "dk";
-const SHOT = "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots";
 
 test.describe("Buyer-employee — checkout smoke (browse → cart → checkout → order)", () => {
   test("CS-1: storefront home + product list reachable", async ({ buyerPage }) => {
@@ -32,7 +33,7 @@ test.describe("Buyer-employee — checkout smoke (browse → cart → checkout �
     const isOnStore = storeUrl.includes(`${CC}/store`) || storeUrl.includes(CC);
     expect(isOnStore).toBeTruthy();
 
-    await buyerPage.screenshot({ path: `${SHOT}/cs-1-store.png` });
+    await buyerPage.screenshot({ path: path.join(SCREENSHOTS_DIR, "cs-1-store.png") });
   });
 
   test("CS-2: add product to cart", async ({ buyerPage }) => {
@@ -55,7 +56,7 @@ test.describe("Buyer-employee — checkout smoke (browse → cart → checkout �
     await buyerPage.waitForLoadState("networkidle");
     console.log("✓ Product added to cart");
 
-    await buyerPage.screenshot({ path: `${SHOT}/cs-2-add-to-cart.png` });
+    await buyerPage.screenshot({ path: path.join(SCREENSHOTS_DIR, "cs-2-add-to-cart.png") });
   });
 
   test("CS-3: proceed to checkout", async ({ buyerPage }) => {
@@ -75,7 +76,7 @@ test.describe("Buyer-employee — checkout smoke (browse → cart → checkout �
     await buyerPage.waitForLoadState("networkidle");
     console.log("✓ Clicked checkout button");
 
-    await buyerPage.screenshot({ path: `${SHOT}/cs-3-checkout.png` });
+    await buyerPage.screenshot({ path: path.join(SCREENSHOTS_DIR, "cs-3-checkout.png") });
 
     // Real assertion: We should be on checkout or payment page
     const currentUrl = buyerPage.url();
@@ -93,7 +94,7 @@ test.describe("Buyer-employee — checkout smoke (browse → cart → checkout �
       });
 
       // Screenshot the checkout page
-      await buyerPage.screenshot({ path: `${SHOT}/cs-4-checkout-stripe.png` });
+      await buyerPage.screenshot({ path: path.join(SCREENSHOTS_DIR, "cs-4-checkout-stripe.png") });
 
       // Verify page loads (may show payment form or may require cart state)
       const pageContent = await buyerPage.content();

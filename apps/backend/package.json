@@ -18,6 +18,7 @@
     "start": "medusa start",
     "dev": "medusa develop",
     "seed": "medusa exec ./src/scripts/seed.ts",
+    "seed:demo-b2b": "medusa exec ./src/scripts/seed-demo-b2b.ts",
     "clean": "rm -rf .medusa/server .medusa/admin node_modules",
     "test:integration:http": "TEST_TYPE=integration:http NODE_OPTIONS=--experimental-vm-modules jest --silent=false --runInBand --forceExit",
     "test:integration:modules": "TEST_TYPE=integration:modules NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit"

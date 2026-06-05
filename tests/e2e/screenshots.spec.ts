@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import * as path from 'path';
 import * as fs from 'fs';
+import { SCREENSHOTS_DIR } from './config';
 
 /**
  * Visual Verification Screenshot Suite — B2B Journeys
@@ -21,8 +22,7 @@ const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD || 'Test1234!';
 const REGION = process.env.TEST_REGION_COUNTRY || 'dk';
 
 // Absolute path — avoids relative traversal at runtime
-const SCREENSHOT_DIR = process.env.SCREENSHOT_OUTPUT_DIR ||
-  '/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/test-results/screenshots';
+const SCREENSHOT_DIR = process.env.SCREENSHOT_OUTPUT_DIR || SCREENSHOTS_DIR;
 
 function screenshotPath(filename: string): string {
   fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });

@@ -11,13 +11,18 @@
 #   500 "A valid publishable key is required to proceed with the request"
 cd /server/apps/storefront
 
-# Pre-flight: warn if publishable key is still the placeholder or unset
+# Pre-flight: hard-fail if publishable key is placeholder/unset (closes DC-050 regression).
+# A placeholder or empty key is ALWAYS wrong at startup — the backend rejects it with 500.
+# Fix: run scripts/config-doctor.sh --fix, then docker compose restart storefront.
 _key="${NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY:-}"
-if [ -z "$_key" ] || [ "$_key" = "pk_test" ]; then
-  echo "WARNING: NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY is '${_key:-<unset>}'."
-  echo "  The storefront will return 500 until the backend seed runs and this"
-  echo "  container is restarted (docker compose restart storefront)."
+if [ -z "$_key" ] || echo "$_key" | grep -qE '^(pk_test|pk_REPLACE)'; then
+  echo "ERROR: NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY is invalid: '${_key:-<unset>}'" >&2
+  echo "  Storefront cannot start with a placeholder or empty key." >&2
+  echo "  Run: ./scripts/config-doctor.sh --fix" >&2
+  echo "  Then: docker compose restart storefront" >&2
+  exit 1
 fi
+echo "Pre-flight OK: publishable key is set (${_key:0:12}...)."
 unset _key
 
 echo "Starting Next.js storefront development server..."

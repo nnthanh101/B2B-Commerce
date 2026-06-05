@@ -148,8 +148,22 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // If the first path segment looks like a country code but is NOT in the regionMap
+  // (e.g. a stale /us tab after the region was changed to /gb), strip that segment
+  // from the redirect path so we don't produce /gb/us → 404.
+  const pathSegments = request.nextUrl.pathname.split("/").filter(Boolean)
+  const firstSegment = pathSegments[0]?.toLowerCase() ?? ""
+  const firstSegmentIsUnknownCountryCode =
+    firstSegment.length === 2 &&
+    firstSegment !== countryCode &&
+    !regionMap.has(firstSegment)
+
+  const remainderPath = firstSegmentIsUnknownCountryCode
+    ? "/" + pathSegments.slice(1).join("/")
+    : request.nextUrl.pathname
+
   const redirectPath =
-    request.nextUrl.pathname === "/" ? "" : request.nextUrl.pathname
+    request.nextUrl.pathname === "/" ? "" : remainderPath
 
   const queryString = request.nextUrl.search ? request.nextUrl.search : ""
 

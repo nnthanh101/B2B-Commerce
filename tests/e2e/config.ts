@@ -18,6 +18,8 @@
  * No secrets (passwords) are hardcoded. For CI/production, provide via env vars.
  */
 
+import path from "node:path";
+
 /**
  * Load .env.test if it exists (for local dev convenience).
  * In CI, rely on env var injection instead.
@@ -32,6 +34,34 @@ function loadDotEnvTest() {
 }
 
 loadDotEnvTest();
+
+/**
+ * Artifact directories (SSOT — Single Source of Truth)
+ * All test artifacts (screenshots, videos, HTML reports) derive from these paths.
+ * Resolved relative to repo root via __dirname (portable across machines/CI).
+ *
+ * Usage:
+ * - playwright.config.ts imports these for reporter/screenshot/video output
+ * - Test specs import SCREENSHOTS_DIR for individual screenshot saves
+ * - Env vars allow CI override (e.g., PLAYWRIGHT_TEST_RESULTS=/tmp/ci-results)
+ */
+const REPO_ROOT = path.resolve(__dirname, "../..");
+
+export const TEST_RESULTS_DIR =
+  process.env.PLAYWRIGHT_TEST_RESULTS ||
+  path.join(REPO_ROOT, "tmp/Digital-Commerce/test-results");
+
+export const SCREENSHOTS_DIR =
+  process.env.PLAYWRIGHT_SCREENSHOTS ||
+  path.join(REPO_ROOT, "tmp/Digital-Commerce/screenshots");
+
+export const HTML_REPORT_DIR =
+  process.env.PLAYWRIGHT_HTML_REPORT ||
+  path.join(TEST_RESULTS_DIR, "playwright-report");
+
+export const VIDEOS_DIR =
+  process.env.PLAYWRIGHT_VIDEOS ||
+  path.join(TEST_RESULTS_DIR, "videos");
 
 /**
  * Backend URL (Medusa backend + admin API)
@@ -173,7 +203,7 @@ export async function configDoctor() {
       name: "Storefront reachable",
       check: async () => {
         const res = await fetch(STOREFRONT_URL, {
-          signal: AbortSignal.timeout(15000),
+          signal: AbortSignal.timeout(30000),
         });
         if (res.status >= 500) {
           throw new Error(`status ${res.status} — server error`);
@@ -245,6 +275,10 @@ export const config = {
   TEST_REGION_COUNTRY,
   QUOTE_FEATURE_ENABLED,
   TEST_IMAGE_BASE_URL,
+  TEST_RESULTS_DIR,
+  SCREENSHOTS_DIR,
+  HTML_REPORT_DIR,
+  VIDEOS_DIR,
   getPublishableKey,
   configDoctor,
 };

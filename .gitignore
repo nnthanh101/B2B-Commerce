@@ -42,12 +42,37 @@ yarn-error.log*
 coverage/
 .nyc_output/
 
-# Terraform (any depth; covers infra/terraform/{,environments/dev,...}/.terraform/)
+# ───────── Terraform (HashiCorp canonical .gitignore + enterprise lock policy) ─────────
+# Provider/plugin cache & module install dir — never committed (any depth).
 .terraform/
+# State — may contain secrets; use the remote S3 backend, never commit.
 *.tfstate
-*.tfstate.backup
+*.tfstate.*
+# Plan output (may contain secrets) + crash logs.
 *.tfplan
+crash.log
+crash.*.log
+# .tfvars may hold sensitive values — keep out of VCS (commit *.tfvars.example instead).
+*.tfvars
+*.tfvars.json
+# Local CLI + override files.
+.terraformrc
+terraform.rc
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+#
+# Dependency lock files (.terraform.lock.hcl): IGNORE ALL except the bootstrap lock.
+#   HITL decision 2026-06-05: only ONE lock is committed — the bootstrap config that
+#   provisions the S3 terraform-state bucket on a clean machine (the genesis step,
+#   run once before any remote backend exists). Its providers must be hash-pinned so
+#   the first-time `init`/`apply` is reproducible. All other locks regenerate on `init`.
 .terraform.lock.hcl
+!infra/terraform/aws/bootstrap/.terraform.lock.hcl
+#
+# Still TRACKED (not ignored) — required to init + lint + test on AWS, NOT lock noise:
+#   backend-*.hcl (needed by `init -backend-config=`), .tflint.hcl (CI lint), *.tftest.hcl (test source)
 
 # Playwright
 playwright-report/
@@ -56,3 +81,10 @@ test-results/
 # Observability secrets (ADR-007 §9 — MF-4 secrets hygiene)
 observability/prometheus/.auth
 .env.observability
+infra/terraform/aws/bootstrap/.terraform.lock.hcl
+infra/terraform/aws/.tflint.hcl
+infra/terraform/aws/modules/appregistry/tests/appregistry_test.tftest.hcl
+infra/terraform/aws/dev/backend-dev.hcl
+infra/terraform/aws/local/backend-local.hcl
+infra/terraform/aws/modules/foundation/tests/foundation_test.tftest.hcl
+tags_test.tftest.hcl

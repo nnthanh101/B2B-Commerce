@@ -1,4 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
+import {
+  HTML_REPORT_DIR,
+  SCREENSHOTS_DIR,
+  VIDEOS_DIR,
+} from "./tests/e2e/config";
 
 const MEDUSA_BACKEND_URL =
   process.env.MEDUSA_BACKEND_URL || "http://localhost:9000";
@@ -17,15 +22,14 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : 1,
+  timeout: 120000, // 120 seconds for recording tests with deliberate pacing
 
   reporter: [
     ["list"],
     [
       "html",
       {
-        outputFolder:
-          process.env.PLAYWRIGHT_HTML_REPORT ||
-          "../../tmp/Digital-Commerce/test-results/playwright-report",
+        outputFolder: HTML_REPORT_DIR,
       },
     ],
   ],
@@ -35,11 +39,11 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: {
       mode: "only-on-failure",
-      dir:
-        process.env.PLAYWRIGHT_SCREENSHOTS ||
-        "../../tmp/Digital-Commerce/screenshots",
+      dir: SCREENSHOTS_DIR,
     },
-    video: "retain-on-failure",
+    video: { mode: 'always', size: { width: 1280, height: 720 } },
+    viewport: { width: 1280, height: 720 },
+    videoDir: VIDEOS_DIR,
   },
 
   webServer: undefined, // docker-compose stack runs independently; no spawning here

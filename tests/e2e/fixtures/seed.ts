@@ -84,14 +84,14 @@ export async function seedCompany() {
     ...adminHeaders,
     body: JSON.stringify({
       name: companyName,
-      email: "contact@oceansoft-test.local",
-      phone: "+45 12 34 56 78",
-      address: "123 Test Street",
-      city: "Copenhagen",
-      state: "DK",
-      zip: "1000",
-      country: "Denmark",
-      currency_code: "DKK",
+      email: "contact@oceansoft.io",
+      phone: "+64 12 34 56 78",
+      address: "123 Hurstmere Road",
+      city: "NorthShore",
+      state: "Auckland",
+      zip: "0622",
+      country: "New Zealand",
+      currency_code: "NZD",
     }),
   });
 
@@ -380,23 +380,28 @@ export async function seedProduct() {
         `Product "${productHandle}" creation returned 400 (already exists). ` +
         `Attempting to fetch and return existing product...`
       );
-      // Re-list with a fresh query to find the product
-      const retryListRes = await fetch(
-        `${MEDUSA_BACKEND_URL}/admin/products?q=${productHandle}`,
-        {
-          method: "GET",
-          ...adminHeaders,
-        }
-      );
-      if (retryListRes.ok) {
-        const { products = [] } = await retryListRes.json();
-        const existing = products.find(
-          (p: { handle: string }) => p.handle === productHandle
+      // Retry: List all products with no limit and find by exact handle match
+      try {
+        const retryListRes = await fetch(
+          `${MEDUSA_BACKEND_URL}/admin/products?limit=500`,
+          {
+            method: "GET",
+            ...adminHeaders,
+          }
         );
-        if (existing) {
-          console.log(`Successfully retrieved existing product "${productHandle}"`);
-          return existing;
+        if (retryListRes.ok) {
+          const { products = [] } = await retryListRes.json();
+          const existing = products.find(
+            (p: { handle: string }) => p.handle === productHandle
+          );
+          if (existing) {
+            console.log(`Successfully retrieved existing product "${productHandle}" (ID: ${existing.id})`);
+            return existing;
+          }
+          console.log(`Product "${productHandle}" not found in list of ${products.length} products. Handle mismatch?`);
         }
+      } catch (fetchErr) {
+        console.log(`Retry fetch error: ${fetchErr instanceof Error ? fetchErr.message : String(fetchErr)}`);
       }
       throw new Error(
         `Product creation returned 400 but product could not be retrieved: ${text}`

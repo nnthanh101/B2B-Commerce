@@ -1,4 +1,6 @@
+import path from "node:path";
 import { test, expect } from "./fixtures/auth";
+import { SCREENSHOTS_DIR } from "./config";
 
 const STOREFRONT_URL = process.env.STOREFRONT_URL || "http://localhost:8000";
 const TEST_REGION_COUNTRY = process.env.TEST_REGION_COUNTRY || "dk";
@@ -36,7 +38,7 @@ test.describe("B2B Negative Cases — Security & Authorization", () => {
     expect(isNotFoundPage || hasLoginForm).toBeTruthy();
 
     await page.screenshot({
-      path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/negative-1-quotes-protected-404.png",
+      path: path.join(SCREENSHOTS_DIR, "negative-1-quotes-protected-404.png"),
     });
   });
 
@@ -62,7 +64,7 @@ test.describe("B2B Negative Cases — Security & Authorization", () => {
     expect(hasLoginForm || !hasDashboard).toBeTruthy();
 
     await page.screenshot({
-      path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/negative-2-account-unauth-login.png",
+      path: path.join(SCREENSHOTS_DIR, "negative-2-account-unauth-login.png"),
     });
   });
 
@@ -95,7 +97,7 @@ test.describe("B2B Negative Cases — Security & Authorization", () => {
     expect(hasNotFound || urlHas404).toBeTruthy();
 
     await buyerPage.screenshot({
-      path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/negative-3-cross-company-denial.png",
+      path: path.join(SCREENSHOTS_DIR, "negative-3-cross-company-denial.png"),
     });
   });
 
@@ -123,7 +125,7 @@ test.describe("B2B Negative Cases — Security & Authorization", () => {
     expect(warningVisible || cartEmpty).toBeTruthy();
 
     await buyerPage.screenshot({
-      path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/negative-4-spending-limit-warning.png",
+      path: path.join(SCREENSHOTS_DIR, "negative-4-spending-limit-warning.png"),
     });
   });
 
@@ -154,7 +156,7 @@ test.describe("B2B Negative Cases — Security & Authorization", () => {
     expect(hasNotFound || urlHas404).toBeTruthy();
 
     await buyerPage.screenshot({
-      path: "/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/negative-5-order-tampering-denied.png",
+      path: path.join(SCREENSHOTS_DIR, "negative-5-order-tampering-denied.png"),
     });
   });
 });
