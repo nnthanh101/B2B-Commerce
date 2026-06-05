@@ -95,7 +95,7 @@
 
 ### Scene 3.4 [03:41]
 
-**[03:41]** "Marcus runs two commands. Visual verify. Checkout smoke. Both pass. Fourteen commands, seven hooks — not a roadmap. A billable governed-delivery surface his regulated clients need."
+**[03:41]** "Marcus runs two commands. Visual verify. Checkout smoke. Both pass. Sixteen commands, seven hooks — not a roadmap. A billable governed-delivery surface his regulated clients need."
 
 ### Scene 3.5 [04:01]
 
@@ -109,7 +109,7 @@
 
 ## Closing CTA [04:31–05:10]
 
-**[04:31]** "Clone the repo. Run `task up`. The governance is already there."
+**[04:31]** "Buy, run, adopt. One local-first codebase. Every claim recorded from real execution. Clone the repo. Run `task up`. The governance is already there."
 
 ---
 

@@ -53,6 +53,13 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
+    {
+      name: "chromium-headed",
+      use: {
+        ...devices["Desktop Chrome"],
+        headless: false,
+      },
+    },
   ],
 
   globalSetup,

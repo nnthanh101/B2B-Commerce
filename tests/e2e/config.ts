@@ -159,7 +159,7 @@ export async function getPublishableKey(): Promise<string> {
     );
   }
 
-  const { api_keys = [] } = (await keyRes.json()) as { api_keys: Array<{ raw_key: string }> };
+  const { api_keys = [] } = (await keyRes.json()) as { api_keys: Array<{ token: string }> };
 
   if (api_keys.length === 0) {
     throw new Error(
@@ -168,7 +168,7 @@ export async function getPublishableKey(): Promise<string> {
     );
   }
 
-  cachedPublishableKey = api_keys[0].raw_key;
+  cachedPublishableKey = api_keys[0].token;
   return cachedPublishableKey;
 }
 
