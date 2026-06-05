@@ -3,9 +3,11 @@ import { test as base, Page, BrowserContext } from "@playwright/test";
 const MEDUSA_BACKEND_URL =
   process.env.MEDUSA_BACKEND_URL || "http://localhost:9000";
 const STOREFRONT_URL = process.env.STOREFRONT_URL || "http://localhost:8000";
-const TEST_ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || "admin@oceansoft.test";
+const MEDUSA_PUBLISHABLE_KEY =
+  process.env.MEDUSA_PUBLISHABLE_KEY || "pk_89861bb07bbcabb1d2109a6fc402fff21dd6d179887483006e88b5895c100624";
+const TEST_ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || "admin@test.local";
 const TEST_ADMIN_PASSWORD =
-  process.env.TEST_ADMIN_PASSWORD || "OceanSoft123!";
+  process.env.TEST_ADMIN_PASSWORD || "Test1234!";
 
 /**
  * Admin context fixture: returns a page with admin authentication.
@@ -75,10 +77,13 @@ export const test = base.extend<{
     const context = await browser.newContext();
     const page = await context.newPage();
 
-    // Customer registration (store API)
+    // Customer registration (Medusa backend API with publishable key)
     const registerRes = await page.request.post(
-      `${STOREFRONT_URL}/auth/customer/emailpass/register`,
+      `${MEDUSA_BACKEND_URL}/auth/customer/emailpass/register`,
       {
+        headers: {
+          "x-publishable-api-key": MEDUSA_PUBLISHABLE_KEY,
+        },
         data: {
           email: "buyer@oceansoft.test",
           password: "BuyerPassword123!",
@@ -92,10 +97,13 @@ export const test = base.extend<{
       );
     }
 
-    // Customer login
+    // Customer login (Medusa backend API with publishable key)
     const loginRes = await page.request.post(
-      `${STOREFRONT_URL}/auth/customer/emailpass`,
+      `${MEDUSA_BACKEND_URL}/auth/customer/emailpass`,
       {
+        headers: {
+          "x-publishable-api-key": MEDUSA_PUBLISHABLE_KEY,
+        },
         data: {
           email: "buyer@oceansoft.test",
           password: "BuyerPassword123!",

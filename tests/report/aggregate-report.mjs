@@ -23,8 +23,14 @@ const readJson = (p) => {
 };
 const dur = (ms) => (ms == null ? "—" : ms < 1000 ? `${Math.round(ms)}ms` : `${(ms / 1000).toFixed(2)}s`);
 
-function parseJest(j) {
+// Returns the ISO run-date string from a jest JSON object (millisecond epoch → ISO).
+const jestRunDate = (j) => j?.startTime ? new Date(j.startTime).toISOString() : null;
+// Returns the ISO run-date string from a Playwright JSON object.
+const pwRunDate = (pw) => pw?.stats?.startTime ?? null;
+
+function parseJest(j, mode) {
   if (!j) return [];
+  const runDate = jestRunDate(j);
   const rows = [];
   for (const f of j.testResults ?? []) {
     const m = f.testFilePath?.match(/integration-tests\/(?:http\/)?(.+?)\.spec\.[jt]s$/);
@@ -33,6 +39,7 @@ function parseJest(j) {
       const spec = [...(r.ancestorTitles ?? []), r.title].join(" › ");
       rows.push({
         tier: "Tier 3a — Integration (HTTP)",
+        mode, runDate,
         suite, spec,
         status: r.status === "passed" ? "PASS" : r.status === "pending" ? "SKIP" : "FAIL",
         duration: dur(r.duration),
@@ -43,8 +50,9 @@ function parseJest(j) {
   return rows;
 }
 
-function parsePw(pw) {
+function parsePw(pw, mode) {
   if (!pw) return [];
+  const runDate = pwRunDate(pw);
   const rows = [];
   const walk = (s, parent) => {
     const title = [parent, s.title].filter(Boolean).join(" › ");
@@ -53,6 +61,7 @@ function parsePw(pw) {
       const res = t.results?.[0] ?? {};
       rows.push({
         tier: "Tier 3b — E2E (Playwright)",
+        mode, runDate,
         suite: title || "root", spec: spec.title,
         status: spec.ok === true ? "PASS" : spec.ok === false ? "FAIL" : "SKIP",
         duration: dur(res.duration),
@@ -72,6 +81,7 @@ function parseStatic(dir) {
   const errs = (txt.match(/error TS\d+/g) || []).length;
   return [{
     tier: "Tier 1 — Static (tsc/lint)",
+    mode: "ci", runDate: null,
     suite: "typecheck", spec: "tsc --noEmit (both apps)",
     status: errs === 0 ? "PASS" : "FAIL",
     duration: "—",
@@ -79,7 +89,40 @@ function parseStatic(dir) {
   }];
 }
 
-const rows = [...parseStatic(reportDir), ...parseJest(readJson(join(reportDir, "jest-integration.json"))), ...parsePw(readJson(join(reportDir, "playwright-json-results.json")))];
+// Detect the mode for jest-integration.json.
+// "inApp" = @medusajs/test-utils spins up an in-process Medusa backend (default task integration).
+// "live"  = runs against a pre-started backend (task live / live-api-smoke.spec.ts).
+// "ci"    = when CI=true env is set (GitHub Actions / CI pipeline run).
+const jestJson = readJson(join(reportDir, "jest-integration.json"));
+const jestMode = process.env.CI === "true" ? "ci" : "inApp";
+
+// Collect all rows including mode and runDate.
+const allRows = [
+  ...parseStatic(reportDir),
+  ...parseJest(jestJson, jestMode),
+  ...parsePw(readJson(join(reportDir, "playwright-json-results.json")), "live"),
+];
+
+// Filter stale inApp rows: for each (mode, tier, suite) group keep only the latest runDate.
+// This prevents stale FAIL rows from a previous inApp run contradicting a newer green run.
+function filterStaleInApp(rows) {
+  // Collect the latest runDate per (mode, tier) key for inApp mode.
+  const latestByKey = new Map();
+  for (const r of rows) {
+    if (r.mode !== "inApp") continue;
+    const key = `${r.mode}|${r.tier}`;
+    const cur = latestByKey.get(key) ?? "";
+    if ((r.runDate ?? "") > cur) latestByKey.set(key, r.runDate ?? "");
+  }
+  return rows.filter((r) => {
+    if (r.mode !== "inApp") return true;
+    const key = `${r.mode}|${r.tier}`;
+    const latest = latestByKey.get(key) ?? "";
+    return (r.runDate ?? "") === latest;
+  });
+}
+
+const rows = filterStaleInApp(allRows);
 const pass = rows.filter((r) => r.status === "PASS").length;
 const fail = rows.filter((r) => r.status === "FAIL").length;
 const skip = rows.filter((r) => r.status === "SKIP").length;
@@ -99,10 +142,10 @@ if (rows.length === 0) {
 } else {
   for (const [tier, trs] of byTier(rows)) {
     const tp = trs.filter((r) => r.status === "PASS").length;
-    md += `\n## ${tier}\n\n**${trs.some((r) => r.status === "FAIL") ? "FAIL" : "PASS"}** — Pass ${tp}/${trs.length}\n\n| Suite | Spec | Status | Duration | Notes |\n|---|---|---|---|---|\n`;
+    md += `\n## ${tier}\n\n**${trs.some((r) => r.status === "FAIL") ? "FAIL" : "PASS"}** — Pass ${tp}/${trs.length}\n\n| Suite | Spec | Mode | Status | Duration | Notes |\n|---|---|---|---|---|---|\n`;
     for (const r of trs) {
       const icon = r.status === "PASS" ? "✅" : r.status === "SKIP" ? "⏭" : "❌";
-      md += `| ${r.suite} | ${r.spec} | ${icon} ${r.status} | ${r.duration} | ${r.message.replace(/\|/g, "\\|").slice(0, 100)} |\n`;
+      md += `| ${r.suite} | ${r.spec} | ${r.mode ?? "—"} | ${icon} ${r.status} | ${r.duration} | ${r.message.replace(/\|/g, "\\|").slice(0, 100)} |\n`;
     }
   }
 }
@@ -111,11 +154,11 @@ const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, 
 const color = overall === "PASS" ? "#22c55e" : overall === "FAIL" ? "#ef4444" : "#94a3b8";
 let sections = rows.length === 0 ? "<p><em>No results. Run <code>task test:all</code>.</em></p>" : "";
 for (const [tier, trs] of byTier(rows)) {
-  sections += `<section><h2>${esc(tier)}</h2><table><thead><tr><th>Suite</th><th>Spec</th><th>Status</th><th>Duration</th><th>Notes</th></tr></thead><tbody>` +
+  sections += `<section><h2>${esc(tier)}</h2><table><thead><tr><th>Suite</th><th>Spec</th><th>Mode</th><th>Status</th><th>Duration</th><th>Notes</th></tr></thead><tbody>` +
     trs.map((r) => {
       const icon = r.status === "PASS" ? "✅" : r.status === "SKIP" ? "⏭" : "❌";
       const cls = r.status === "FAIL" ? ' class="fail"' : r.status === "SKIP" ? ' class="skip"' : "";
-      return `<tr${cls}><td>${esc(r.suite)}</td><td>${esc(r.spec)}</td><td>${icon} ${r.status}</td><td>${r.duration}</td><td><small>${esc(r.message).slice(0, 120)}</small></td></tr>`;
+      return `<tr${cls}><td>${esc(r.suite)}</td><td>${esc(r.spec)}</td><td>${esc(r.mode ?? "—")}</td><td>${icon} ${r.status}</td><td>${r.duration}</td><td><small>${esc(r.message).slice(0, 120)}</small></td></tr>`;
     }).join("") + `</tbody></table></section>`;
 }
 const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>OceanSoft B2B — Test Report v1.1.0</title>

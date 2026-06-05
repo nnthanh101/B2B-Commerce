@@ -35,7 +35,7 @@ test.describe("Admin/sales-manager persona — B2B company & approval workflow",
 
     // Step 2: Verify companies list page renders
     const companiesHeader = adminPage.locator(
-      'text="Companies", h1, [data-testid="page-title"]'
+      'h1:has-text("Companies"), [data-testid="page-title"]'
     );
     await expect(companiesHeader).toBeVisible(); // Just verify page loaded
 
@@ -103,7 +103,7 @@ test.describe("Admin/sales-manager persona — B2B company & approval workflow",
 
     // Look for pending approval from buyer (populated by buyer's earlier request)
     const pendingRequest = adminPage.locator(
-      '[data-testid="approval-pending"], text="Pending"'
+      '[data-testid="approval-pending"]:has-text("Pending")'
     );
     await expect(pendingRequest).toBeVisible();
 

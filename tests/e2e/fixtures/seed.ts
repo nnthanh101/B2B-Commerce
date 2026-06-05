@@ -1,8 +1,8 @@
 const MEDUSA_BACKEND_URL =
   process.env.MEDUSA_BACKEND_URL || "http://localhost:9000";
-const TEST_ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || "admin@oceansoft.test";
+const TEST_ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || "admin@test.local";
 const TEST_ADMIN_PASSWORD =
-  process.env.TEST_ADMIN_PASSWORD || "OceanSoft123!";
+  process.env.TEST_ADMIN_PASSWORD || "Test1234!";
 
 /**
  * Admin API headers with authentication token.
@@ -19,9 +19,9 @@ async function getAdminHeaders(): Promise<{
     }),
   });
 
-  if (!loginRes.ok()) {
+  if (!loginRes.ok) {
     throw new Error(
-      `Admin auth failed: ${loginRes.status()} ${loginRes.statusText}`
+      `Admin auth failed: ${loginRes.status} ${loginRes.statusText}`
     );
   }
 
@@ -70,7 +70,7 @@ export async function seedCompany() {
     }),
   });
 
-  if (!companyRes.ok()) {
+  if (!companyRes.ok) {
     const text = await companyRes.text();
     throw new Error(
       `Failed to create company: ${companyRes.status()} ${text}`

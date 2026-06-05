@@ -71,9 +71,20 @@ tasks:
     env:
       DATABASE_URL: "{{.DB_URL}}"
       REDIS_URL: "{{.REDIS}}"
+      # pg-god (medusaIntegrationTestRunner) needs individual DB_* vars to create ephemeral per-suite DBs
+      DB_HOST: "localhost"
+      DB_PORT: "5433"
+      DB_USERNAME: "postgres"
+      DB_PASSWORD: "postgres"
+      TEST_TYPE: "integration:http"
+      NODE_OPTIONS: "--experimental-vm-modules"
     cmds:
       - mkdir -p {{.REPORT_DIR}}
-      - pnpm --filter @oceansoft/backend test:integration:http -- --json --outputFile={{.REPORT_DIR}}/jest-integration.json
+      - |
+        JEST={{.REPO}}/apps/backend/node_modules/.bin/jest && \
+        cd {{.REPO}}/apps/backend && \
+        "$JEST" --no-silent --runInBand --forceExit \
+          --json --outputFile={{.REPORT_DIR}}/jest-integration.json
 
   e2e:
     desc: "Tier 3b — Playwright E2E. SKIPs (exit 0) if backend :9000 unreachable."

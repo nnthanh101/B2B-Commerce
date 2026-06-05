@@ -62,3 +62,48 @@ jobs:
           else
             echo "No infra/terraform yet — skipping (Phase 2)."
           fi
+
+  test:
+    name: Integration tests (HTTP tier)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Bring up test datastore
+        run: docker compose -f docker-compose.test.yml -p ec_test up -d --wait
+
+      - name: Run integration gate
+        run: |
+          cd apps/backend
+          mkdir -p ../../tmp/Digital-Commerce/test-results
+          DB_HOST=localhost \
+          DB_PORT=5433 \
+          DB_USERNAME=postgres \
+          DB_PASSWORD=postgres \
+          DATABASE_URL=postgres://postgres:postgres@localhost:5433/ec-store-test \
+          REDIS_URL=redis://localhost:6380 \
+          TEST_TYPE=integration:http \
+          NODE_OPTIONS=--experimental-vm-modules \
+          pnpm exec jest --silent=false --runInBand --forceExit \
+            --json --outputFile=../../tmp/Digital-Commerce/test-results/jest-integration.json
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: |
+            tmp/Digital-Commerce/test-results/jest-integration.json
+          retention-days: 14
+
+      - name: Tear down test datastore
+        if: always()
+        run: docker compose -f docker-compose.test.yml -p ec_test down -v
