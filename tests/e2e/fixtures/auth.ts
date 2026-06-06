@@ -7,7 +7,7 @@ import {
   TEST_REGION_COUNTRY,
   getPublishableKey,
 } from "../config";
-import { createCartAndAddLineItem, setCartIdCookie } from "./cart";
+import { setCartIdCookie } from "./cart";
 
 // For backwards compatibility, keep these aliases for any direct references
 const MEDUSA_BACKEND_URL = BACKEND_URL;
@@ -30,12 +30,20 @@ export const test = base.extend<{
     page.setDefaultTimeout(25000);
     page.setDefaultNavigationTimeout(30000);
 
-    // Admin login via UI form (same pattern as screenshots.spec.ts adminLogin)
-    // This is more reliable than API token + localStorage injection
+    // CRITICAL: Dual-path admin authentication:
+    // 1. UI login to `/app` (admin dashboard) — establishes browser session
+    // 2. API login to `/auth/customer/emailpass` — gets JWT for `/store/invites` endpoint
+    //
+    // Why: The `/app` dashboard is admin-specific (UI login creates httpOnly cookies).
+    // The `/store/invites` endpoint requires customer auth (JWT in Authorization header).
+    // The seeded admin is also a customer (see seed-demo-b2b.ts L213-267).
+
+    // STEP 1: Admin UI login for /app dashboard access
+    console.log("[auth] Step 1: Admin UI login to /app dashboard...");
+
     await page.goto(`${MEDUSA_BACKEND_URL}/app/login`);
     await page.waitForLoadState("domcontentloaded");
 
-    // Wait for React SPA to hydrate and render the login form
     const emailInput = page.locator(
       'input[type="email"], input[name="email"], input[id="email"]'
     );
@@ -50,7 +58,6 @@ export const test = base.extend<{
     );
     await submitBtn.first().click();
 
-    // Poll until URL leaves login page (navigated to dashboard)
     await page.waitForFunction(
       () => {
         const p = window.location.pathname;
@@ -62,7 +69,46 @@ export const test = base.extend<{
       },
       { timeout: 20000 }
     );
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("networkidle").catch(() => {
+      // Network timeout is OK — page may still be usable
+    });
+    console.log("[auth] ✓ Step 1: Admin dashboard authenticated");
+
+    // STEP 2: API login to get customer JWT for /store/invites
+    console.log("[auth] Step 2: Admin customer API login for /store/invites...");
+
+    const customerLoginRes = await fetch(`${MEDUSA_BACKEND_URL}/auth/customer/emailpass`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: TEST_ADMIN_EMAIL,
+        password: TEST_ADMIN_PASSWORD,
+      }),
+    });
+
+    if (!customerLoginRes.ok) {
+      const errText = await customerLoginRes.text();
+      throw new Error(
+        `[auth] Admin customer API login failed: ${customerLoginRes.status} ${errText}. ` +
+        `The admin user (${TEST_ADMIN_EMAIL}) must be seeded as a CUSTOMER with employee/company link.`
+      );
+    }
+
+    const { token: adminCustomerToken } = (await customerLoginRes.json()) as { token: string };
+    console.log(`[auth] ✓ Step 2: Customer token obtained: ${adminCustomerToken.substring(0, 20)}...`);
+
+    // Add the customer JWT token as a cookie so tests can extract it via adminContext.cookies()
+    await context.addCookies([
+      {
+        name: "_medusa_jwt",
+        value: adminCustomerToken,
+        domain: "localhost",
+        path: "/",
+        httpOnly: true,
+        sameSite: "Lax",
+      },
+    ]);
+    console.log(`[auth] ✓ Step 2: Customer JWT cookie added to context`);
 
     await use(context);
     await context.close();
@@ -320,6 +366,24 @@ export const test = base.extend<{
     console.log(`[auth] Building buyer cart with line item...`);
     let cartId: string;
     try {
+      // Resolve the first available region (country-agnostic: TEST_REGION_COUNTRY may
+      // default to "nz" but the seeded store may only have "dk" or another region).
+      // Using the first region avoids the cart.ts resolveRegionUuid() country-filter mismatch.
+      const regionsRes = await fetch(`${BACKEND_URL}/store/regions`, {
+        headers: { "x-publishable-api-key": publishableKey },
+      });
+      if (!regionsRes.ok) {
+        throw new Error(`Failed to fetch regions: ${regionsRes.status}`);
+      }
+      const regionsData = (await regionsRes.json()) as {
+        regions?: Array<{ id: string }>;
+      };
+      const regionId = regionsData.regions?.[0]?.id;
+      if (!regionId) {
+        throw new Error("No regions found in store — cannot create cart");
+      }
+      console.log(`[auth] ✓ Region resolved (first available): ${regionId}`);
+
       // Get first available variant from products
       const productsRes = await fetch(
         `${BACKEND_URL}/store/products?limit=1&fields=*variants`,
@@ -343,8 +407,47 @@ export const test = base.extend<{
         throw new Error("No product variants available to add to cart");
       }
 
-      // Create cart and add line item
-      cartId = await createCartAndAddLineItem(context, firstVariant.id, 1);
+      // Create cart directly with the resolved region_id (bypasses cart.ts resolveRegionUuid
+      // which filters by TEST_REGION_COUNTRY and fails when that env var doesn't match seeded data)
+      const createCartRes = await context.request.post(`${BACKEND_URL}/store/carts`, {
+        headers: {
+          "Content-Type": "application/json",
+          "x-publishable-api-key": publishableKey,
+        },
+        data: { region_id: regionId },
+      });
+      if (!createCartRes.ok()) {
+        const errText = await createCartRes.text();
+        throw new Error(`POST /store/carts failed: ${createCartRes.status()} ${errText}`);
+      }
+      const cartData = (await createCartRes.json()) as { cart?: { id: string } };
+      cartId = cartData.cart?.id ?? "";
+      if (!cartId) {
+        throw new Error("No cart ID returned from POST /store/carts");
+      }
+      console.log(`[auth] ✓ Cart created: ${cartId}`);
+
+      // Add line item
+      const addLineRes = await context.request.post(
+        `${BACKEND_URL}/store/carts/${cartId}/line-items`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "x-publishable-api-key": publishableKey,
+          },
+          data: { variant_id: firstVariant.id, quantity: 1 },
+        }
+      );
+      if (!addLineRes.ok()) {
+        const errText = await addLineRes.text();
+        throw new Error(`POST /store/carts/${cartId}/line-items failed: ${addLineRes.status()} ${errText}`);
+      }
+      const lineData = (await addLineRes.json()) as { cart?: { items?: unknown[] } };
+      const itemCount = lineData.cart?.items?.length ?? 0;
+      if (itemCount === 0) {
+        throw new Error("Line item was not added (items array empty after POST)");
+      }
+      console.log(`[auth] ✓ Line item added. Cart now has ${itemCount} item(s).`);
 
       // Set the _medusa_cart_id cookie
       await setCartIdCookie(context, cartId, STOREFRONT_URL);

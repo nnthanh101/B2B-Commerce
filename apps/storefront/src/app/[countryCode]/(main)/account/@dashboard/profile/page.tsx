@@ -4,7 +4,6 @@ import ProfileCard from "@/modules/account/components/profile-card"
 import SecurityCard from "@/modules/account/components/security-card"
 import { Heading } from "@medusajs/ui"
 import { Metadata } from "next"
-import { notFound } from "next/navigation"
 
 export const metadata: Metadata = {
   title: "Profile",
@@ -15,8 +14,9 @@ export default async function Profile() {
   const customer = await retrieveCustomer()
   const regions = await listRegions()
 
+  // Return null so the parent layout.tsx renders the @login slot instead.
   if (!customer || !regions) {
-    notFound()
+    return null
   }
 
   return (

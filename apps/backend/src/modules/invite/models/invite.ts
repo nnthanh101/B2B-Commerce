@@ -1,6 +1,6 @@
 import { model } from "@medusajs/framework/utils";
 
-export const Invite = model.define("invite", {
+export const Invite = model.define("b2b_invite", {
   id: model
     .id({
       prefix: "inv",

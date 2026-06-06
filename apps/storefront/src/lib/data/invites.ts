@@ -46,6 +46,21 @@ export const createInvite = async (
   })
 }
 
+/** GET /store/invites/accept?token=<raw_token> — validate without consuming */
+export const validateInviteToken = async (
+  token: string
+): Promise<{ valid: boolean }> => {
+  try {
+    const result = await sdk.client.fetch<{ valid: boolean }>(
+      `/store/invites/accept?token=${encodeURIComponent(token)}`,
+      { method: "GET" }
+    )
+    return result
+  } catch {
+    return { valid: false }
+  }
+}
+
 /** POST /store/invites/accept — public endpoint, no auth required */
 export const acceptInvite = async (
   data: AcceptInviteInput

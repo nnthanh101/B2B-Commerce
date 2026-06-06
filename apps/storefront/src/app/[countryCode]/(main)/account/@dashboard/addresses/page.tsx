@@ -2,7 +2,6 @@ import { retrieveCustomer } from "@/lib/data/customer"
 import { getRegion } from "@/lib/data/regions"
 import AddressBook from "@/modules/account/components/address-book"
 import { Metadata } from "next"
-import { notFound } from "next/navigation"
 
 export const metadata: Metadata = {
   title: "Addresses",
@@ -17,8 +16,9 @@ export default async function Addresses(props: {
   const customer = await retrieveCustomer()
   const region = await getRegion(countryCode)
 
+  // Return null so the parent layout.tsx renders the @login slot instead.
   if (!customer || !region) {
-    notFound()
+    return null
   }
 
   return (

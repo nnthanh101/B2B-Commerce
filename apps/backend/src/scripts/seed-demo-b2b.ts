@@ -215,6 +215,7 @@ export default async function seedDemoB2B({
   logger.info("Step 4b: Admin user company link...")
 
   const userModule = container.resolve(Modules.USER)
+  const authModule = container.resolve(Modules.AUTH)
   const adminUsers = await userModule.listUsers()
   const adminUser = adminUsers[0]
 
@@ -236,6 +237,49 @@ export default async function seedDemoB2B({
         last_name: adminUser.last_name || "User",
       })
       logger.info(`  Admin customer created: ${adminCustomer.id}`)
+    }
+
+    // Link the admin's customer auth identity (emailpass, store scope) to the customer record.
+    //
+    // When admin@test.local logs in via POST /auth/customer/emailpass, Medusa returns a JWT
+    // with actor_id="" because the auth identity's app_metadata.customer_id is not set.
+    // The /store/invites middleware calls authenticate("customer",...) which rejects actor_id=""
+    // with 401. Fix: update the auth identity so app_metadata.customer_id = adminCustomer.id.
+    //
+    // The auth identity shared between admin and customer scope for admin@test.local is the
+    // same identity (authid_*). We update app_metadata to include customer_id so subsequent
+    // /auth/customer/emailpass logins return a token with actor_id = adminCustomer.id.
+    try {
+      const providerIdentities = await (authModule as any).listProviderIdentities({
+        entity_id: adminUser.email,
+        provider: "emailpass",
+      })
+
+      for (const pi of providerIdentities) {
+        const authIdentity = await (authModule as any).retrieveAuthIdentity(
+          pi.auth_identity_id,
+          { select: ["id", "app_metadata"] }
+        )
+
+        if (!authIdentity.app_metadata?.customer_id) {
+          await (authModule as any).updateAuthIdentities({
+            id: authIdentity.id,
+            app_metadata: {
+              ...(authIdentity.app_metadata || {}),
+              customer_id: adminCustomer.id,
+            },
+          })
+          logger.info(
+            `  Auth identity ${authIdentity.id} updated: app_metadata.customer_id = ${adminCustomer.id}`
+          )
+        } else {
+          logger.info(
+            `  Auth identity ${authIdentity.id} already has customer_id — skipping`
+          )
+        }
+      }
+    } catch (err: any) {
+      logger.warn(`  Could not update admin auth identity: ${err.message}`)
     }
 
     // Employee↔Customer is a remote link (not a column on the Employee model).

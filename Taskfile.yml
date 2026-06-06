@@ -64,6 +64,22 @@ tasks:
     cmds:
       - docker compose exec ec sh -c "cd /server/apps/backend && pnpm seed"
 
+  db:generate:
+    desc: "Generate a Medusa migration file from model.define changes (agent-ok: writes file only, no DB mutation). Usage: task db:generate -- <module>"
+    cmds:
+      - docker compose exec ec sh -c "cd /server/apps/backend && pnpm medusa db:generate {{.CLI_ARGS}}"
+
+  db:migrate:
+    desc: "Apply pending Medusa migrations to the database (SCHEMA MUTATION — Principle I: HITL only). Run: CONFIRM=1 task db:migrate"
+    cmds:
+      - |
+        if [ "${CONFIRM:-}" != "1" ]; then
+          echo "Principle I: schema mutation — HITL must run this, not agents."
+          echo "  HITL: CONFIRM=1 task db:migrate"
+          exit 1
+        fi
+      - docker compose exec ec sh -c "cd /server/apps/backend && pnpm medusa db:migrate"
+
   # ---------------------------------------------------------------------------
   # Code quality
   # ---------------------------------------------------------------------------

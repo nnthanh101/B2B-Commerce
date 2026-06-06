@@ -6,13 +6,12 @@ import CompanyCard from "@/modules/account/components/company-card"
 import EmployeesCard from "@/modules/account/components/employees-card"
 import InviteEmployeeCard from "@/modules/account/components/invite-employee-card"
 import { Heading } from "@medusajs/ui"
-import { notFound } from "next/navigation"
-
 export default async function Company() {
   const customer = await retrieveCustomer()
   const regions = await listRegions()
 
-  if (!customer || !customer?.employee?.company) return notFound()
+  // Return null so the parent layout.tsx renders the @login slot instead.
+  if (!customer || !customer?.employee?.company) return null
 
   const company = await retrieveCompany(customer.employee.company.id)
 

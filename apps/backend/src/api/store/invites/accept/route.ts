@@ -7,6 +7,31 @@ import type InviteModuleService from "../../../../modules/invite/service";
 import { createEmployeesWorkflow } from "../../../../workflows/employee/workflows";
 import { StoreAcceptInviteType } from "../validators";
 
+/** GET /store/invites/accept?token=<raw_token> — public: validate token without consuming it */
+export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
+  const token = req.query.token as string | undefined;
+
+  if (!token) {
+    return res.status(400).json({ valid: false, reason: "missing_token" });
+  }
+
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  const inviteService = req.scope.resolve<InviteModuleService>(INVITE_MODULE);
+  const [invite] = await inviteService.listInvites({ token_hash: tokenHash });
+
+  if (!invite) {
+    return res.status(400).json({ valid: false, reason: "not_found" });
+  }
+  if (invite.used_at) {
+    return res.status(400).json({ valid: false, reason: "already_used" });
+  }
+  if (new Date(invite.expires_at) < new Date()) {
+    return res.status(400).json({ valid: false, reason: "expired" });
+  }
+
+  return res.status(200).json({ valid: true });
+};
+
 /** POST /store/invites/accept — public endpoint: redeem token, create customer + employee */
 export const POST = async (
   req: MedusaRequest<StoreAcceptInviteType>,
@@ -14,25 +39,13 @@ export const POST = async (
 ) => {
   const { token, password, first_name, last_name } = req.validatedBody;
 
-  const tokenHash = crypto
-    .createHash("sha256")
-    .update(token)
-    .digest("hex");
-
   const inviteService = req.scope.resolve<InviteModuleService>(INVITE_MODULE);
 
-  const [invite] = await inviteService.listInvites({ token_hash: tokenHash });
-
-  if (!invite) {
-    return res.status(400).json({ message: "Invalid or expired invite token" });
-  }
-
-  if (invite.used_at) {
-    return res.status(400).json({ message: "Invite has already been used" });
-  }
-
-  if (new Date(invite.expires_at) < new Date()) {
-    return res.status(400).json({ message: "Invite has expired" });
+  let invite;
+  try {
+    invite = await inviteService.accept(token);
+  } catch (err: any) {
+    return res.status(400).json({ message: err.message });
   }
 
   // Register the customer via Medusa auth
@@ -109,10 +122,7 @@ export const POST = async (
   });
 
   // Mark invite used (single-use)
-  await inviteService.updateInvites({
-    id: invite.id,
-    used_at: new Date(),
-  });
+  await inviteService.markUsed(invite.id);
 
   return res.status(200).json({
     success: true,

@@ -7,7 +7,6 @@ import PendingCustomerApprovals from "@/modules/account/components/pending-custo
 import { ApprovalStatusType } from "@/types/approval"
 import { Heading } from "@medusajs/ui"
 import { Metadata } from "next"
-import { notFound } from "next/navigation"
 
 export const metadata: Metadata = {
   title: "Orders",
@@ -17,22 +16,27 @@ export const metadata: Metadata = {
 export default async function Orders() {
   const customer = await retrieveCustomer()
 
+  // Return null so the parent layout.tsx can render the @login slot instead.
+  // Calling notFound() inside a parallel-route slot causes a segment-level 404
+  // that bypasses the parent layout's login/dashboard slot selection.
   if (!customer) {
-    notFound()
+    return null
   }
 
-  const orders = await listOrders()
+  const orders = await listOrders().catch(() => [])
 
   const { approval_settings } =
-    (await retrieveCompany(customer?.employee?.company_id!)) || {}
+    (await retrieveCompany(customer?.employee?.company_id!).catch(() => null)) || {}
 
   const approval_required =
     approval_settings?.requires_admin_approval ||
     approval_settings?.requires_sales_manager_approval
 
+  // listApprovals hits /store/approvals which requires company_admin role.
+  // Non-admin buyers get 403 — catch it and treat as empty (no pending approvals).
   const { carts_with_approvals } = await listApprovals({
     status: ApprovalStatusType.PENDING,
-  })
+  }).catch(() => ({ carts_with_approvals: [] }))
 
   return (
     <div

@@ -31,14 +31,14 @@
 
 import path from "node:path";
 import { execSync } from "node:child_process";
-import { test, expect } from "../fixtures/auth";
+import { test, expect } from "./fixtures/auth";
 import {
   BACKEND_URL,
   STOREFRONT_URL,
   TEST_REGION_COUNTRY,
   SCREENSHOTS_DIR,
   getPublishableKey,
-} from "../config";
+} from "./config";
 
 /**
  * Helper: Extract invite token from backend container logs

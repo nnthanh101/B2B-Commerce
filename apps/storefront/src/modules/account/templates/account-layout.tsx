@@ -13,10 +13,12 @@ const AccountLayout: React.FC<AccountLayoutProps> = async ({
   customer,
   children,
 }) => {
+  // /store/approvals requires company_admin role — non-admin buyers get 403.
+  // Catch and default to empty so non-admin buyers can still view their account.
   const { carts_with_approvals } = await listApprovals({
     type: ApprovalType.ADMIN,
     status: ApprovalStatusType.PENDING,
-  })
+  }).catch(() => ({ carts_with_approvals: [] }))
 
   const numPendingApprovals = carts_with_approvals?.length || 0
 

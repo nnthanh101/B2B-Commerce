@@ -4,7 +4,6 @@ import PendingApprovalRequestsAdminList from "@/modules/account/components/appro
 import RejectedApprovalRequestsAdminList from "@/modules/account/components/approval-requests-admin-list/rejected-list"
 import { Heading } from "@medusajs/ui"
 import { Metadata } from "next"
-import { notFound } from "next/navigation"
 import { Suspense } from "react"
 
 export const metadata: Metadata = {
@@ -18,8 +17,9 @@ export default async function Approvals({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const customer = await retrieveCustomer()
+  // Return null so the parent layout.tsx renders the @login slot instead.
   if (!customer) {
-    notFound()
+    return null
   }
 
   const urlSearchParams = await searchParams
