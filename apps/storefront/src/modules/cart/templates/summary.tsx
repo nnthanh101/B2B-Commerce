@@ -3,6 +3,7 @@
 import { useCart } from "@/lib/context/cart-context"
 import { getCheckoutStep } from "@/lib/util/get-checkout-step"
 import CartToCsvButton from "@/modules/cart/components/cart-to-csv-button"
+import QuickOrderPad from "@/modules/cart/components/quick-order-pad"
 import CartTotals from "@/modules/cart/components/cart-totals"
 import PromotionCode from "@/modules/checkout/components/promotion-code"
 import Button from "@/modules/common/components/button"
@@ -90,6 +91,8 @@ const Summary = ({ customer, spendLimitExceeded }: SummaryProps) => {
         </RequestQuotePrompt>
       )}
       <CartToCsvButton cart={cart} />
+      <Divider />
+      <QuickOrderPad />
       <Button
         onClick={handleEmptyCart}
         className="w-full h-10 rounded-full shadow-borders-base"

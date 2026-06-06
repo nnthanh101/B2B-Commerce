@@ -7,6 +7,56 @@ import { sortProducts } from "@/lib/util/sort-products"
 import { SortOptions } from "@/modules/store/components/refinement-list/sort-products"
 import { HttpTypes } from "@medusajs/types"
 
+/**
+ * Resolve an array of SKUs to { sku, variant_id } pairs.
+ *
+ * Uses GET /store/products?variants[sku][]=... which returns each matching
+ * product with all its variants. We then exact-match on variant.sku.
+ *
+ * Returns a Map<sku, variant_id> for O(1) lookup in the caller.
+ * Unknown SKUs are simply absent from the map.
+ */
+export const resolveSkusToVariants = async (
+  skus: string[]
+): Promise<Map<string, string>> => {
+  if (skus.length === 0) return new Map()
+
+  const headers = {
+    ...(await getAuthHeaders()),
+  }
+
+  const next = {
+    ...(await getCacheOptions("products")),
+  }
+
+  const query = {
+    variants: { sku: skus },
+    fields: "id,*variants.id,*variants.sku",
+    limit: skus.length * 2, // each sku is one variant; products may share
+  }
+
+  const { products } = await sdk.client
+    .fetch<{ products: HttpTypes.StoreProduct[] }>(`/store/products`, {
+      credentials: "include",
+      method: "GET",
+      query,
+      headers,
+      next,
+    })
+
+  const map = new Map<string, string>()
+
+  for (const product of products) {
+    for (const variant of product.variants ?? []) {
+      if (variant.sku && skus.includes(variant.sku) && variant.id) {
+        map.set(variant.sku, variant.id)
+      }
+    }
+  }
+
+  return map
+}
+
 export const getProductsById = async ({
   ids,
   regionId,
