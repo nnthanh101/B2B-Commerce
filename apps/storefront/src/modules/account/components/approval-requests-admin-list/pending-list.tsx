@@ -17,7 +17,7 @@ export default async function PendingApprovalRequestsAdminList({
     status: ApprovalStatusType.PENDING,
     offset: (currentPage - 1) * limit,
     limit,
-  })
+  }).catch(() => ({ carts_with_approvals: [], count: 0 }))
 
   const totalPages = Math.ceil((count || 0) / limit)
 

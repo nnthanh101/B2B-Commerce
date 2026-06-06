@@ -46,18 +46,41 @@ export const createInvite = async (
   })
 }
 
-/** GET /store/invites/accept?token=<raw_token> — validate without consuming */
+/** GET /store/invites/accept?token=<raw_token> — validate without consuming.
+ *
+ * Uses native fetch with AbortSignal.timeout(4000) to enforce a 4-second
+ * hard deadline. This prevents the RSC page from hanging for 30s when the
+ * backend is slow or temporarily unreachable (e.g., container cold-start).
+ *
+ * On timeout or any network error: returns { valid: true } so the accept
+ * form renders. The authoritative validation happens on the POST endpoint
+ * when the user submits the form.
+ */
 export const validateInviteToken = async (
   token: string
 ): Promise<{ valid: boolean }> => {
+  const MEDUSA_URL =
+    process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
+  const PUB_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
+
   try {
-    const result = await sdk.client.fetch<{ valid: boolean }>(
-      `/store/invites/accept?token=${encodeURIComponent(token)}`,
-      { method: "GET" }
-    )
-    return result
+    const url = `${MEDUSA_URL}/store/invites/accept?token=${encodeURIComponent(token)}`
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "x-publishable-api-key": PUB_KEY,
+      },
+      signal: AbortSignal.timeout(4000),
+      cache: "no-store",
+    })
+    if (!res.ok) {
+      return { valid: false }
+    }
+    return (await res.json()) as { valid: boolean }
   } catch {
-    return { valid: false }
+    // Timeout or network error — render form optimistically.
+    // POST /store/invites/accept provides the authoritative check.
+    return { valid: true }
   }
 }
 

@@ -435,8 +435,8 @@ export async function seedProduct() {
           manage_inventory: false, // Always purchasable — no inventory check
           prices: [
             {
-              currency_code: "dkk",
-              amount: 10000, // 100 DKK
+              currency_code: "nzd",
+              amount: 129, // 129 NZD
             },
           ],
           options: {
@@ -449,8 +449,8 @@ export async function seedProduct() {
           manage_inventory: false,
           prices: [
             {
-              currency_code: "dkk",
-              amount: 12000, // 120 DKK
+              currency_code: "nzd",
+              amount: 159, // 159 NZD
             },
           ],
           options: {
@@ -555,7 +555,7 @@ export async function seedProduct() {
       `seedProduct ASSERTION FAILED: Product "${productHandle}" not found in store API ` +
       `(GET /store/products?region_id=${regionId} returned ${storeProducts.length} products). ` +
       `Product was created and assigned, but is not visible. ` +
-      `Check: (1) product.status == published, (2) sales_channel assignment, (3) region has currency DKK.`
+      `Check: (1) product.status == published, (2) sales_channel assignment, (3) region has currency NZD.`
     );
   }
 
@@ -575,7 +575,7 @@ export async function seedProduct() {
     throw new Error(
       `seedProduct ASSERTION FAILED: Product "${productHandle}" has variants but none have a calculated_price. ` +
       `Variants: ${JSON.stringify(visibleProduct.variants.map((v: any) => ({ id: v.id, title: v.title, price: v.calculated_price })))}. ` +
-      `Check: (1) variant has prices array, (2) prices include currency_code DKK, (3) region matches.`
+      `Check: (1) variant has prices array, (2) prices include currency_code NZD, (3) region matches.`
     );
   }
 

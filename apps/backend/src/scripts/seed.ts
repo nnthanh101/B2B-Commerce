@@ -63,7 +63,11 @@ export default async function seed({
     ModuleRegistrationName.FULFILLMENT
   )
 
-  const countries = ["gb", "de", "nz", "se", "fr", "es", "it"]
+  // Oceania (primary demo region: NZ/NZD) — NZ lives in a separate NZD region
+  // so it is deliberately excluded from the "Europe" country list below.
+  const nzCountries = ["nz"]
+  const euCountries = ["gb", "de", "se", "fr", "es", "it"]
+  const countries = [...nzCountries, ...euCountries]
 
   // ── Sales channel ────────────────────────────────────────────────────────────
   logger.info("Seeding store data...")
@@ -133,8 +137,12 @@ export default async function seed({
             name: "Default Store",
             supported_currencies: [
               {
-                currency_code: "eur",
+                currency_code: "nzd",
                 is_default: true,
+              },
+              {
+                currency_code: "eur",
+                is_default: false,
               },
               {
                 currency_code: "usd",
@@ -150,42 +158,69 @@ export default async function seed({
     logger.info("Store already exists, skipping creation.")
   }
 
-  // ── Region ────────────────────────────────────────────────────────────────────
+  // ── Regions ───────────────────────────────────────────────────────────────────
   logger.info("Seeding region data...")
   const regionModule = container.resolve(Modules.REGION)
-  const existingRegions = await regionModule.listRegions({ name: "Europe" })
 
+  // Primary demo region: Oceania (NZD) — OceanSoft HQ is Auckland, NZ.
+  const existingOceaniaRegions = await regionModule.listRegions({ name: "Oceania" })
   let region: any
-  if (existingRegions.length > 0) {
-    logger.info("Region already exists, skipping creation.")
-    region = existingRegions[0]
+  if (existingOceaniaRegions.length > 0) {
+    logger.info("Oceania region already exists, skipping creation.")
+    region = existingOceaniaRegions[0]
   } else {
-    const { result: regionResult } = await createRegionsWorkflow(
-      container
-    ).run({
+    const { result: oceaniaResult } = await createRegionsWorkflow(container).run({
       input: {
         regions: [
           {
-            name: "Europe",
-            currency_code: "eur",
-            countries,
+            name: "Oceania",
+            currency_code: "nzd",
+            countries: nzCountries,
             payment_providers: ["pp_system_default"],
           },
         ],
       },
     })
-    region = regionResult[0]
-    logger.info("Finished seeding regions.")
+    region = oceaniaResult[0]
+    logger.info("Oceania (NZD) region created.")
 
-    logger.info("Seeding tax regions...")
+    logger.info("Seeding NZ tax region...")
     await createTaxRegionsWorkflow(container).run({
-      input: countries.map((country_code) => ({
+      input: nzCountries.map((country_code) => ({
         country_code,
         provider_id: "tp_system",
       })),
     })
-    logger.info("Finished seeding tax regions.")
   }
+
+  // Secondary region: Europe (EUR)
+  const existingEuropeRegions = await regionModule.listRegions({ name: "Europe" })
+  if (existingEuropeRegions.length === 0) {
+    await createRegionsWorkflow(container).run({
+      input: {
+        regions: [
+          {
+            name: "Europe",
+            currency_code: "eur",
+            countries: euCountries,
+            payment_providers: ["pp_system_default"],
+          },
+        ],
+      },
+    })
+    logger.info("Europe (EUR) region created.")
+
+    logger.info("Seeding EU tax regions...")
+    await createTaxRegionsWorkflow(container).run({
+      input: euCountries.map((country_code) => ({
+        country_code,
+        provider_id: "tp_system",
+      })),
+    })
+  } else {
+    logger.info("Europe region already exists, skipping creation.")
+  }
+  logger.info("Finished seeding regions.")
 
   // ── Stock location ────────────────────────────────────────────────────────────
   logger.info("Seeding stock location data...")
@@ -265,9 +300,10 @@ export default async function seed({
     })
 
     const shippingOptionPrices = [
+      { currency_code: "nzd", amount: 15 },
       { currency_code: "usd", amount: 10 },
       { currency_code: "eur", amount: 10 },
-      { region_id: region.id, amount: 10 },
+      { region_id: region.id, amount: 15 },
     ]
 
     await createShippingOptionsWorkflow(container).run({
@@ -383,6 +419,7 @@ export default async function seed({
                 options: { Storage: "256 GB", Color: "Blue" },
                 manage_inventory: false,
                 prices: [
+                  { amount: 1999, currency_code: "nzd" },
                   { amount: 1299, currency_code: "eur" },
                   { amount: 1299, currency_code: "usd" },
                 ],
@@ -393,6 +430,7 @@ export default async function seed({
                 options: { Storage: "512 GB", Color: "Red" },
                 manage_inventory: false,
                 prices: [
+                  { amount: 1949, currency_code: "nzd" },
                   { amount: 1259, currency_code: "eur" },
                   { amount: 1259, currency_code: "usd" },
                 ],
@@ -419,6 +457,7 @@ export default async function seed({
                 options: { Color: "Black" },
                 manage_inventory: false,
                 prices: [
+                  { amount: 99, currency_code: "nzd" },
                   { amount: 59, currency_code: "eur" },
                   { amount: 59, currency_code: "usd" },
                 ],
@@ -429,6 +468,7 @@ export default async function seed({
                 options: { Color: "White" },
                 manage_inventory: false,
                 prices: [
+                  { amount: 109, currency_code: "nzd" },
                   { amount: 65, currency_code: "eur" },
                   { amount: 65, currency_code: "usd" },
                 ],
@@ -460,6 +500,7 @@ export default async function seed({
                 options: { Memory: "256 GB", Color: "Purple" },
                 manage_inventory: false,
                 prices: [
+                  { amount: 1599, currency_code: "nzd" },
                   { amount: 999, currency_code: "eur" },
                   { amount: 999, currency_code: "usd" },
                 ],
@@ -470,6 +511,7 @@ export default async function seed({
                 options: { Memory: "256 GB", Color: "Red" },
                 manage_inventory: false,
                 prices: [
+                  { amount: 1549, currency_code: "nzd" },
                   { amount: 959, currency_code: "eur" },
                   { amount: 959, currency_code: "usd" },
                 ],
@@ -498,6 +540,7 @@ export default async function seed({
                 options: { Color: "White" },
                 manage_inventory: false,
                 prices: [
+                  { amount: 999, currency_code: "nzd" },
                   { amount: 599, currency_code: "eur" },
                   { amount: 599, currency_code: "usd" },
                 ],
@@ -508,6 +551,7 @@ export default async function seed({
                 options: { Color: "Black" },
                 manage_inventory: false,
                 prices: [
+                  { amount: 999, currency_code: "nzd" },
                   { amount: 599, currency_code: "eur" },
                   { amount: 599, currency_code: "usd" },
                 ],
@@ -536,6 +580,7 @@ export default async function seed({
                 options: { Color: "Black" },
                 manage_inventory: false,
                 prices: [
+                  { amount: 249, currency_code: "nzd" },
                   { amount: 149, currency_code: "eur" },
                   { amount: 149, currency_code: "usd" },
                 ],
@@ -546,6 +591,7 @@ export default async function seed({
                 options: { Color: "White" },
                 manage_inventory: false,
                 prices: [
+                  { amount: 249, currency_code: "nzd" },
                   { amount: 149, currency_code: "eur" },
                   { amount: 149, currency_code: "usd" },
                 ],
@@ -573,6 +619,7 @@ export default async function seed({
                 options: { Color: "Black" },
                 manage_inventory: false,
                 prices: [
+                  { amount: 159, currency_code: "nzd" },
                   { amount: 99, currency_code: "eur" },
                   { amount: 99, currency_code: "usd" },
                 ],
@@ -583,6 +630,7 @@ export default async function seed({
                 options: { Color: "White" },
                 manage_inventory: false,
                 prices: [
+                  { amount: 159, currency_code: "nzd" },
                   { amount: 99, currency_code: "eur" },
                   { amount: 99, currency_code: "usd" },
                 ],
@@ -610,6 +658,7 @@ export default async function seed({
                 options: { Color: "Black" },
                 manage_inventory: false,
                 prices: [
+                  { amount: 129, currency_code: "nzd" },
                   { amount: 79, currency_code: "eur" },
                   { amount: 79, currency_code: "usd" },
                 ],
@@ -620,6 +669,7 @@ export default async function seed({
                 options: { Color: "White" },
                 manage_inventory: false,
                 prices: [
+                  { amount: 129, currency_code: "nzd" },
                   { amount: 79, currency_code: "eur" },
                   { amount: 79, currency_code: "usd" },
                 ],
@@ -647,6 +697,7 @@ export default async function seed({
                 options: { Color: "Black" },
                 manage_inventory: false,
                 prices: [
+                  { amount: 129, currency_code: "nzd" },
                   { amount: 79, currency_code: "eur" },
                   { amount: 79, currency_code: "usd" },
                 ],
@@ -657,6 +708,7 @@ export default async function seed({
                 options: { Color: "White" },
                 manage_inventory: false,
                 prices: [
+                  { amount: 89, currency_code: "nzd" },
                   { amount: 55, currency_code: "eur" },
                   { amount: 55, currency_code: "usd" },
                 ],
