@@ -126,7 +126,7 @@ test.describe('Grafana Observability Dashboard — Production Readiness Audit', 
     page.setDefaultTimeout(20000);
 
     // Try anonymous access first
-    await page.goto(`${GRAFANA_URL}/d/${dashboardUid}/digital-commerce-e28094-backend`);
+    await page.goto(`${GRAFANA_URL}/d/${dashboardUid}/b2b-commerce-e28094-backend`);
     const currentUrl = page.url();
 
     // If redirected to login, authenticate
@@ -157,7 +157,7 @@ test.describe('Grafana Observability Dashboard — Production Readiness Audit', 
 
     // Navigate with kiosk mode to hide Grafana UI chrome
     await page.goto(
-      `${GRAFANA_URL}/d/${dashboardUid}/digital-commerce-e28094-backend?kiosk&from=now-30m&to=now`,
+      `${GRAFANA_URL}/d/${dashboardUid}/b2b-commerce-e28094-backend?kiosk&from=now-30m&to=now`,
       { waitUntil: 'networkidle' }
     );
 
@@ -191,7 +191,7 @@ test.describe('Grafana Observability Dashboard — Production Readiness Audit', 
 
     // d-solo URL isolates single panel; no login needed (anonymous access enabled)
     await page.goto(
-      `${GRAFANA_URL}/d-solo/${dashboardUid}/digital-commerce-e28094-backend?panelId=1&from=now-30m&to=now&theme=dark`,
+      `${GRAFANA_URL}/d-solo/${dashboardUid}/b2b-commerce-e28094-backend?panelId=1&from=now-30m&to=now&theme=dark`,
       { waitUntil: 'networkidle' }
     );
 
@@ -224,7 +224,7 @@ test.describe('Grafana Observability Dashboard — Production Readiness Audit', 
     page.setViewportSize({ width: 1000, height: 500 });
 
     await page.goto(
-      `${GRAFANA_URL}/d-solo/${dashboardUid}/digital-commerce-e28094-backend?panelId=2&from=now-30m&to=now&theme=dark`,
+      `${GRAFANA_URL}/d-solo/${dashboardUid}/b2b-commerce-e28094-backend?panelId=2&from=now-30m&to=now&theme=dark`,
       { waitUntil: 'networkidle' }
     );
 
@@ -255,7 +255,7 @@ test.describe('Grafana Observability Dashboard — Production Readiness Audit', 
     page.setViewportSize({ width: 1000, height: 500 });
 
     await page.goto(
-      `${GRAFANA_URL}/d-solo/${dashboardUid}/digital-commerce-e28094-backend?panelId=5&from=now-30m&to=now&theme=dark`,
+      `${GRAFANA_URL}/d-solo/${dashboardUid}/b2b-commerce-e28094-backend?panelId=5&from=now-30m&to=now&theme=dark`,
       { waitUntil: 'networkidle' }
     );
 
@@ -286,7 +286,7 @@ test.describe('Grafana Observability Dashboard — Production Readiness Audit', 
     page.setViewportSize({ width: 1000, height: 500 });
 
     await page.goto(
-      `${GRAFANA_URL}/d-solo/${dashboardUid}/digital-commerce-e28094-backend?panelId=6&from=now-30m&to=now&theme=dark`,
+      `${GRAFANA_URL}/d-solo/${dashboardUid}/b2b-commerce-e28094-backend?panelId=6&from=now-30m&to=now&theme=dark`,
       { waitUntil: 'networkidle' }
     );
 
@@ -317,7 +317,7 @@ test.describe('Grafana Observability Dashboard — Production Readiness Audit', 
     page.setViewportSize({ width: 1000, height: 500 });
 
     await page.goto(
-      `${GRAFANA_URL}/d-solo/${dashboardUid}/digital-commerce-e28094-backend?panelId=7&from=now-30m&to=now&theme=dark`,
+      `${GRAFANA_URL}/d-solo/${dashboardUid}/b2b-commerce-e28094-backend?panelId=7&from=now-30m&to=now&theme=dark`,
       { waitUntil: 'networkidle' }
     );
 
@@ -348,7 +348,7 @@ test.describe('Grafana Observability Dashboard — Production Readiness Audit', 
     page.setViewportSize({ width: 1000, height: 500 });
 
     await page.goto(
-      `${GRAFANA_URL}/d-solo/${dashboardUid}/digital-commerce-e28094-backend?panelId=8&from=now-30m&to=now&theme=dark`,
+      `${GRAFANA_URL}/d-solo/${dashboardUid}/b2b-commerce-e28094-backend?panelId=8&from=now-30m&to=now&theme=dark`,
       { waitUntil: 'networkidle' }
     );
 

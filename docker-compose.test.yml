@@ -1,4 +1,4 @@
-# Digital-Commerce — ephemeral TEST datastore stack (RQ2/RQ3 automation harness)
+# B2B-Commerce — ephemeral TEST datastore stack (RQ2/RQ3 automation harness)
 # Postgres + Redis ONLY. The Medusa app boots in-process via @medusajs/test-utils
 # (medusaIntegrationTestRunner inApp:true) which creates/drops its own throwaway DB.
 #

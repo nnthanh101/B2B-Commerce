@@ -133,7 +133,7 @@ test.describe("B2B invite accept flow [IA-01..IA-05]", () => {
     // This simulates a fresh invite link click from email
     const buyerContext = await browser.newContext({
       recordVideo: {
-        dir: "./tmp/Digital-Commerce/test-results/videos",
+        dir: "./tmp/B2B-Commerce/test-results/videos",
         size: { width: 1280, height: 720 },
       },
       viewport: { width: 1280, height: 720 },
@@ -151,6 +151,12 @@ test.describe("B2B invite accept flow [IA-01..IA-05]", () => {
     // Screenshot: form loaded
     await buyerPage.screenshot({
       path: path.join(SCREENSHOTS_DIR, "ia-01-form-loaded.png"),
+    });
+    // Flow capture: step-01-invite-form (logged-in buyer view)
+    await buyerPage.screenshot({
+      path: path.join(SCREENSHOTS_DIR, "../demo/flows/11-invite-employee/step-01-invite-form.png"),
+    }).catch((err) => {
+      console.log(`[ia] Note: Demo flow capture not written (dir may need manual creation): ${err.message}`);
     });
 
     // ────────────────────────────────────────────────────────────────────
@@ -226,6 +232,12 @@ test.describe("B2B invite accept flow [IA-01..IA-05]", () => {
     // Screenshot: success state
     await buyerPage.screenshot({
       path: path.join(SCREENSHOTS_DIR, "ia-02-success-state.png"),
+    });
+    // Flow capture: step-02-success (logged-in buyer view)
+    await buyerPage.screenshot({
+      path: path.join(SCREENSHOTS_DIR, "../demo/flows/11-invite-employee/step-02-success.png"),
+    }).catch((err) => {
+      console.log(`[ia] Note: Demo flow capture not written (dir may need manual creation): ${err.message}`);
     });
 
     // ────────────────────────────────────────────────────────────────────

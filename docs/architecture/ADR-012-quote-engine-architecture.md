@@ -3,11 +3,11 @@
 **Status**: Accepted
 **Date**: 2026-06-04
 **Deciders**: cloud-architect, product-owner, HITL
-**Authority**: `tmp/Digital-Commerce/coordination-logs/cloud-architect-batch-3-ca-2026-06-04.json`
+**Authority**: `tmp/B2B-Commerce/coordination-logs/cloud-architect-batch-3-ca-2026-06-04.json`
 
 ## Summary
 
-The **Quote Engine** — Digital-Commerce's unfair-advantage differentiator — is composed of the **OceanSoft-owned Medusa Quote module** (`apps/backend/src/modules/quote/`) plus **8 custom workflows** (`apps/backend/src/workflows/quote/workflows/`) plus **storefront Server Actions** (`apps/storefront/src/lib/data/quotes.ts`). **No Medusa quote plugin layer. No third-party quote tooling (Conga, DealHub, PandaDoc, etc.).** The ADLC AI Gateway (Roadmap v0.6) layers semantic / RFQ-template orchestration on top of these workflows — it does not replace them. This ADR makes the engine boundary explicit so future "should we add a plugin layer?" debates resolve to "no — engine is composed, not pluggable."
+The **Quote Engine** — B2B-Commerce's unfair-advantage differentiator — is composed of the **OceanSoft-owned Medusa Quote module** (`apps/backend/src/modules/quote/`) plus **8 custom workflows** (`apps/backend/src/workflows/quote/workflows/`) plus **storefront Server Actions** (`apps/storefront/src/lib/data/quotes.ts`). **No Medusa quote plugin layer. No third-party quote tooling (Conga, DealHub, PandaDoc, etc.).** The ADLC AI Gateway (Roadmap v0.6) layers semantic / RFQ-template orchestration on top of these workflows — it does not replace them. This ADR makes the engine boundary explicit so future "should we add a plugin layer?" debates resolve to "no — engine is composed, not pluggable."
 
 ## 5S Sort Justification
 

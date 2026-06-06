@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # scripts/lib/common.sh
-# Shared helpers for all Digital-Commerce scripts.
+# Shared helpers for all B2B-Commerce scripts.
 # Source this file: source "$(dirname "$0")/lib/common.sh"
 #
 # Exports: log, info, fail, require_cmd, http_wait

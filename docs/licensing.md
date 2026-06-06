@@ -1,6 +1,6 @@
 # Licensing
 
-Digital-Commerce is **fully MIT-licensed** under OceanSoft copyright. All code in this repository is freely available under the same terms.
+B2B-Commerce is **fully MIT-licensed** under OceanSoft copyright. All code in this repository is freely available under the same terms.
 
 ## Current License
 

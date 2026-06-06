@@ -2,7 +2,7 @@
 
 ## System Overview
 
-Digital-Commerce is a **B2B marketplace platform** separating concerns across three tiers:
+B2B-Commerce is a **B2B-Commerce platform** separating concerns across three tiers:
 
 ```
                          Developer / HITL
@@ -37,7 +37,7 @@ Digital-Commerce is a **B2B marketplace platform** separating concerns across th
 ### Repo Layout
 
 ```
-Digital-Commerce/                   (MIT licensed public monorepo)
+B2B-Commerce/                   (MIT licensed public monorepo)
 ├── apps/backend/                  Medusa consumer app (thin wrapper)
 │   ├── medusa-config.ts           Registers @oceansoft/medusa-plugin-b2b modules
 │   ├── src/api                    API extensions (custom endpoints if any)

@@ -3,11 +3,11 @@
 **Status**: Accepted
 **Date**: 2026-06-04
 **Deciders**: cloud-architect, product-owner, HITL
-**Authority**: `tmp/Digital-Commerce/coordination-logs/cloud-architect-batch-3-ca-2026-06-04.json`
+**Authority**: `tmp/B2B-Commerce/coordination-logs/cloud-architect-batch-3-ca-2026-06-04.json`
 
 ## Summary
 
-Digital-Commerce uses **Medusa 2.x out-of-the-box (OOTB)** for cart, order, product, inventory, customer, payment-stub, and admin scaffolding, and **extends Medusa via its first-class extension points** — custom modules, custom workflows, and admin SDK extensions. **We do NOT fork Medusa core.** Upstream Medusa releases land via standard `@medusajs/*` npm version bumps tracked by Renovate; OceanSoft owns every extension surface under `apps/backend/src/{modules,workflows,api,subscribers,jobs,links}/`. This ADR makes the extension boundary explicit so future Medusa releases do not trigger an architectural review.
+B2B-Commerce uses **Medusa 2.x out-of-the-box (OOTB)** for cart, order, product, inventory, customer, payment-stub, and admin scaffolding, and **extends Medusa via its first-class extension points** — custom modules, custom workflows, and admin SDK extensions. **We do NOT fork Medusa core.** Upstream Medusa releases land via standard `@medusajs/*` npm version bumps tracked by Renovate; OceanSoft owns every extension surface under `apps/backend/src/{modules,workflows,api,subscribers,jobs,links}/`. This ADR makes the extension boundary explicit so future Medusa releases do not trigger an architectural review.
 
 ## Context
 

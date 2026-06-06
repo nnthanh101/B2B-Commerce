@@ -42,7 +42,7 @@ Stripe Connect Express collects supplier identity, business registration, benefi
 | ACL supplier representations | T&Cs at onboarding | supplier accepts warranty pass-through clause |
 
 - **Storage**: vetting evidence in RDS per [ADR-002](./ADR-002-rds-single-az.md) with FOCUS tags `Compliance=APRA-CPS234`, `DataClassification=supplier-business`
-- **Audit trail**: every vetting check writes JSON to `tmp/Digital-Commerce/coordination-logs/supplier-vetting-{supplier_id}-{date}.json` (Phase 1 local), then to an S3-backed immutable audit bucket at v0.4 deploy with Object Lock for the 7-year retention obligation
+- **Audit trail**: every vetting check writes JSON to `tmp/B2B-Commerce/coordination-logs/supplier-vetting-{supplier_id}-{date}.json` (Phase 1 local), then to an S3-backed immutable audit bucket at v0.4 deploy with Object Lock for the 7-year retention obligation
 
 ### Layer 3 — Ongoing Re-verification (Phase 2 v0.4)
 
@@ -62,11 +62,11 @@ Stripe Connect Express collects supplier identity, business registration, benefi
 
 ## FOCUS 1.2+ Tags
 
-- `Service=digital-commerce-supplier-vetting`
+- `Service=b2b-commerce-supplier-vetting`
 - `Environment={dev,staging,prod}`
 - `Owner=security-compliance`
 - `CostCenter=engineering`
-- `Project=digital-commerce`
+- `Project=b2b-commerce`
 - `BillingTag={customer-X}` (multi-tenant rebilling)
 - `ManagedBy=adlc`
 - `Compliance=APRA-CPS234+ASIC+AUSTRAC+ANZSIC`

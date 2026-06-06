@@ -3,7 +3,7 @@
 **Status**: Accepted
 **Date**: 2026-06-04
 **Deciders**: cloud-architect, product-owner, HITL
-**Authority**: `tmp/Digital-Commerce/coordination-logs/cloud-architect-digital-commerce-p1-2026-06-04.json`
+**Authority**: `tmp/B2B-Commerce/coordination-logs/cloud-architect-b2b-commerce-p1-2026-06-04.json`
 
 ## Summary
 
@@ -11,7 +11,7 @@
 
 ## Context
 
-Digital-Commerce was initialised in June 2026 by copying two MIT-licensed Medusa scaffolds:
+B2B-Commerce was initialised in June 2026 by copying two MIT-licensed Medusa scaffolds:
 
 - **`medusajs/b2b-starter`** — supplied the `apps/backend/` shell with company/quote/approval modules (see ADR-008 for module-layer detail).
 - **`medusajs/dtc-starter`** — supplied the Turbo monorepo + pnpm workspace layout, the `apps/storefront/` Next.js shell, and the `tooling/` configuration baseline.

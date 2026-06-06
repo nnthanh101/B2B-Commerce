@@ -3,15 +3,15 @@
 **Status**: Accepted (Phase 1 local, Phase 2 RDS)
 **Date**: 2026-06-04
 **Deciders**: cloud-architect, product-owner, HITL
-**Authority**: `tmp/Digital-Commerce/coordination-logs/cloud-architect-batch-2-order-1-2026-06-04.json`
+**Authority**: `tmp/B2B-Commerce/coordination-logs/cloud-architect-batch-2-order-1-2026-06-04.json`
 
 ## Summary
 
-Digital-Commerce uses **PostgreSQL native full-text search** (`tsvector` + `tsquery`) for Phase 1 and Phase 2 product/quote/company search operations. FTS is built into the `postgres:15-alpine` container (Phase 1) and RDS PostgreSQL 15 (Phase 2); zero additional infrastructure cost at both scales. **Algolia migration trigger** is explicit: > 1M products OR > 100 concurrent search QPS OR quote-catalog hybrid search (semantic + structured filtering). **Quote-catalog hybrid search** (v0.4+ roadmap) will use pgvector for semantic similarity over quote descriptions, with FTS remaining the primary search index until Phase 2.
+B2B-Commerce uses **PostgreSQL native full-text search** (`tsvector` + `tsquery`) for Phase 1 and Phase 2 product/quote/company search operations. FTS is built into the `postgres:15-alpine` container (Phase 1) and RDS PostgreSQL 15 (Phase 2); zero additional infrastructure cost at both scales. **Algolia migration trigger** is explicit: > 1M products OR > 100 concurrent search QPS OR quote-catalog hybrid search (semantic + structured filtering). **Quote-catalog hybrid search** (v0.4+ roadmap) will use pgvector for semantic similarity over quote descriptions, with FTS remaining the primary search index until Phase 2.
 
 ## Context
 
-Digital-Commerce search surface includes:
+B2B-Commerce search surface includes:
 
 - **Product catalog search** — buyer searches "LED lights 100W" across product titles + descriptions
 - **Quote history search** — admin searches "Acme Corp" across company, quote, and line items

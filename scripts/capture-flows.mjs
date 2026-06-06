@@ -16,12 +16,12 @@ import { chromium } from "@playwright/test";
 import path from "node:path";
 import fs from "node:fs";
 
-const REPO_ROOT = "/Volumes/Working/projects/Digital-Commerce";
+const REPO_ROOT = "/Volumes/Working/projects/B2B-Commerce";
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:9000";
 const STOREFRONT_URL = process.env.STOREFRONT_URL || "http://localhost:8000";
 const DEMO_BUYER_EMAIL = "demo-buyer@democorp.local";
 const DEMO_BUYER_PASSWORD = "Test1234!";
-const FLOWS_DIR = path.join(REPO_ROOT, "tmp/Digital-Commerce/demo/flows");
+const FLOWS_DIR = path.join(REPO_ROOT, "tmp/B2B-Commerce/demo/flows");
 
 // Flows: [num, slug, persona, path, description]
 const FLOWS = [

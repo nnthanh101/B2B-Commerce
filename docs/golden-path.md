@@ -1,6 +1,6 @@
-# Golden Path — Demo Digital-Commerce End-to-End in 15 Minutes
+# Golden Path — Demo B2B-Commerce End-to-End in 15 Minutes
 
-> **Doc identity**: This is the **Golden Path** — the canonical happy-path demo that proves the wedge (quote-assisted B2B with dual-persona). If you only read one Digital-Commerce doc to evaluate the product, read this one.
+> **Doc identity**: This is the **Golden Path** — the canonical happy-path demo that proves the wedge (quote-assisted B2B with dual-persona). If you only read one B2B-Commerce doc to evaluate the product, read this one.
 > **Audience**: HITL, prospect demo, alpha customer OceanSoft, first-week dev
 > **Time**: 5 min setup + 10 min Golden Path demo = 15 min total
 > **Phase**: 1 (local-first, no AWS provisioning)
@@ -10,7 +10,7 @@
 
 ## When to Use This Doc
 
-- **You** want to demo Digital-Commerce to a prospect, a stakeholder, or yourself in 15 minutes.
+- **You** want to demo B2B-Commerce to a prospect, a stakeholder, or yourself in 15 minutes.
 - **You** want to prove the buyer-employee + admin/sales-manager wedge actually runs end-to-end (not slide-deck claims).
 - **You** are NOT here to learn every `task` target (see [Taskfile.yml](../Taskfile.yml)) or every topology fact (see [architecture/local-mvp.md](./architecture/local-mvp.md)).
 
@@ -54,7 +54,7 @@ You are now the **admin** who just onboarded a customer company with a regulated
 3. Click **Request Quote** on the cart page.
 4. Confirm the quote appears at `/gb/account/quotes` with status `pending_approval`.
 
-You have now executed the **buyer-employee** half of the wedge. The cart never converted to an order; it was routed to approval per Digital-Commerce's "every cart enters an approval workflow by default" design.
+You have now executed the **buyer-employee** half of the wedge. The cart never converted to an order; it was routed to approval per B2B-Commerce's "every cart enters an approval workflow by default" design.
 
 ### Step 3 — Approve the quote (admin/sales-manager persona, 2 min)
 

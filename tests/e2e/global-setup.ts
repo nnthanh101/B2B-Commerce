@@ -6,7 +6,7 @@ import { configDoctor } from "./config";
 
 const SEED_LOG_PATH = path.resolve(
   __dirname,
-  "../../tmp/Digital-Commerce/test-results/seed-demo-b2b.log"
+  "../../tmp/B2B-Commerce/test-results/seed-demo-b2b.log"
 );
 
 /**

@@ -14,14 +14,14 @@ require_cmd docker "Install Docker Desktop"
 : "${AWS_DEFAULT_REGION:?AWS_DEFAULT_REGION must be set}"
 
 log "Creating LocalStack network (idempotent)..."
-docker network create digital-commerce_ls_net 2>/dev/null || true
+docker network create b2b-commerce_ls_net 2>/dev/null || true
 
 log "Removing any previous LocalStack container..."
 docker rm -f dc-localstack 2>/dev/null || true
 
 log "Starting LocalStack Community (port 4566)..."
 docker run -d --name dc-localstack \
-  --network digital-commerce_ls_net \
+  --network b2b-commerce_ls_net \
   --network-alias localstack \
   -e SERVICES=s3,sqs,sns,secretsmanager,iam,sts \
   -e DEFAULT_REGION="${AWS_DEFAULT_REGION}" \

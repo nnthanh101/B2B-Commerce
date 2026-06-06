@@ -6,8 +6,8 @@ Create a `.env.test` file in this directory with the following variables:
 MEDUSA_BACKEND_URL=http://medusa:9000
 STOREFRONT_URL=http://localhost:8000
 TEST_REGION_COUNTRY=dk
-PLAYWRIGHT_HTML_REPORT=tmp/Digital-Commerce/test-results/playwright-report
-PLAYWRIGHT_SCREENSHOTS=tmp/Digital-Commerce/screenshots
+PLAYWRIGHT_HTML_REPORT=tmp/B2B-Commerce/test-results/playwright-report
+PLAYWRIGHT_SCREENSHOTS=tmp/B2B-Commerce/screenshots
 ```
 
 These variables are used by:

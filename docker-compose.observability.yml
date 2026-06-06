@@ -1,4 +1,4 @@
-# docker-compose.observability.yml — Digital-Commerce opt-in observability stack
+# docker-compose.observability.yml — B2B-Commerce opt-in observability stack
 #
 # ADR-007 AMENDMENT 2026-06-05: hybrid-cloud SSOT, execute NOW
 #
@@ -40,7 +40,7 @@ services:
     networks:
       - ec_network
     labels:
-      application: digital-commerce
+      application: b2b-commerce
       service: observability
       environment: local
       managed-by: adlc
@@ -72,7 +72,7 @@ services:
     depends_on:
       - prometheus
     labels:
-      application: digital-commerce
+      application: b2b-commerce
       service: observability
       environment: local
       managed-by: adlc
@@ -91,7 +91,7 @@ services:
     networks:
       - ec_network
     labels:
-      application: digital-commerce
+      application: b2b-commerce
       service: postgres
       environment: local
       managed-by: adlc
@@ -109,7 +109,7 @@ services:
     networks:
       - ec_network
     labels:
-      application: digital-commerce
+      application: b2b-commerce
       service: redis
       environment: local
       managed-by: adlc
@@ -133,7 +133,7 @@ services:
     networks:
       - ec_network
     labels:
-      application: digital-commerce
+      application: b2b-commerce
       service: node
       environment: local
       managed-by: adlc

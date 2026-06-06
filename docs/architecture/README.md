@@ -1,10 +1,10 @@
 # Architecture Decision Records (ADRs)
 
-This directory contains accepted architectural decisions for the Digital-Commerce platform. Each ADR follows the **Summary → Context → Decision → Consequences** template.
+This directory contains accepted architectural decisions for the B2B-Commerce platform. Each ADR follows the **Summary → Context → Decision → Consequences** template.
 
 ## Naming convention
 
-`adr-NNN-<kebab-slug>.md` — lowercase, dash-separated. Reflects the broader `docs/` kebab-lowercase enterprise convention. (Adoption date: 2026-06-04. Prior convention `ADR-NNN-*.md` was migrated to lowercase per [PO+CA consensus](../../tmp/Digital-Commerce/coordination-logs/product-owner-kebab-lowercase-round2-2026-06-04.json).)
+`adr-NNN-<kebab-slug>.md` — lowercase, dash-separated. Reflects the broader `docs/` kebab-lowercase enterprise convention. (Adoption date: 2026-06-04. Prior convention `ADR-NNN-*.md` was migrated to lowercase per [PO+CA consensus](../../tmp/B2B-Commerce/coordination-logs/product-owner-kebab-lowercase-round2-2026-06-04.json).)
 
 ## Index
 

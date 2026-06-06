@@ -1,7 +1,7 @@
 /**
  * Demo B2B Seed Script — `medusa exec` path
  * ─────────────────────────────────────────
- * Scope: digital-commerce-demo-3act-storyboard
+ * Scope: b2b-commerce-demo-3act-storyboard
  *
  * Purpose:
  *   Idempotently populate company + buyer employee + approval-settings
@@ -369,20 +369,39 @@ export default async function seedDemoB2B({
     }
   }
 
-  // ── Step 5: Cart linked to company ──────────────────────────────────────
+  // ── Step 5: Cart linked to company (under Oceania/NZD region) ─────────────
 
-  logger.info("Step 5: Cart linked to company...")
+  logger.info("Step 5: Cart linked to company (Oceania/NZD)...")
 
   // Look up a region and sales channel to create a valid cart
   const regionModule = container.resolve(Modules.REGION)
   const regions = await regionModule.listRegions()
-  const region = regions[0]
+
+  // CRITICAL: Find the Oceania (NZD) region by country iso_2 = "nz"
+  // This ensures demo quotes and orders show NZD, not EUR (from Europe region)
+  let region = regions.find((r: any) =>
+    r.countries?.some((c: any) => c.iso_2 === "nz")
+  )
+
+  // Fallback: if no Oceania region, use first region (but log warning)
+  if (!region) {
+    logger.warn(
+      "WARNING: No Oceania (nz) region found. Using first region. " +
+      "Demo quotes/orders will NOT be in NZD."
+    )
+    region = regions[0]
+  }
 
   if (!region) {
     throw new Error(
       "No region found — run the base seed.ts first (npx medusa exec ./src/scripts/seed.ts)"
     )
   }
+
+  logger.info(
+    `  Using region: ${region.id} ` +
+    `(currency=${region.currency_code}, countries=${region.countries?.map((c: any) => c.iso_2).join(",")})`
+  )
 
   const salesChannelModule = container.resolve(Modules.SALES_CHANNEL)
   const salesChannels = await salesChannelModule.listSalesChannels()

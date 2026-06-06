@@ -10,10 +10,10 @@
 #
 # OPTIONS:
 #   --flows-dir   <dir>    Narration .md files dir  (default: docs/demo/flows)
-#   --stills-root <dir>    Per-flow stills parent   (default: tmp/Digital-Commerce/demo/flows)
-#   --out-dir     <dir>    Reel output dir          (default: tmp/Digital-Commerce/demo/flows)
+#   --stills-root <dir>    Per-flow stills parent   (default: tmp/B2B-Commerce/demo/flows)
+#   --out-dir     <dir>    Reel output dir          (default: tmp/B2B-Commerce/demo/flows)
 #   --persona-map <file>   Flow-owner map           (default: docs/demo/persona-flow-map.md)
-#   --verdict     <file>   Green verdict JSON       (default: tmp/Digital-Commerce/test-results/flow-green-verdict-2026-06-06.json)
+#   --verdict     <file>   Green verdict JSON       (default: tmp/B2B-Commerce/test-results/flow-green-verdict-2026-06-06.json)
 #   --voice       <name>   macOS TTS voice          (default: Daniel)
 #   --dry-run              Validate wiring; skip actual build + ffprobe
 #   --help                 Print this help and exit
@@ -56,10 +56,10 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TODAY="$(date +%Y-%m-%d)"
 
 FLOWS_DIR="${REPO_ROOT}/docs/demo/flows"
-STILLS_ROOT="${REPO_ROOT}/tmp/Digital-Commerce/demo/flows"
-OUT_DIR="${REPO_ROOT}/tmp/Digital-Commerce/demo/flows"
+STILLS_ROOT="${REPO_ROOT}/tmp/B2B-Commerce/demo/flows"
+OUT_DIR="${REPO_ROOT}/tmp/B2B-Commerce/demo/flows"
 PERSONA_MAP="${REPO_ROOT}/docs/demo/persona-flow-map.md"
-VERDICT_FILE="${REPO_ROOT}/tmp/Digital-Commerce/test-results/flow-green-verdict-2026-06-06.json"
+VERDICT_FILE="${REPO_ROOT}/tmp/B2B-Commerce/test-results/flow-green-verdict-2026-06-06.json"
 VOICE="Daniel"
 DRY_RUN=0
 
@@ -154,13 +154,17 @@ fi
 # ---------------------------------------------------------------------------
 verdict_for_flow() {
   local slug="$1"
+  # Strip leading NN- prefix (e.g. "01-cart-to-quote" -> "cart-to-quote") so the
+  # lookup key matches bare flow names stored in the verdict JSON.
+  local bare_slug="${slug#[0-9][0-9]-}"
   if [[ "$VERDICT_PRESENT" -eq 0 ]]; then
     echo "UNKNOWN"
     return
   fi
   local v
-  v=$(jq -r --arg slug "$slug" \
-    '.flows[] | select(.flow == $slug) | .verdict // "UNKNOWN"' \
+  # Verdict JSON uses the field name "status" (values: PASS, EXCLUDED, FAIL).
+  v=$(jq -r --arg slug "$bare_slug" \
+    '.flows[] | select(.flow == $slug) | .status // "UNKNOWN"' \
     "$VERDICT_FILE" 2>/dev/null | head -1)
   echo "${v:-UNKNOWN}"
 }

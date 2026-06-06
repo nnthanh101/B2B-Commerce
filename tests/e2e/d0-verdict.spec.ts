@@ -62,7 +62,7 @@ interface D0Verdict {
 }
 
 const verdict: D0Verdict = {
-  scope_id: "digital-commerce-3act-live-demo-record",
+  scope_id: "b2b-commerce-3act-live-demo-record",
   run_date: new Date().toISOString().split("T")[0],
   routes: [],
   summary: {
@@ -348,11 +348,11 @@ test.describe("D0: As-Is Route Render Verdict (Act 1 + Act 3)", () => {
   test("ACT 3.1: Coordination logs exist (/tmp/.../coordination-logs)", async ({
     request,
   }) => {
-    const route = "tmp/Digital-Commerce/coordination-logs";
+    const route = "tmp/B2B-Commerce/coordination-logs";
     const screenshot = path.join(SCREENSHOTS_DIR, "act3-1-coordination-logs.png");
 
     try {
-      const logDir = `/Volumes/Working/projects/Digital-Commerce/${route}`;
+      const logDir = `/Volumes/Working/projects/B2B-Commerce/${route}`;
       const logs = fs.readdirSync(logDir).filter((f) => f.endsWith(".json"));
 
       if (logs.length >= 2) {

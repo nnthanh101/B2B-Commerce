@@ -3,7 +3,7 @@
 **Status**: Accepted (Phase 1 CI gates, Phase 2 deploy)
 **Date**: 2026-06-04
 **Deciders**: cloud-architect, product-owner, HITL
-**Authority**: `tmp/Digital-Commerce/coordination-logs/cloud-architect-batch-2-order-1-2026-06-04.json`
+**Authority**: `tmp/B2B-Commerce/coordination-logs/cloud-architect-batch-2-order-1-2026-06-04.json`
 
 ## Summary
 
@@ -17,7 +17,7 @@ GitHub Actions provides two common trigger patterns:
 2. **Manual workflow dispatch** — requires explicit workflow run approval in the GitHub UI (explicit, but ceremony-heavy)
 3. **Tag-push triggers** — production code is tagged by HITL; the tag triggers the deploy (explicit intent, no UI ceremony)
 
-Digital-Commerce uses the **tag-push pattern** because:
+B2B-Commerce uses the **tag-push pattern** because:
 
 - HITL retains deploy authority via git tag (a commit-level operation that surfaces in history)
 - PR CI runs validate syntax/types/infra without touching AWS

@@ -1,6 +1,6 @@
 # TEST-PLAN — OceanSoft B2B Commerce
 
-QA domain for the Digital-Commerce platform. All test execution is container-based (`task test:<tier>`). Evidence paths write to `tmp/Digital-Commerce/test-results/`.
+QA domain for the B2B-Commerce platform. All test execution is container-based (`task test:<tier>`). Evidence paths write to `tmp/B2B-Commerce/test-results/`.
 
 ## Tier Overview
 
@@ -86,8 +86,8 @@ Integration (Tier 2) tests not yet provisioned (v0.3 target). Tier 3a (`task tes
 
 | Artifact | Path |
 |----------|------|
-| E2E HTML report | `tmp/Digital-Commerce/test-results/playwright-report/` |
-| Failure screenshots | `tmp/Digital-Commerce/screenshots/` |
-| Unit test JSON | `tmp/Digital-Commerce/test-results/unit-results.json` |
-| Integration test log | `tmp/Digital-Commerce/test-results/integration-results.log` |
-| Rename/CI V1 log | `tmp/Digital-Commerce/test-results/cycle2-rename-tests-v1-2026-06-04.log` |
+| E2E HTML report | `tmp/B2B-Commerce/test-results/playwright-report/` |
+| Failure screenshots | `tmp/B2B-Commerce/screenshots/` |
+| Unit test JSON | `tmp/B2B-Commerce/test-results/unit-results.json` |
+| Integration test log | `tmp/B2B-Commerce/test-results/integration-results.log` |
+| Rename/CI V1 log | `tmp/B2B-Commerce/test-results/cycle2-rename-tests-v1-2026-06-04.log` |

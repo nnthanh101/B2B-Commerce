@@ -1,10 +1,10 @@
-# Digital-Commerce Documentation
+# B2B-Commerce Documentation
 
-Digital-Commerce is a B2B marketplace platform built on OceanSoft's B2B plugin for Medusa v2. This documentation covers local development, architecture decisions, and licensing.
+B2B-Commerce is a B2B-Commerce platform built on OceanSoft's B2B plugin for Medusa v2. This documentation covers local development, architecture decisions, and licensing.
 
 ## What You'll Build
 
-A production-ready B2B marketplace where:
+A production-ready B2B-Commerce where:
 - **Buyers** register as companies, add employees with spending limits, request quotes, and place orders through an approval workflow
 - **Merchants** manage company accounts, quote negotiations, approval settings, and bulk order fulfillment
 - **Operators** (OceanSoft + licensees) deploy locally in Docker, validate in Terraform, and scale to AWS
@@ -28,7 +28,7 @@ A production-ready B2B marketplace where:
 
 ## About OceanSoft
 
-OceanSoft is a B2B marketplace operator and technology company. This reference architecture powers www.oceansoft.io (our alpha customer) and serves as the integration guide for licensees building their own B2B marketplaces on the `@oceansoft/medusa-plugin-b2b` plugin.
+OceanSoft's B2B-Commerce operator and technology company. This reference architecture powers www.oceansoft.io (our alpha customer) and serves as the integration guide for licensees building their own B2B-Commerces on the `@oceansoft/medusa-plugin-b2b` plugin.
 
 ---
 

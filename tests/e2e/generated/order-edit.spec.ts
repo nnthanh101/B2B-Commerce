@@ -116,6 +116,12 @@ test.describe("B2B order-edit flow [generated]", () => {
     await buyerPage.screenshot({
       path: path.join(SCREENSHOTS_DIR, "generated-order-edit-02-orders-wrapper.png"),
     });
+    // Flow capture: step-01-orders-wrapper (logged-in buyer view)
+    await buyerPage.screenshot({
+      path: path.join(SCREENSHOTS_DIR, "../demo/flows/08-order-edit/step-01-orders-wrapper.png"),
+    }).catch(() => {
+      // Dir may not exist yet; batch gate creates it
+    });
 
     // OE-03: HARD assertion — "Orders" heading is visible
     // Grounded in: page.tsx Heading component renders "Orders" as h1-level text
@@ -141,6 +147,12 @@ test.describe("B2B order-edit flow [generated]", () => {
 
     await buyerPage.screenshot({
       path: path.join(SCREENSHOTS_DIR, "generated-order-edit-03-orders-heading.png"),
+    });
+    // Flow capture: step-02-orders-heading (logged-in buyer view)
+    await buyerPage.screenshot({
+      path: path.join(SCREENSHOTS_DIR, "../demo/flows/08-order-edit/step-02-orders-heading.png"),
+    }).catch(() => {
+      // Dir may not exist yet; batch gate creates it
     });
 
     // OE-04: CONTENT CHECK (Approach B) — if order rows exist, extract display_id

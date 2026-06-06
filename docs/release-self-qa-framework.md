@@ -1,16 +1,16 @@
 # Release Self-QA Framework (RSF) — Standard Operating Procedure
 
-> **Version**: 1.1.0 — first run: Digital-Commerce v1.1.0; next release: v1.1.1 (live test execution)
+> **Version**: 1.1.0 — first run: B2B-Commerce v1.1.0; next release: v1.1.1 (live test execution)
 > **Owner**: HITL (T-Shape manager) + enterprise-team AI agents (ADLC v1.2.0)
-> **Authority**: `tmp/Digital-Commerce/coordination-logs/product-owner-2026-06-04-v110-rsf.json` + `cloud-architect-2026-06-04-v110-rsf.json` (PO 96% / CA 96% — ≥95% gate met)
+> **Authority**: `tmp/B2B-Commerce/coordination-logs/product-owner-2026-06-04-v110-rsf.json` + `cloud-architect-2026-06-04-v110-rsf.json` (PO 96% / CA 96% — ≥95% gate met)
 > **Invocation**: `/commerce:release-qa` or `task test:all`
-> **Canonical SSOT**: `.claude/plugins/commerce/knowledge/plan/Digital-Commerce-Release-Self-QA-Framework-v1.x.md`
+> **Canonical SSOT**: `.claude/plugins/commerce/knowledge/plan/B2B-Commerce-Release-Self-QA-Framework-v1.x.md`
 
 ---
 
 ## Purpose
 
-The RSF is the **repeatable, enterprise-team self-test / self-QA pipeline** executed for every Digital-Commerce release. It replaces ad-hoc manual testing with a 7-phase structured process that emits:
+The RSF is the **repeatable, enterprise-team self-test / self-QA pipeline** executed for every B2B-Commerce release. It replaces ad-hoc manual testing with a 7-phase structured process that emits:
 - Persona + business-value **changelog** (for stakeholders)
 - **Technical excellence** artifacts (automation + autonomous testing + visual verification)
 - **Enterprise quality gates** with HITL escalation when ≥99.5% is not reached autonomously
@@ -42,10 +42,10 @@ Before any release proceeds, all four gates must be satisfied:
 
 | Gate | Threshold | Evidence path |
 |------|-----------|---------------|
-| PDCA autonomous score | ≥99.5% (`validation_score`) | `tmp/Digital-Commerce/pdca-cycles/cycle-N-*.json` |
+| PDCA autonomous score | ≥99.5% (`validation_score`) | `tmp/B2B-Commerce/pdca-cycles/cycle-N-*.json` |
 | Agent agreement (PO + CA + QA) | ≥95% | P0 and P6 coordination logs |
 | MCP-vs-native accuracy | ≥99.5% | `cross-validation-docs` output |
-| RQ3 autonomous gate | PASS | `tmp/Digital-Commerce/test-results/rq3-scorecard.json` |
+| RQ3 autonomous gate | PASS | `tmp/B2B-Commerce/test-results/rq3-scorecard.json` |
 
 If any gate fails after 3 PDCA cycles: **HITL escalation** (release blocked; HITL reviews evidence and decides).
 
@@ -59,11 +59,11 @@ If any gate fails after 3 PDCA cycles: **HITL escalation** (release blocked; HIT
 
 **Operator action:**
 ```bash
-task adlc SCOPE=digital-commerce-release-vX.Y.Z
+task adlc SCOPE=b2b-commerce-release-vX.Y.Z
 ```
 
 **What to verify at exit:**
-- INVEST stories (≥4/6 each) in `tmp/Digital-Commerce/coordination-logs/`
+- INVEST stories (≥4/6 each) in `tmp/B2B-Commerce/coordination-logs/`
 - Persona changelog skeleton drafted (buyer-employee + admin/sales-manager both named)
 - PO+CA agreement ≥95% recorded in coordination logs
 
@@ -118,7 +118,7 @@ test:all          → deps:[static, db:up, integration, e2e, live, visual] → r
 ```
 
 > **Local vs CI integration model**: Local integration uses `task test:live` (HTTP against the running `:9000` service — no second Medusa boot). `task test:integration` (`inApp` runner) is the CI path and requires a **dedicated Postgres service with no competing Medusa process**. Running `task test:integration` inside the shared local container causes `KnexTimeoutError` boot-hang (not a timeout-tuning issue — 300s full-burn confirmed). See knowledge-plan §17 for full 5-Whys and CA1–CA5.
-> Evidence: `tmp/Digital-Commerce/evidence/root-cause-corrective-actions-2026-06-04.md`
+> Evidence: `tmp/B2B-Commerce/evidence/root-cause-corrective-actions-2026-06-04.md`
 
 **What to verify at exit:**
 - `task test:all` exits 0 **twice** (two timestamped logs — idempotency gate)
@@ -140,7 +140,7 @@ task test:visual
 ```
 
 **What to verify at exit:**
-- `tmp/Digital-Commerce/test-results/screenshots/` contains PNGs for **both** surfaces:
+- `tmp/B2B-Commerce/test-results/screenshots/` contains PNGs for **both** surfaces:
   - Storefront journey at `:8000` (buyer-employee persona)
   - Admin + terminal on display 2 (admin/sales-manager persona)
 
@@ -167,8 +167,8 @@ task test:live
 ```
 
 **What to verify at exit:**
-- `tmp/Digital-Commerce/pdca-cycles/cycle-N-YYYY-MM-DD.json` for each cycle
-- `tmp/Digital-Commerce/test-results/rq3-scorecard.json` present
+- `tmp/B2B-Commerce/pdca-cycles/cycle-N-YYYY-MM-DD.json` for each cycle
+- `tmp/B2B-Commerce/test-results/rq3-scorecard.json` present
 - `validation_score ≥ 0.995`; release-blocking gate PASS
 - No-progress stop rule: 2 consecutive cycles <0.5% improvement → HITL escalated
 - 3× repeatability: stddev of pass rates <2%
@@ -257,7 +257,7 @@ When any gate fails after 3 PDCA cycles:
 
 ```
 Work complete (with exceptions). Ready for HITL review.
-Evidence: tmp/Digital-Commerce/pdca-cycles/cycle-3-YYYY-MM-DD.json
+Evidence: tmp/B2B-Commerce/pdca-cycles/cycle-3-YYYY-MM-DD.json
 Failure: [gate name] = [actual score] (threshold: [threshold])
 Next action: HITL reviews evidence path above and decides release / rollback.
   git diff --stat   [to review changes]
@@ -293,13 +293,13 @@ task test:report          # Aggregate REPORT.md/.html
 
 | Artifact | Path |
 |----------|------|
-| PDCA cycle scores | `tmp/Digital-Commerce/pdca-cycles/cycle-N-YYYY-MM-DD.json` |
-| RQ3 scorecard | `tmp/Digital-Commerce/test-results/rq3-scorecard.json` |
-| Visual screenshots | `tmp/Digital-Commerce/test-results/screenshots/` |
-| Aggregate test report | `tmp/Digital-Commerce/test-results/REPORT.{md,html}` |
-| Integration test log | `tmp/Digital-Commerce/test-results/integration-results.log` |
-| E2E HTML report | `tmp/Digital-Commerce/test-results/playwright-report/` |
-| Coordination logs | `tmp/Digital-Commerce/coordination-logs/` |
+| PDCA cycle scores | `tmp/B2B-Commerce/pdca-cycles/cycle-N-YYYY-MM-DD.json` |
+| RQ3 scorecard | `tmp/B2B-Commerce/test-results/rq3-scorecard.json` |
+| Visual screenshots | `tmp/B2B-Commerce/test-results/screenshots/` |
+| Aggregate test report | `tmp/B2B-Commerce/test-results/REPORT.{md,html}` |
+| Integration test log | `tmp/B2B-Commerce/test-results/integration-results.log` |
+| E2E HTML report | `tmp/B2B-Commerce/test-results/playwright-report/` |
+| Coordination logs | `tmp/B2B-Commerce/coordination-logs/` |
 
 ---
 
@@ -315,4 +315,4 @@ These are validated by integration + E2E tiers, not unit tests. Unit mocks of th
 
 ---
 
-*This SOP versions with the plugin. Re-run it unchanged next release — update only the evidence paths and version numbers. For INVEST stories, component justification, and architecture decisions, see the canonical plan: `.claude/plugins/commerce/knowledge/plan/Digital-Commerce-Release-Self-QA-Framework-v1.x.md`.*
+*This SOP versions with the plugin. Re-run it unchanged next release — update only the evidence paths and version numbers. For INVEST stories, component justification, and architecture decisions, see the canonical plan: `.claude/plugins/commerce/knowledge/plan/B2B-Commerce-Release-Self-QA-Framework-v1.x.md`.*

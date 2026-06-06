@@ -83,7 +83,7 @@ jobs:
       - name: Run integration gate
         run: |
           cd apps/backend
-          mkdir -p ../../tmp/Digital-Commerce/test-results
+          mkdir -p ../../tmp/B2B-Commerce/test-results
           DB_HOST=localhost \
           DB_PORT=5433 \
           DB_USERNAME=postgres \
@@ -93,7 +93,7 @@ jobs:
           TEST_TYPE=integration:http \
           NODE_OPTIONS=--experimental-vm-modules \
           pnpm exec jest --silent=false --runInBand --forceExit \
-            --json --outputFile=../../tmp/Digital-Commerce/test-results/jest-integration.json
+            --json --outputFile=../../tmp/B2B-Commerce/test-results/jest-integration.json
 
       - name: Upload test results
         if: always()
@@ -101,7 +101,7 @@ jobs:
         with:
           name: integration-test-results
           path: |
-            tmp/Digital-Commerce/test-results/jest-integration.json
+            tmp/B2B-Commerce/test-results/jest-integration.json
           retention-days: 14
 
       - name: Tear down test datastore

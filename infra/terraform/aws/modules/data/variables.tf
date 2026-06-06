@@ -6,5 +6,5 @@ variable "environment" {
 variable "project" {
   type        = string
   description = "Project slug for resource naming."
-  default     = "digital-commerce"
+  default     = "b2b-commerce"
 }

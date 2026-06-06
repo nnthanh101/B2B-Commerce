@@ -3,7 +3,7 @@
 **Status**: Accepted (Phase 1 local docker-compose, Phase 2 roadmap) — **AMENDED 2026-06-05 (hybrid-cloud premise; execution NOW)**
 **Date**: 2026-06-04 (amended 2026-06-05)
 **Deciders**: cloud-architect, product-owner, HITL
-**Authority**: `tmp/Digital-Commerce/coordination-logs/cloud-architect-batch-2-order-1-2026-06-04.json`; amendment: `product-owner-2026-06-05-observability-rev.json` + `cloud-architect-2026-06-05-observability-rev.json`
+**Authority**: `tmp/B2B-Commerce/coordination-logs/cloud-architect-batch-2-order-1-2026-06-04.json`; amendment: `product-owner-2026-06-05-observability-rev.json` + `cloud-architect-2026-06-05-observability-rev.json`
 
 ---
 
@@ -34,11 +34,11 @@
 
 ## Summary
 
-Digital-Commerce uses **Prometheus + Grafana** for observability, deployed as containers in local `docker-compose.yml` (Phase 1) with a Phase 2 upgrade path to **managed Grafana Cloud OR self-hosted on ECS** (decision deferred to v0.3 CA coordination). Phase 1 metrics focus on **Medusa workflow lifecycle** (quote created → sent → approved/rejected timing), **approval-flow SLA tracking**, **cart-abandonment signals**, and **FinOps cost-per-quote attribution**. ADLC subagent supervision metrics (Claude API calls, cost per call, success rate) are a **Phase v0.3 roadmap capability** (zero code today). Phase 1 is observability foundation; instrumentation depth scales with production traffic.
+B2B-Commerce uses **Prometheus + Grafana** for observability, deployed as containers in local `docker-compose.yml` (Phase 1) with a Phase 2 upgrade path to **managed Grafana Cloud OR self-hosted on ECS** (decision deferred to v0.3 CA coordination). Phase 1 metrics focus on **Medusa workflow lifecycle** (quote created → sent → approved/rejected timing), **approval-flow SLA tracking**, **cart-abandonment signals**, and **FinOps cost-per-quote attribution**. ADLC subagent supervision metrics (Claude API calls, cost per call, success rate) are a **Phase v0.3 roadmap capability** (zero code today). Phase 1 is observability foundation; instrumentation depth scales with production traffic.
 
 ## Context
 
-Digital-Commerce operates in two personas' workflows:
+B2B-Commerce operates in two personas' workflows:
 
 - **Buyer-employee**: browse → add to cart → request quote → wait for approval → place order
 - **Admin / sales-manager**: review pending quotes → approve/reject → generate PO
@@ -63,7 +63,7 @@ Phase 2 decision (v0.3 roadmap): either provision Grafana Cloud (SaaS, ~$50-200/
 
 **Deploy Prometheus + Grafana locally in Phase 1; upgrade path to managed/self-hosted in Phase 2.** Specifically:
 
-**FOCUS 1.2+ tagging**: observability infrastructure carries the full 9-key tag set at Phase 2 (`Service=digital-commerce-observability`, `Environment={dev,staging,prod}`, `Owner=cloudops`, `CostCenter=engineering`, `Project=digital-commerce`, `BillingTag={customer-X}`, `ManagedBy=adlc`, `Compliance=APRA-CPS234` audit surface, `DataClassification=internal`). Phase 1 docker-compose containers carry equivalent container labels per [golden-path.md](../golden-path.md) FOCUS section. Cost attribution for observability is non-optional for multi-tenant FinOps rebilling.
+**FOCUS 1.2+ tagging**: observability infrastructure carries the full 9-key tag set at Phase 2 (`Service=b2b-commerce-observability`, `Environment={dev,staging,prod}`, `Owner=cloudops`, `CostCenter=engineering`, `Project=b2b-commerce`, `BillingTag={customer-X}`, `ManagedBy=adlc`, `Compliance=APRA-CPS234` audit surface, `DataClassification=internal`). Phase 1 docker-compose containers carry equivalent container labels per [golden-path.md](../golden-path.md) FOCUS section. Cost attribution for observability is non-optional for multi-tenant FinOps rebilling.
 
 - **Prometheus** (Phase 1 container):
   - Image: `prom/prometheus:v2.55.0`
@@ -106,7 +106,7 @@ Phase 2 decision (v0.3 roadmap): either provision Grafana Cloud (SaaS, ~$50-200/
 **Accepted**:
 
 - **Zero cloud cost at Phase 1** — Prometheus + Grafana are open-source containers; no SaaS subscription until Phase 2.
-- **Observability from day 1** — quote SLA metrics are visible during demo; helps validate "quote cycles are faster with Digital-Commerce."
+- **Observability from day 1** — quote SLA metrics are visible during demo; helps validate "quote cycles are faster with B2B-Commerce."
 - **Phase 2 flexibility** — same Prometheus scrape targets work with Grafana Cloud or self-hosted (no app-layer refactoring needed).
 - **Audit trail** — Medusa workflow step events populate metrics; matches APRA CPS 234 §36 evidence trail (every quote state change is tracked).
 
@@ -127,7 +127,7 @@ Phase 2 decision (v0.3 roadmap): either provision Grafana Cloud (SaaS, ~$50-200/
 
 Phase v0.3 will add:
 
-- **Claude API call counter**: `claude_api_calls_total{model="haiku"|"sonnet"|"opus", project="digital-commerce"}`
+- **Claude API call counter**: `claude_api_calls_total{model="haiku"|"sonnet"|"opus", project="b2b-commerce"}`
 - **API cost tracking**: `claude_api_cost_usd_total{model, project}`
 - **Agent success rate**: `adlc_agent_success_rate{agent_name="observability-engineer"|...}`
 - **Coordination overhead**: `adlc_coordination_time_seconds_total{agent="product-owner"|"cloud-architect"}`

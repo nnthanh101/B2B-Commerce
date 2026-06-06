@@ -1,7 +1,7 @@
 version: "3"
 
 # =============================================================================
-# Digital-Commerce — Test Suite Menu (HITL-readable)
+# B2B-Commerce — Test Suite Menu (HITL-readable)
 # =============================================================================
 # Included from root Taskfile.yml as the "test:" namespace.
 # All tasks here run under: task test:<name>
@@ -27,7 +27,7 @@ version: "3"
 
 vars:
   REPO: "{{.TASKFILE_DIR}}/.."
-  REPORT_DIR: "{{.TASKFILE_DIR}}/../tmp/Digital-Commerce/test-results"
+  REPORT_DIR: "{{.TASKFILE_DIR}}/../tmp/B2B-Commerce/test-results"
   COMPOSE_FILE: "{{.TASKFILE_DIR}}/../docker-compose.test.yml"
   PROJECT: ec_test
   DB_URL: "postgres://postgres:postgres@localhost:5433/ec-store-test"
@@ -113,7 +113,7 @@ tasks:
     desc: "Tier 3b — Playwright browser tests (exits 1 if backend is unreachable)"
     dir: "{{.REPO}}"
     cmds:
-      - bash scripts/e2e.sh "{{.BACKEND_URL}}" "tmp/Digital-Commerce/test-results" "."
+      - bash scripts/e2e.sh "{{.BACKEND_URL}}" "tmp/B2B-Commerce/test-results" "."
 
   live:
     desc: "Tier 3a-live — HTTP smoke against the running backend (needs 'task up')"
@@ -132,7 +132,7 @@ tasks:
     desc: "Tier 4 — browser screenshots (Playwright) + terminal capture (screencapture)"
     dir: "{{.REPO}}"
     cmds:
-      - bash scripts/visual-verify.sh "{{.BACKEND_URL}}" "tmp/Digital-Commerce/test-results"
+      - bash scripts/visual-verify.sh "{{.BACKEND_URL}}" "tmp/B2B-Commerce/test-results"
 
   # ---------------------------------------------------------------------------
   # Reporting + idempotency

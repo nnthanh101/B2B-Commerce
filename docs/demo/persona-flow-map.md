@@ -1,11 +1,11 @@
-# Persona-Flow Map — Digital-Commerce B2B Demo
+# Persona-Flow Map — B2B-Commerce B2B Demo
 
 > Machine-readable contract for `scripts/batch-demo-video.sh`.
 > Each flow carries ONE HTML-comment marker (grep-deterministic). The batch script greps
 > `<!-- flow:<slug> owner:<persona> goal:"..." -->` to inject the persona goal as the reel's
 > opening narration line. No flow has more than one owner marker.
 >
-> Source of truth: `tmp/Digital-Commerce/coordination-logs/product-owner-2026-06-06-zazzy.json`
+> Source of truth: `tmp/B2B-Commerce/coordination-logs/product-owner-2026-06-06-zazzy.json`
 > Ownership invariants: buyer owns 6, admin owns 4, sales-manager owns 1.
 > Evidence-bound: only Phase-2-green flows produce reels; flow-11 voices token-accept only (GAP-006).
 

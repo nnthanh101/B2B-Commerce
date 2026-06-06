@@ -1,7 +1,7 @@
 version: "3"
 
 # =============================================================================
-# Digital-Commerce — Manager Menu (HITL-readable)
+# B2B-Commerce — Manager Menu (HITL-readable)
 # =============================================================================
 # This file is the top-level control panel for the platform.
 # Each task is named for WHAT it does, not HOW it does it.
@@ -63,6 +63,11 @@ tasks:
     desc: "Load the database with products, users, and categories"
     cmds:
       - docker compose exec ec sh -c "cd /server/apps/backend && pnpm seed"
+
+  seed:demo:
+    desc: "Seed B2B demo data (companies, quotes, completed NZD orders, buyer auth) via medusa exec. Local-dev autonomous."
+    cmds:
+      - docker compose exec ec sh -c "cd /server/apps/backend && npx medusa exec ./src/scripts/seed-demo-b2b.ts"
 
   db:generate:
     desc: "Generate a Medusa migration file from model.define changes (agent-ok: writes file only, no DB mutation). Usage: task db:generate -- <module>"
@@ -162,7 +167,7 @@ tasks:
     cmds:
       - docker run --rm
         -v "{{.ROOT_DIR}}/infra/terraform/aws:/workspace"
-        -v "{{.ROOT_DIR}}/tmp/Digital-Commerce/test-results:/out"
+        -v "{{.ROOT_DIR}}/tmp/B2B-Commerce/test-results:/out"
         -w /workspace/{{.ENV}}
         infracost/infracost:ci-latest
         breakdown --path /workspace/{{.ENV}} --format json
@@ -183,7 +188,7 @@ tasks:
     cmds:
       - |
         docker run --rm \
-          --network digital-commerce_ls_net \
+          --network b2b-commerce_ls_net \
           -v "{{.ROOT_DIR}}/infra/terraform/aws:/workspace" \
           -w /workspace/bootstrap \
           -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION}" \
@@ -201,7 +206,7 @@ tasks:
     cmds:
       - |
         docker run --rm \
-          --network digital-commerce_ls_net \
+          --network b2b-commerce_ls_net \
           -v "{{.ROOT_DIR}}/infra/terraform/aws:/workspace" \
           -w /workspace/local \
           -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION}" \

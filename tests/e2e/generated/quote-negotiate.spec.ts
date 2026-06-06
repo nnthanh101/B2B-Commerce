@@ -81,8 +81,15 @@ test.describe("B2B quote-negotiate flow [generated]", () => {
     await expect(quotesPageContent).toBeVisible({ timeout: 5000 });
     console.log("[quote-negotiate] CONTENT CHECK: Quotes page visible");
 
+    // Flow capture: step-03-quotes-list (logged-in buyer view)
     await buyerPage.screenshot({
       path: path.join(SCREENSHOTS_DIR, "generated-quote-negotiate-04-quotes-list.png"),
+    });
+    // Backup to demo/flows directory for batch gate
+    await buyerPage.screenshot({
+      path: path.join(SCREENSHOTS_DIR, "../demo/flows/05-quote-negotiate/step-03-quotes-list.png"),
+    }).catch(() => {
+      // Dir may not exist yet; batch gate creates it
     });
 
     // Step 5: HARD assertion — click first quote to view details (if row visible)

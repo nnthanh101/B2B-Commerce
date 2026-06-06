@@ -10,7 +10,7 @@ set -euo pipefail
 source "$(dirname "$0")/lib/common.sh"
 
 BACKEND_URL="${1:-http://localhost:9000}"
-REPORT_DIR="${2:-tmp/Digital-Commerce/test-results}"
+REPORT_DIR="${2:-tmp/B2B-Commerce/test-results}"
 
 mkdir -p "${REPORT_DIR}/screenshots"
 

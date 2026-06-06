@@ -3,11 +3,11 @@
 **Status**: Accepted
 **Date**: 2026-06-04
 **Deciders**: cloud-architect, product-owner, HITL
-**Authority**: `tmp/Digital-Commerce/coordination-logs/cloud-architect-digital-commerce-p1-2026-06-04.json`
+**Authority**: `tmp/B2B-Commerce/coordination-logs/cloud-architect-b2b-commerce-p1-2026-06-04.json`
 
 ## Summary
 
-Digital-Commerce **reuses the B2B Commerce modules** (`company`, `quote`, `approval`) as the canonical implementation of the quote-assisted B2B workflow. These modules were borrowed as 1st-init drafts from `medusajs/b2b-starter` (MIT) and are now owned outright by OceanSoft from v0.1.0 forward — no upstream sync, no resync CI. The decision is grounded in `feedback_borrow_as_init_draft.md`: borrow the scaffold, then forget upstream.
+B2B-Commerce **reuses the B2B Commerce modules** (`company`, `quote`, `approval`) as the canonical implementation of the quote-assisted B2B workflow. These modules were borrowed as 1st-init drafts from `medusajs/b2b-starter` (MIT) and are now owned outright by OceanSoft from v0.1.0 forward — no upstream sync, no resync CI. The decision is grounded in `feedback_borrow_as_init_draft.md`: borrow the scaffold, then forget upstream.
 
 ## Context
 

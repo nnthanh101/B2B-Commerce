@@ -1,4 +1,4 @@
-# 3-Act Demo Narration — Digital-Commerce
+# 3-Act Demo Narration — B2B-Commerce
 
 > **Purpose**: Timestamped voice-over script for HITL to read while the demo video plays. Every scene has a `[mm:ss]` cue (cumulative running clock from [00:00] opening hook through [05:10] closing CTA). One narration paragraph per scene = 1–2 natural spoken sentences.
 >

@@ -3,7 +3,7 @@
 **Status**: Accepted (Phase 2 boundary, v0.3 roadmap)
 **Date**: 2026-06-04
 **Deciders**: cloud-architect, product-owner, HITL
-**Authority**: `tmp/Digital-Commerce/coordination-logs/cloud-architect-digital-commerce-p1-2026-06-04.json`
+**Authority**: `tmp/B2B-Commerce/coordination-logs/cloud-architect-b2b-commerce-p1-2026-06-04.json`
 
 ## Summary
 
@@ -11,7 +11,7 @@ Phase 2 (v0.3) deploys PostgreSQL on **Amazon RDS Single-AZ, `db.t4g.micro`** (o
 
 ## Context
 
-Digital-Commerce is a **quote-assisted B2B marketplace** — the dominant database workload is:
+B2B-Commerce is a **quote-assisted B2B-Commerce** — the dominant database workload is:
 
 - **Quote create / update / approve cycles** — bursty during business hours, idle overnight. Each quote touches `quote`, `quote_line_items`, `approval`, and `approval_settings` tables.
 - **Company + employee CRUD** — low write rate, cached read rate.
@@ -42,7 +42,7 @@ The `db.t4g.micro` baseline aligns with the AWS Well-Architected Sustainability 
 - **Backup**: Automated snapshots, 7-day retention (RDS default); point-in-time recovery enabled
 - **Region**: `$AWS_DEFAULT_REGION` (customer-configured per ADR-001)
 - **Availability**: Single-AZ — explicitly NOT Multi-AZ in v0.3
-- **FOCUS 1.2+ tags**: applied via Terraform `default_tags` (see ADR-001 for the 9-key set); `Service=digital-commerce-database`, `DataClassification=customer`, `Compliance=APRA-CPS234`
+- **FOCUS 1.2+ tags**: applied via Terraform `default_tags` (see ADR-001 for the 9-key set); `Service=b2b-commerce-database`, `DataClassification=customer`, `Compliance=APRA-CPS234`
 
 **Aurora Serverless v2 migration triggers** (explicit, not vague):
 

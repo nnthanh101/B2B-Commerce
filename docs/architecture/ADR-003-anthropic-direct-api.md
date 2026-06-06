@@ -3,15 +3,15 @@
 **Status**: Accepted (Phase 1, v0.1 baseline)
 **Date**: 2026-06-04
 **Deciders**: cloud-architect, product-owner, HITL
-**Authority**: `tmp/Digital-Commerce/coordination-logs/cloud-architect-batch-2-order-1-2026-06-04.json`
+**Authority**: `tmp/B2B-Commerce/coordination-logs/cloud-architect-batch-2-order-1-2026-06-04.json`
 
 ## Summary
 
-Digital-Commerce integrates **Anthropic Claude API** (direct, not AWS Bedrock) as the canonical AI backbone for ADLC subagent orchestration and future AI-assisted procurement workflows. Phase 1 uses **Haiku 4.5 for low-cost operational agents** (inventory, validation, observability); **Sonnet / Opus are reserved for complex reasoning** (cost analysis, approval workflows) when triggered in Phase 2+. Cost tracking is enforced via API request tags (`Project`, `BillingTag`); every Claude API call logs to the FOCUS 1.2+ cost allocation stream. The decision defers AWS Bedrock in favour of direct Claude API for Phase 1 simplicity.
+B2B-Commerce integrates **Anthropic Claude API** (direct, not AWS Bedrock) as the canonical AI backbone for ADLC subagent orchestration and future AI-assisted procurement workflows. Phase 1 uses **Haiku 4.5 for low-cost operational agents** (inventory, validation, observability); **Sonnet / Opus are reserved for complex reasoning** (cost analysis, approval workflows) when triggered in Phase 2+. Cost tracking is enforced via API request tags (`Project`, `BillingTag`); every Claude API call logs to the FOCUS 1.2+ cost allocation stream. The decision defers AWS Bedrock in favour of direct Claude API for Phase 1 simplicity.
 
 ## Context
 
-Digital-Commerce operates on an **ADLC v1.2.0 governance model** with one HITL manager and 38+ specialist AI agents. The orchestration surface needs:
+B2B-Commerce operates on an **ADLC v1.2.0 governance model** with one HITL manager and 38+ specialist AI agents. The orchestration surface needs:
 
 - **Lightweight agent supervision** — read-first paradigm; HITL retains write-authority (git, apply, deploy)
 - **Cost transparency** — every agent invocation must surface its API cost for FinOps accountability
@@ -31,7 +31,7 @@ The two main alternatives were:
 
 - **Phase 1 operational agents** (observability-engineer, developer-experience-engineer, qa-engineer): Haiku 4.5 for fast feedback loops (5s response targets)
 - **Phase 2+ complex reasoning** (product-owner orchestration, cost analysis): Sonnet 4 ($3/1M input, $15/1M output); Opus 4 reserved for critical architectures
-- **Cost tracking** — every request includes tags: `Project=digital-commerce`, `Environment=dev|staging|prod`, `BillingTag=customer-oceansoft` (future multi-tenant), `ManagedBy=adlc`, `Compliance=APRA-CPS234`
+- **Cost tracking** — every request includes tags: `Project=b2b-commerce`, `Environment=dev|staging|prod`, `BillingTag=customer-oceansoft` (future multi-tenant), `ManagedBy=adlc`, `Compliance=APRA-CPS234`
 - **Data handling posture** — Phase 1: READONLY-only agent supervision (agents read files, transcribe results, HITL makes write decisions). Phase 2+: optional customer-data analysis on explicit request with audit logging
 
 **API Integration Specifics**:
@@ -40,7 +40,7 @@ The two main alternatives were:
 - **Authentication**: `ANTHROPIC_API_KEY` environment variable (stored in `.env.local`, never committed)
 - **Rate limits**: Phase 1 agent execution stays well below tier-1 (500 req/min); production escalation is roadmap
 - **Error handling**: transient timeouts trigger exponential backoff (1s → 2s → 4s max); permanent API errors surface to HITL for manual review
-- **Phase 2 v0.3 secret source**: `ANTHROPIC_API_KEY` sourced from AWS Secrets Manager (secret name `digital-commerce/anthropic-api-key` per customer account). The Medusa backend resolves the secret at boot via the AWS SDK; no `.env`-file injection in Phase 2. KMS-managed encryption-at-rest applies (consistent with [ADR-002](./adr-002-rds-single-az.md) KMS posture). Audit trail: every secret retrieval logged to CloudTrail per APRA CPS 234 §36.
+- **Phase 2 v0.3 secret source**: `ANTHROPIC_API_KEY` sourced from AWS Secrets Manager (secret name `b2b-commerce/anthropic-api-key` per customer account). The Medusa backend resolves the secret at boot via the AWS SDK; no `.env`-file injection in Phase 2. KMS-managed encryption-at-rest applies (consistent with [ADR-002](./adr-002-rds-single-az.md) KMS posture). Audit trail: every secret retrieval logged to CloudTrail per APRA CPS 234 §36.
 
 **ADLC Gateway Roadmap** (v0.6 — zero code today):
 
@@ -76,7 +76,7 @@ Note: [ADR-007](./adr-007-grafana-prometheus-local-first.md) lands subagent obse
 APRA CPS 234 §36 posture:
 
 - **Data residency** — agent requests are dispatched to Anthropic's API (US-based). Customer-identifiable data is NOT sent to Claude unless the customer explicitly approves (Phase 1 READONLY default prevents this).
-- **Audit trail** — all agent invocations are logged locally in `tmp/Digital-Commerce/coordination-logs/*.json` with timestamps, models used, and cost tags.
+- **Audit trail** — all agent invocations are logged locally in `tmp/B2B-Commerce/coordination-logs/*.json` with timestamps, models used, and cost tags.
 - **Opt-in model training** — Anthropic's default disables model training on API requests; ADLC maintains this posture (no future-model-improvement sharing without explicit data-licensing agreement).
 
 ## Cross-References

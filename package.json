@@ -1,11 +1,11 @@
 {
-  "name": "digital-commerce",
+  "name": "b2b-commerce",
   "private": true,
-  "description": "Digital-Commerce — B2B headless commerce + marketplace for oceansoft.io. Medusa 2 + Next.js 15 on AWS via Terraform (terraform-aws modules), FOCUS 1.2+ FinOps tagging, ADLC AI gateway.",
+  "description": "B2B-Commerce — B2B headless commerce + marketplace for oceansoft.io. Medusa 2 + Next.js 15 on AWS via Terraform (terraform-aws modules), FOCUS 1.2+ FinOps tagging, ADLC AI gateway.",
   "homepage": "https://www.oceansoft.io",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nnthanh101/Digital-Commerce.git"
+    "url": "https://github.com/nnthanh101/B2B-Commerce.git"
   },
   "license": "MIT",
   "packageManager": "pnpm@10.11.1",

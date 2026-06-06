@@ -60,8 +60,36 @@ export const POST = async (
     used_at: null,
   });
 
-  // Log token to console for E2E grep — production deployments should email this
-  console.log(`[INVITE_TOKEN] invite_id=${invite.id} token=${rawToken}`);
+  // ── LOCAL DELIVERY SEAM ──────────────────────────────────────────────────
+  // Phase-1: emit the accept link to stdout so the admin can copy it and send
+  // it manually. No email is sent here by design — this is a local-first stub.
+  //
+  // Phase-2 TODO (needs HITL AWS creds + SES domain verification):
+  //   1. Wire NOTIFICATION_MODULE with @medusajs/notification-sendgrid (or SES).
+  //   2. Replace the console.log below with:
+  //      await notificationService.create({
+  //        to: invite.email,
+  //        channel: "email",
+  //        template: "employee-invite",
+  //        data: { accept_url: acceptUrl, company_id, expires_at: expiresAt },
+  //      });
+  const storefrontBase =
+    process.env.STOREFRONT_URL?.replace(/\/$/, "") ?? "http://localhost:8000";
+  const acceptUrl = `${storefrontBase}/us/invite/accept?token=${rawToken}`;
+
+  // Structured log: grep-friendly for E2E + demo copy-paste
+  console.log(
+    JSON.stringify({
+      event: "INVITE_CREATED",
+      invite_id: invite.id,
+      email: invite.email,
+      company_id,
+      expires_at: expiresAt.toISOString(),
+      accept_url: acceptUrl,
+      note: "LOCAL STUB — copy this URL and send to the invitee manually",
+    })
+  );
+  // ────────────────────────────────────────────────────────────────────────
 
   return res.status(201).json({
     invite: {
@@ -71,5 +99,6 @@ export const POST = async (
       expires_at: invite.expires_at,
     },
     token_display: rawToken,
+    accept_url: acceptUrl,
   });
 };

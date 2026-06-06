@@ -4,7 +4,7 @@ import {
   STOREFRONT_URL,
   ADMIN_EMAIL,
   ADMIN_PASSWORD,
-  TEST_REGION_COUNTRY,
+  TEST_REGION_COUNTRY as CONFIG_TEST_REGION_COUNTRY,
   getPublishableKey,
 } from "../config";
 import { setCartIdCookie } from "./cart";
@@ -23,6 +23,8 @@ export const test = base.extend<{
   adminPage: Page;
   buyerContext: BrowserContext;
   buyerPage: Page;
+  salesManagerContext: BrowserContext;
+  salesManagerPage: Page;
 }>({
   adminContext: async ({ browser }, use) => {
     const context = await browser.newContext();
@@ -126,7 +128,7 @@ export const test = base.extend<{
     // Enable video recording for buyer context (1280x720 resolution)
     const context = await browser.newContext({
       recordVideo: {
-        dir: "./tmp/Digital-Commerce/test-results/videos",
+        dir: "./tmp/B2B-Commerce/test-results/videos",
         size: { width: 1280, height: 720 },
       },
       viewport: { width: 1280, height: 720 },
@@ -152,7 +154,8 @@ export const test = base.extend<{
     // Step 1: Use the demo buyer that's already seeded in the system
     const DEMO_BUYER_EMAIL = "demo-buyer@democorp.local";
     const DEMO_BUYER_PASSWORD = "Test1234!";
-    const TEST_REGION_COUNTRY = process.env.TEST_REGION_COUNTRY || "nz";
+    // Use config.ts value to ensure consistency with TEST_REGION_COUNTRY default (gb)
+    const TEST_REGION_COUNTRY = CONFIG_TEST_REGION_COUNTRY;
 
     // Step 2: API-based registration + customer record creation + login (3-phase auth flow)
     // CRITICAL FIX: In Medusa v2, /auth/customer/emailpass/register creates an AUTH IDENTITY
@@ -419,7 +422,9 @@ export const test = base.extend<{
           "Content-Type": "application/json",
           "x-publishable-api-key": publishableKey,
         },
-        data: { region_id: regionId },
+        data: {
+          region_id: regionId,
+        },
       });
       if (!createCartRes.ok()) {
         const errText = await createCartRes.text();
@@ -454,6 +459,11 @@ export const test = base.extend<{
       }
       console.log(`[auth] ✓ Line item added. Cart now has ${itemCount} item(s).`);
 
+      // Attempt to link cart to company (seed-demo-b2b creates Demo Corp for demo-buyer@democorp.local)
+      // This happens via the /admin API with a special link endpoint (if available)
+      // For now, we rely on the seed script linking the cart to company via company_company_cart_cart
+      // The cart creation above already set customer_id, which is sufficient for basic storefront access
+
       // Set the _medusa_cart_id cookie
       await setCartIdCookie(context, cartId, STOREFRONT_URL);
 
@@ -475,6 +485,108 @@ export const test = base.extend<{
 
   buyerPage: async ({ buyerContext }, use) => {
     const page = await buyerContext.newPage();
+    page.setDefaultTimeout(25000);
+    page.setDefaultNavigationTimeout(30000);
+    await use(page);
+    await page.close();
+  },
+
+  /**
+   * Sales Manager context fixture: returns a page with admin authentication.
+   * LIMITATION: The seed does not create a distinct sales-manager user (Sofia).
+   * For now, we use the admin context (David) as a proxy.
+   * TODO: Create a separate sales-manager employee in the seed and add auth here.
+   *
+   * Sales Manager would have access to quote/approval workflows in the admin dashboard.
+   */
+  salesManagerContext: async ({ browser }, use) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    page.setDefaultTimeout(25000);
+    page.setDefaultNavigationTimeout(30000);
+
+    // CRITICAL: Dual-path admin authentication (same as adminContext)
+    // 1. UI login to `/app` (admin dashboard) — establishes browser session
+    // 2. API login to `/auth/customer/emailpass` — gets JWT for `/store/invites` endpoint
+
+    // STEP 1: Admin UI login for /app dashboard access
+    console.log("[auth] Step 1: Sales Manager UI login to /app dashboard...");
+
+    await page.goto(`${MEDUSA_BACKEND_URL}/app/login`);
+    await page.waitForLoadState("domcontentloaded");
+
+    const emailInput = page.locator(
+      'input[type="email"], input[name="email"], input[id="email"]'
+    );
+    await emailInput.waitFor({ state: "visible", timeout: 20000 });
+    await emailInput.fill(TEST_ADMIN_EMAIL);
+
+    const pwInput = page.locator("input[type=\"password\"], input[name=\"password\"]");
+    await pwInput.first().fill(TEST_ADMIN_PASSWORD);
+
+    const submitBtn = page.locator(
+      'button[type="submit"], button:has-text("Sign in"), button:has-text("Log in"), button:has-text("Login"), button:has-text("Continue")'
+    );
+    await submitBtn.first().click();
+
+    await page.waitForFunction(
+      () => {
+        const p = window.location.pathname;
+        return (
+          p.startsWith("/app") &&
+          p !== "/app/login" &&
+          !p.startsWith("/app/login")
+        );
+      },
+      { timeout: 20000 }
+    );
+    await page.waitForLoadState("networkidle").catch(() => {
+      // Network timeout is OK — page may still be usable
+    });
+    console.log("[auth] ✓ Step 1: Sales Manager dashboard authenticated");
+
+    // STEP 2: API login to get customer JWT for /store/invites
+    console.log("[auth] Step 2: Sales Manager customer API login for /store/invites...");
+
+    const customerLoginRes = await fetch(`${MEDUSA_BACKEND_URL}/auth/customer/emailpass`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: TEST_ADMIN_EMAIL,
+        password: TEST_ADMIN_PASSWORD,
+      }),
+    });
+
+    if (!customerLoginRes.ok) {
+      const errText = await customerLoginRes.text();
+      throw new Error(
+        `[auth] Sales Manager customer API login failed: ${customerLoginRes.status} ${errText}. ` +
+        `The admin user (${TEST_ADMIN_EMAIL}) must be seeded as a CUSTOMER with employee/company link.`
+      );
+    }
+
+    const { token: salesManagerCustomerToken } = (await customerLoginRes.json()) as { token: string };
+    console.log(`[auth] ✓ Step 2: Sales Manager customer token obtained: ${salesManagerCustomerToken.substring(0, 20)}...`);
+
+    // Add the customer JWT token as a cookie so tests can extract it via salesManagerContext.cookies()
+    await context.addCookies([
+      {
+        name: "_medusa_jwt",
+        value: salesManagerCustomerToken,
+        domain: "localhost",
+        path: "/",
+        httpOnly: true,
+        sameSite: "Lax",
+      },
+    ]);
+    console.log(`[auth] ✓ Step 2: Sales Manager customer JWT cookie added to context`);
+
+    await use(context);
+    await context.close();
+  },
+
+  salesManagerPage: async ({ salesManagerContext }, use) => {
+    const page = await salesManagerContext.newPage();
     page.setDefaultTimeout(25000);
     page.setDefaultNavigationTimeout(30000);
     await use(page);

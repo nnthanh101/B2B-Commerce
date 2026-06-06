@@ -3,15 +3,15 @@
 **Status**: Accepted (Phase 2 boundary, v0.3 roadmap)
 **Date**: 2026-06-04
 **Deciders**: cloud-architect, product-owner, HITL
-**Authority**: `tmp/Digital-Commerce/coordination-logs/cloud-architect-digital-commerce-p1-2026-06-04.json`
+**Authority**: `tmp/B2B-Commerce/coordination-logs/cloud-architect-b2b-commerce-p1-2026-06-04.json`
 
 ## Summary
 
-Digital-Commerce will deploy onto a **single AWS account per customer tenancy** at Phase 2 (v0.3 roadmap milestone). Phase 1 today is validate-only — no AWS resources are provisioned; `terraform init -backend=false && terraform validate` and `infracost breakdown` are the gates. Multi-account Landing Zone (LZ) topology is deferred to v0.5+ when multi-tenant operator mode lands. Azure Australia East remains a roadmap option (multi-cloud unfair advantage), not a forced scope expansion today.
+B2B-Commerce will deploy onto a **single AWS account per customer tenancy** at Phase 2 (v0.3 roadmap milestone). Phase 1 today is validate-only — no AWS resources are provisioned; `terraform init -backend=false && terraform validate` and `infracost breakdown` are the gates. Multi-account Landing Zone (LZ) topology is deferred to v0.5+ when multi-tenant operator mode lands. Azure Australia East remains a roadmap option (multi-cloud unfair advantage), not a forced scope expansion today.
 
 ## Context
 
-Digital-Commerce is a **quote-assisted B2B marketplace for ANZ regulated industries** (Energy, FSI, Telecom). The deployment surface must serve:
+B2B-Commerce is a **quote-assisted B2B-Commerce for ANZ regulated industries** (Energy, FSI, Telecom). The deployment surface must serve:
 
 - One alpha customer (OceanSoft) in v0.3
 - Customer-controlled data residency (APRA CPS 234 §36, Essential Eight)
@@ -31,9 +31,9 @@ The unfair-advantage stack ([b2b-blueprint.md](../b2b-blueprint.md)) includes **
 - **One account per customer** — OceanSoft alpha lands in its own AWS account; future paying customers each get one. Aligns with ANZ data-sovereignty expectations (no shared tenancy by default).
 - **Region**: customer-configured per deployment via `$AWS_DEFAULT_REGION` (Sydney is a common ANZ selection but never hardcoded). Single region per customer for APRA CPS 234 §36 data-residency alignment.
 - **No Landing Zone Accelerator, no Organizations, no Control Tower** at v0.3. Reassess when customer #3 onboards or when an enterprise customer mandates AWS Organizations parent.
-- **AWS myApplications + AppRegistry** is the application-discovery surface at Phase 2 deploy — every resource registered to a single `digital-commerce` application with FOCUS 1.2+ tags propagated automatically. (Carry-forward from CA round-1 LOW-4.)
+- **AWS myApplications + AppRegistry** is the application-discovery surface at Phase 2 deploy — every resource registered to a single `b2b-commerce` application with FOCUS 1.2+ tags propagated automatically. (Carry-forward from CA round-1 LOW-4.)
 - **FOCUS 1.2+ tags** are the mandatory tag set in `infra/terraform/tags.tf` as `default_tags` on the AWS provider:
-  - `Service` — e.g. `digital-commerce-backend`
+  - `Service` — e.g. `b2b-commerce-backend`
   - `Environment` — `dev` / `staging` / `prod`
   - `Owner` — e.g. `oceansoft-platform`
   - `CostCenter` — e.g. `cc-engineering`

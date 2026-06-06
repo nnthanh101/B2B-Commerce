@@ -15,7 +15,7 @@ variable "environment" {
 variable "project" {
   type        = string
   description = "Project slug used in bucket naming."
-  default     = "digital-commerce"
+  default     = "b2b-commerce"
 }
 
 variable "aws_region" {

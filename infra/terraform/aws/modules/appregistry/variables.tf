@@ -10,5 +10,5 @@ variable "enable_appregistry" {
 variable "application_name" {
   type        = string
   description = "AWS AppRegistry application name."
-  default     = "digital-commerce"
+  default     = "b2b-commerce"
 }

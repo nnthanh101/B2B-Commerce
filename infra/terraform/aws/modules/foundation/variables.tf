@@ -9,7 +9,7 @@ variable "environment" {
 variable "project" {
   type        = string
   description = "Project slug used in resource naming."
-  default     = "digital-commerce"
+  default     = "b2b-commerce"
 }
 
 variable "secret_recovery_window" {

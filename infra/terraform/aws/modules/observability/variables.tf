@@ -12,7 +12,7 @@ variable "environment" {
 variable "project" {
   type        = string
   description = "Project slug for resource naming."
-  default     = "digital-commerce"
+  default     = "b2b-commerce"
 }
 
 # v0.3 variables (reserved — uncomment when AMP/AMG resources are added):

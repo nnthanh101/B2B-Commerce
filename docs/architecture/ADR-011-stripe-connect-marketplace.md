@@ -3,15 +3,15 @@
 **Status**: Accepted (Roadmap — Phase 2 v0.4)
 **Date**: 2026-06-04
 **Deciders**: cloud-architect, product-owner, HITL
-**Authority**: `tmp/Digital-Commerce/coordination-logs/cloud-architect-batch-3-ca-2026-06-04.json`
+**Authority**: `tmp/B2B-Commerce/coordination-logs/cloud-architect-batch-3-ca-2026-06-04.json`
 
 ## Summary
 
-Digital-Commerce will use **Stripe Connect Express** as the payment infrastructure for the multi-supplier marketplace at **Phase 2 v0.4**. Phase 1 ships **no payment integration** (mock provider only, per [b2b-blueprint.md](../b2b-blueprint.md) B2B Features Matrix). Phase 2 v0.3 introduces **single-supplier billing** (OceanSoft as merchant of record); Phase 2 v0.4 introduces **multi-supplier marketplace splits** via Connect Express. KYB / KYC is delegated to Stripe; the ANZ-specific supplier vetting overlay is handled separately (see [ADR-013](./ADR-013-anz-marketplace-supplier-vetting.md)). This ADR documents the strategic choice so v0.4 execution does not revisit the vendor debate.
+B2B-Commerce will use **Stripe Connect Express** as the payment infrastructure for the multi-supplier marketplace at **Phase 2 v0.4**. Phase 1 ships **no payment integration** (mock provider only, per [b2b-blueprint.md](../b2b-blueprint.md) B2B Features Matrix). Phase 2 v0.3 introduces **single-supplier billing** (OceanSoft as merchant of record); Phase 2 v0.4 introduces **multi-supplier marketplace splits** via Connect Express. KYB / KYC is delegated to Stripe; the ANZ-specific supplier vetting overlay is handled separately (see [ADR-013](./ADR-013-anz-marketplace-supplier-vetting.md)). This ADR documents the strategic choice so v0.4 execution does not revisit the vendor debate.
 
 ## Context
 
-The Digital-Commerce marketplace will host **multiple ANZ-based suppliers** (Energy / FSI / Telecom verticals) selling to **buyer-employees at customer companies**. Payment flow requirements:
+The B2B-Commerce marketplace will host **multiple ANZ-based suppliers** (Energy / FSI / Telecom verticals) selling to **buyer-employees at customer companies**. Payment flow requirements:
 
 - **Multi-party splits** — buyer pays once; funds split between supplier + platform fee + tax authority
 - **ANZ regulatory posture** — ASIC AFSL exemption for the marketplace operator (funds flow through a regulated payment intermediary, not OceanSoft accounts)
@@ -43,11 +43,11 @@ Three primary alternatives were considered:
 
 Per [b2b-blueprint.md](../b2b-blueprint.md) FinOps strategy, payment infrastructure carries the full 9-key tag set at Phase 2:
 
-- `Service=digital-commerce-payments`
+- `Service=b2b-commerce-payments`
 - `Environment={dev,staging,prod}`
 - `Owner=cloudops`
 - `CostCenter=engineering`
-- `Project=digital-commerce`
+- `Project=b2b-commerce`
 - `BillingTag={customer-X}` — per multi-tenant operator (v1.0)
 - `ManagedBy=terraform` for infra, `stripe-managed` for Connect accounts
 - `Compliance=APRA-CPS234+PCI-DSS`
@@ -78,7 +78,7 @@ Per [b2b-blueprint.md](../b2b-blueprint.md) FinOps strategy, payment infrastruct
 
 **Rejected**:
 
-- **Square** — ANZ marketplace tooling weaker than Stripe Connect; in-person retail strength irrelevant to digital-commerce B2B procurement.
+- **Square** — ANZ marketplace tooling weaker than Stripe Connect; in-person retail strength irrelevant to b2b-commerce B2B procurement.
 - **Adyen** — enterprise-tier minimum-volume commitments destroy Phase 2 v0.4 cost predictability. Reassess at v1.0 if customer volume justifies.
 - **Direct bank rail (NPP / PayTo)** — KYB operational overhead destroys the time-to-launch budget; no marketplace-splits orchestration provided by Australian bank APIs. Reassess at v1.0+ if fees become a binding constraint.
 

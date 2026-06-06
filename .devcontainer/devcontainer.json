@@ -1,5 +1,5 @@
 {
-  "name": "Digital-Commerce",
+  "name": "B2B-Commerce",
   "dockerComposeFile": ["../docker-compose.yml"],
   "service": "ec",
   "workspaceFolder": "/server",

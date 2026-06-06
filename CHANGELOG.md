@@ -1,6 +1,6 @@
-# Changelog — Digital-Commerce
+# Changelog — B2B-Commerce
 
-All notable changes to Digital-Commerce follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
+All notable changes to B2B-Commerce follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
 
 ---
 

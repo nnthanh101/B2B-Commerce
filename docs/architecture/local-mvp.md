@@ -1,12 +1,12 @@
 # Local MVP — Phase 1 Topology Reference
 
 > **Status**: Phase 1 — local-first 4-service docker-compose. NO AWS provisioning.
-> **Authority**: `tmp/Digital-Commerce/coordination-logs/cloud-architect-batch-3-ca-2026-06-04.json`
+> **Authority**: `tmp/B2B-Commerce/coordination-logs/cloud-architect-batch-3-ca-2026-06-04.json`
 > **Companion**: [LOCAL.md](../LOCAL.md) (developer-facing runbook); this file is the architectural reference.
 
 ## Overview
 
-Phase 1 of Digital-Commerce is the **local-first B2B skeleton** — every developer (HITL or AI-specialist) brings the full stack online via `docker-compose up` and `task up`, no AWS account required. The four containers, single bridge network, and named-volume topology are documented here as the architectural reference. Phase 2 (v0.3 roadmap per [b2b-blueprint.md](../b2b-blueprint.md) Deployment Evolution Timeline) lifts these four services onto a single AWS account with **no application-layer changes** — same container images for backend / storefront, same Postgres major version, same Redis major version.
+Phase 1 of B2B-Commerce is the **local-first B2B skeleton** — every developer (HITL or AI-specialist) brings the full stack online via `docker-compose up` and `task up`, no AWS account required. The four containers, single bridge network, and named-volume topology are documented here as the architectural reference. Phase 2 (v0.3 roadmap per [b2b-blueprint.md](../b2b-blueprint.md) Deployment Evolution Timeline) lifts these four services onto a single AWS account with **no application-layer changes** — same container images for backend / storefront, same Postgres major version, same Redis major version.
 
 Phase 1 also runs **Terraform in validate-only mode** via the container `nnthanh101/terraform:2.6.0`. No provider credentials are wired; `terraform plan` and `infracost breakdown` produce JSON output that proves the FOCUS 1.2+ tag set is wired even when costs are $0 (per DC-031 acceptance criterion in [discovery-brief.md](../discovery-brief.md)).
 
@@ -90,7 +90,7 @@ Per [LOCAL.md](../LOCAL.md) FOCUS section, each Phase 1 service carries the equi
 
 | Label key | Example value | Phase 2 AWS tag |
 |-----------|---------------|------------------|
-| `Service` | `digital-commerce-backend` | resource tag `Service` |
+| `Service` | `b2b-commerce-backend` | resource tag `Service` |
 | `Environment` | `dev` | resource tag `Environment` |
 | `Owner` | `oceansoft-platform` | resource tag `Owner` |
 | `CostCenter` | `cc-engineering` | resource tag `CostCenter` |

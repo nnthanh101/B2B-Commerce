@@ -1,6 +1,6 @@
-# Quickstart — Run Digital-Commerce Locally
+# Quickstart — Run B2B-Commerce Locally
 
-Get the full B2B marketplace running in Docker in under 10 minutes.
+Get the full B2B-Commerce running in Docker in under 10 minutes.
 
 ## Prerequisites
 
@@ -13,8 +13,8 @@ Get the full B2B marketplace running in Docker in under 10 minutes.
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/nnthanh101/Digital-Commerce.git
-cd Digital-Commerce
+git clone https://github.com/nnthanh101/B2B-Commerce.git
+cd B2B-Commerce
 
 # 2. Copy environment templates (adjust credentials/API keys as needed)
 cp apps/backend/.env.template apps/backend/.env
@@ -64,7 +64,7 @@ docker compose ps
 ```bash
 # 7. Playwright E2E smoke test (login → create company → quote → approval)
 task test:e2e
-# Expected: All tests pass; HTML report generated at tmp/Digital-Commerce/test-results/playwright-report/index.html
+# Expected: All tests pass; HTML report generated at tmp/B2B-Commerce/test-results/playwright-report/index.html
 
 # 8. Unit tests
 task test
@@ -84,7 +84,7 @@ task tf:validate
 
 # 11. Generate infracost report (cost forecast when AWS resources are added)
 task tf:cost
-# Expected: JSON report saved to tmp/Digital-Commerce/test-results/infracost-breakdown.json
+# Expected: JSON report saved to tmp/B2B-Commerce/test-results/infracost-breakdown.json
 # Note: $0 cost at P1 (no real resources provisioned yet)
 ```
 

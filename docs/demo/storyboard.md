@@ -1,4 +1,4 @@
-# 3-Act Demo Storyboard — Digital-Commerce
+# 3-Act Demo Storyboard — B2B-Commerce
 
 > **Purpose**: Scene-by-scene breakdown of the 5-minute product demo recorded as a claude-in-chrome GIF + narration voice-over. Guides the demo director through all 19 scenes across three acts (Buy→Run→Adopt), with timing cues, on-screen actions, cross-validation anchors for QA, and per-act success metrics.
 >
@@ -82,7 +82,7 @@ This demo uses a **two-tier recording strategy**:
 
 | Scene | Dur | On-screen action | POV | Story | Narration beat | Cross-val anchor |
 |-------|-----|------------------|-----|-------|----------------|------------------|
-| 2.1 | 12s | Terminal: git clone <repo> digital-commerce && cd; cp apps/backend/.env.example apps/backend/.env; corner timer starts (600s gate) | Developer | DC-001 | "Fresh terminal. No prior state. The clock starts here." | git clone exit 0; apps/backend/.env.example present |
+| 2.1 | 12s | Terminal: git clone <repo> b2b-commerce && cd; cp apps/backend/.env.example apps/backend/.env; corner timer starts (600s gate) | Developer | DC-001 | "Fresh terminal. No prior state. The clock starts here." | git clone exit 0; apps/backend/.env.example present |
 | 2.2 | 16s | `task up` — 4 service-start lines (ec_postgres_b2b/redis_b2b/backend_b2b/storefront_b2b); `task ps` all Up; hold on green | Developer | DC-001 | "One command. Four services. No manual docker run, no hand-written compose, no port negotiation." | startup-time-<ts>.txt; CA log S1 Step3 all 4 Up |
 | 2.3 | 10s | `task seed` exit 0; `curl -sf :9000/health` returns JSON; elapsed < 300s | Developer | DC-001 | "Seed loaded. Health gate green. Under five minutes. The timer proves it — not a slide deck." | startup-time-<ts>.txt rows > 0; /health 200 |
 | 2.4 | 12s | Browser :8000 storefront landing (catalog + B2B login); switch :9000/app admin login; /admin/companies list; cursor confirms port | Developer / Marcus | DC-001, DC-061 | "Storefront on eight-thousand. Admin on nine-thousand. Both live. A dev agency forks this, adds their client's brand, and ships a governed B2B build the same day." | apps/storefront + apps/backend 200; screenshots.spec.ts |
@@ -114,7 +114,7 @@ This demo uses a **two-tier recording strategy**:
 
 | Scene | Dur | On-screen action | POV | Story | Narration beat | Cross-val anchor |
 |-------|-----|------------------|-----|-------|----------------|------------------|
-| 3.1 | 15s | Terminal: ls -la tmp/.../coordination-logs/*demo-3act* → 2 JSON; jq '.scope_id' on both → "digital-commerce-demo-3act-storyboard" (match) | Priya | DC-060 | "Before a single line of code shipped, two agents wrote coordination logs. Same scope ID. The evidence trail APRA CPS 234 auditors ask for — on disk, not a slide." | product-owner-demo-3act-2026-06-05.json + cloud-architect-demo-3act-2026-06-05.json; scope_id field |
+| 3.1 | 15s | Terminal: ls -la tmp/.../coordination-logs/*demo-3act* → 2 JSON; jq '.scope_id' on both → "b2b-commerce-demo-3act-storyboard" (match) | Priya | DC-060 | "Before a single line of code shipped, two agents wrote coordination logs. Same scope ID. The evidence trail APRA CPS 234 auditors ask for — on disk, not a slide." | product-owner-demo-3act-2026-06-05.json + cloud-architect-demo-3act-2026-06-05.json; scope_id field |
 | 3.2 | 20s | Terminal: attempt blocked op (git commit OR block-terraform-apply.sh); hook fires; red exit-2 stderr; camera HOLDS 6s; cursor still | Priya | DC-060 | "An agent tried to commit without HITL approval. The hook blocked it. Exit two. Principle One: agents prepare, humans decide. Enforced — not promised." | .claude/hooks/scripts/block-*.sh; exit-2 stderr verbatim; CA log S4 Scene B |
 | 3.3 | 15s | Terminal: /metrics:update-dora → DORA JSON, 4 named metrics; grep confidence=low highlighted | Priya | DC-060 | "DORA metrics from one agent run. Honestly flagged confidence equals low — a single run, not a baseline. Velocity data with the caveat built in." | DORA JSON in tmp/; 4 metrics; confidence=low |
 | 3.4 | 20s | Terminal: /commerce:visual-verify (screenshot path + exit 0) then /commerce:checkout-smoke (pass lines); ls .claude/commands wc -l =16; ls block-*.sh wc -l | Marcus | DC-061, DC-062 | "Marcus runs two commands. Visual verify. Checkout smoke. Both pass. Sixteen commands, seven hooks — not a roadmap. A billable governed-delivery surface his regulated clients need." | .claude/plugins/commerce/commands/ (16); .claude/plugins/commerce/hooks/ (7); counts verified on disk (CAPABILITY_ASSERTED_NOT_TESTED guard) |
@@ -171,15 +171,15 @@ This demo uses a **two-tier recording strategy**:
 | 1 | Admin onboarding | `apps/backend/src/workflows/hooks/validate-*.ts` | Workflow exists + is called | grep -l validate- apps/backend/src/workflows/hooks/*.ts |
 | 1 | Quote approval workflow | `apps/backend/src/workflows/approval/workflows/update-approval.ts` | File exists + exports handler | test -f apps/backend/src/workflows/approval/workflows/update-approval.ts |
 | 1 | Buyer persona storefront | `apps/storefront/src/modules/account/components/` | 23 account components exist | ls apps/storefront/src/modules/account/components/ \| wc -l |
-| 2 | Stack startup | `tmp/Digital-Commerce/test-results/startup-time-*.txt` | Elapsed < 600s | grep elapsed startup-time-*.txt |
+| 2 | Stack startup | `tmp/B2B-Commerce/test-results/startup-time-*.txt` | Elapsed < 600s | grep elapsed startup-time-*.txt |
 | 2 | Health gate | `/health` endpoint returns JSON | Backend HTTP 200 | curl -s http://localhost:9000/health |
-| 3 | Coordination logs (PO + CA) | `tmp/Digital-Commerce/coordination-logs/product-owner-demo-3act-2026-06-05.json` | scope_id matches | jq '.scope_id' product-owner-demo-3act-*.json |
-| 3 | Coordination logs (PO + CA) | `tmp/Digital-Commerce/coordination-logs/cloud-architect-demo-3act-2026-06-05.json` | scope_id matches | jq '.scope_id' cloud-architect-demo-3act-*.json |
+| 3 | Coordination logs (PO + CA) | `tmp/B2B-Commerce/coordination-logs/product-owner-demo-3act-2026-06-05.json` | scope_id matches | jq '.scope_id' product-owner-demo-3act-*.json |
+| 3 | Coordination logs (PO + CA) | `tmp/B2B-Commerce/coordination-logs/cloud-architect-demo-3act-2026-06-05.json` | scope_id matches | jq '.scope_id' cloud-architect-demo-3act-*.json |
 | 3 | Hook blocking | `.claude/hooks/scripts/block-*.sh` | Script exists + is executable | ls -l .claude/hooks/scripts/block-*.sh \| grep -c "^-rwx" |
-| 3 | DORA metrics | `tmp/Digital-Commerce/test-results/dora-*.json` | 4 metrics present + confidence=low visible | jq '.metrics | length' dora-*.json |
+| 3 | DORA metrics | `tmp/B2B-Commerce/test-results/dora-*.json` | 4 metrics present + confidence=low visible | jq '.metrics | length' dora-*.json |
 | 3 | Plugin commands | `.claude/plugins/commerce/commands/` | 16 commands | ls .claude/plugins/commerce/commands/ \| wc -l |
 | 3 | Plugin hooks | `.claude/plugins/commerce/hooks/` | 7 hooks (all block-*.sh or evidence-*.sh) | ls .claude/plugins/commerce/hooks/ \| wc -l |
-| 3 | PO JSON stories | `tmp/Digital-Commerce/coordination-logs/product-owner-demo-3act-*.json` | 5 new_stories, min INVEST 84 | jq '[.new_stories[].invest_score_100] \| min' product-owner-*.json |
+| 3 | PO JSON stories | `tmp/B2B-Commerce/coordination-logs/product-owner-demo-3act-*.json` | 5 new_stories, min INVEST 84 | jq '[.new_stories[].invest_score_100] \| min' product-owner-*.json |
 
 ---
 
@@ -209,8 +209,8 @@ This demo uses a **two-tier recording strategy**:
 ## Cross-Repo SSOT Notes
 
 The five stories for Act 3 (DC-060, DC-061, DC-062) are stored in the adlc-framework jira CSV:
-- **File**: `adlc-framework/docs/static/data/jira/digital-commerce.csv`
-- **Location**: `adlc-framework`, not Digital-Commerce repo (surfaced to HITL in PO coordination log; SSOT confirmed in cloud-architect log)
+- **File**: `adlc-framework/docs/static/data/jira/b2b-commerce.csv`
+- **Location**: `adlc-framework`, not B2B-Commerce repo (surfaced to HITL in PO coordination log; SSOT confirmed in cloud-architect log)
 - **Access**: Queries via `jq` on the coordination JSON files (`product-owner-demo-3act-*.json`) are self-contained; no direct CSV reference needed for the demo
 
 ---

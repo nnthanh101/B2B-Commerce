@@ -3,11 +3,11 @@
 **Status**: Accepted (Governance Policy — applies from Roadmap v0.6 AI integration onwards)
 **Date**: 2026-06-04
 **Deciders**: cloud-architect, product-owner, HITL
-**Authority**: `tmp/Digital-Commerce/coordination-logs/cloud-architect-batch-3-ca-2026-06-04.json`
+**Authority**: `tmp/B2B-Commerce/coordination-logs/cloud-architect-batch-3-ca-2026-06-04.json`
 
 ## Summary
 
-When Digital-Commerce integrates the **ADLC AI Gateway at Roadmap v0.6** (per [b2b-blueprint.md](../b2b-blueprint.md) Deployment Evolution Timeline), AI subagents will operate under a **read-first, HITL-controlled write, evidence-first** governance pattern. Subagents may **autonomously draft, summarise, suggest, and route** — they may **NOT autonomously send quotes, approve POs, move funds, or execute storefront mutations**. Every subagent invocation writes a JSON evidence record to `tmp/Digital-Commerce/coordination-logs/`. This ADR codifies the policy now so v0.6 execution does not rebuild governance under deadline pressure. **Zero AI code ships today.**
+When B2B-Commerce integrates the **ADLC AI Gateway at Roadmap v0.6** (per [b2b-blueprint.md](../b2b-blueprint.md) Deployment Evolution Timeline), AI subagents will operate under a **read-first, HITL-controlled write, evidence-first** governance pattern. Subagents may **autonomously draft, summarise, suggest, and route** — they may **NOT autonomously send quotes, approve POs, move funds, or execute storefront mutations**. Every subagent invocation writes a JSON evidence record to `tmp/B2B-Commerce/coordination-logs/`. This ADR codifies the policy now so v0.6 execution does not rebuild governance under deadline pressure. **Zero AI code ships today.**
 
 ## 5S Sort Justification
 
@@ -67,11 +67,11 @@ These tools require HITL confirmation before the underlying workflow runs. The A
 
 ### Evidence Schema (Mandatory Per Subagent Invocation)
 
-Every subagent invocation MUST write a JSON record to `tmp/Digital-Commerce/coordination-logs/subagent-<agent>-<date>.json` with this schema:
+Every subagent invocation MUST write a JSON record to `tmp/B2B-Commerce/coordination-logs/subagent-<agent>-<date>.json` with this schema:
 
 ```json
 {
-  "scope_id": "digital-commerce-<feature-or-phase>",
+  "scope_id": "b2b-commerce-<feature-or-phase>",
   "agent": "<subagent-name>",
   "model": "haiku-4.5 | sonnet-4 | opus-4",
   "date": "YYYY-MM-DD",
@@ -82,7 +82,7 @@ Every subagent invocation MUST write a JSON record to `tmp/Digital-Commerce/coor
   "hitl_required": true | false,
   "hitl_disposition": "pending | approved | rejected | bypassed",
   "cost_tags": {
-    "Project": "digital-commerce",
+    "Project": "b2b-commerce",
     "BillingTag": "customer-X",
     "Environment": "dev | staging | prod"
   }
@@ -107,11 +107,11 @@ Every AI-suggested quote diff is reversible until HITL approves the SEND workflo
 
 ### FOCUS 1.2+ Tag Set (AI Infrastructure)
 
-- `Service=digital-commerce-ai`
+- `Service=b2b-commerce-ai`
 - `Environment={dev,staging,prod}`
 - `Owner=cloudops`
 - `CostCenter=engineering`
-- `Project=digital-commerce`
+- `Project=b2b-commerce`
 - `BillingTag={customer-X}` — multi-tenant attribution
 - `ManagedBy=adlc`
 - `Compliance=APRA-CPS234+ADLC-v2.0`
@@ -154,7 +154,7 @@ APRA CPS 234 §36 requires audit trail for information security in third-party a
 
 - **Retention**: 7 years (APRA general retention; matches the Phase 2 S3 Object Lock bucket per [ADR-013](./adr-013-anz-marketplace-supplier-vetting.md))
 - **Content**: scope_id, agent, decision, confidence, evidence_paths, hitl_required, hitl_disposition, cost_tags (FOCUS 1.2+)
-- **Immutability**: Phase 1 writes to `tmp/Digital-Commerce/coordination-logs/` (local, mutable); Phase 2 v0.3 writes to S3 Object Lock with KMS encryption (per [ADR-002](./adr-002-rds-single-az.md))
+- **Immutability**: Phase 1 writes to `tmp/B2B-Commerce/coordination-logs/` (local, mutable); Phase 2 v0.3 writes to S3 Object Lock with KMS encryption (per [ADR-002](./adr-002-rds-single-az.md))
 - **Audit access**: admin/sales-manager queries via admin SDK Reporting surface (Roadmap v0.3); buyer-employees see audit-status badge only
 
 Cross-reference with [ADR-013](./adr-013-anz-marketplace-supplier-vetting.md) Layer 3 ongoing re-verification (also produces APRA-compliant evidence).

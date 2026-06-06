@@ -4,7 +4,7 @@
 # ADR-015 D3 amendment (2026-06-05): Assert 1 now proves bootstrap created the state bucket;
 #   Assert 2 proves the workload state object physically landed in that bucket.
 #   Combined: these prove the full genesis flow (bootstrap → S3 backend → workload apply).
-# Writes evidence to tmp/Digital-Commerce/test-results/tier2-localstack-YYYY-MM-DD.txt
+# Writes evidence to tmp/B2B-Commerce/test-results/tier2-localstack-YYYY-MM-DD.txt
 #
 # Usage: bash scripts/localstack-assert.sh [ROOT_DIR]
 # ROOT_DIR defaults to the repo root (two levels up from scripts/).
@@ -34,23 +34,23 @@ run_assert() {
 LS="docker exec -i dc-localstack awslocal"
 
 # Assert 1: bootstrap created the tfstate bucket (genesis proof)
-# Bucket name = digital-commerce-sandbox-tfstate (environment=sandbox per local/variables.tf)
+# Bucket name = b2b-commerce-sandbox-tfstate (environment=sandbox per local/variables.tf)
 run_assert "s3:bootstrap-created-tfstate-bucket" \
-  "${LS} s3api head-bucket --bucket digital-commerce-sandbox-tfstate"
+  "${LS} s3api head-bucket --bucket b2b-commerce-sandbox-tfstate"
 
 # Assert 2: workload state object exists in the bootstrap bucket (remote-state round-trip proof)
-# Key = digital-commerce/local/terraform.tfstate (from backend-local.hcl)
+# Key = b2b-commerce/local/terraform.tfstate (from backend-local.hcl)
 run_assert "s3:workload-state-object-in-bucket" \
-  "${LS} s3api head-object --bucket digital-commerce-sandbox-tfstate --key digital-commerce/local/terraform.tfstate"
+  "${LS} s3api head-object --bucket b2b-commerce-sandbox-tfstate --key b2b-commerce/local/terraform.tfstate"
 
 # Assert 3: media bucket exists (environment=sandbox)
 run_assert "s3:media-bucket-exists" \
-  "${LS} s3api head-bucket --bucket digital-commerce-sandbox-media"
+  "${LS} s3api head-bucket --bucket b2b-commerce-sandbox-media"
 
-# Assert 4: media bucket has Application tag = digital-commerce
+# Assert 4: media bucket has Application tag = b2b-commerce
 run_assert "s3:media-application-tag" \
-  "${LS} s3api get-bucket-tagging --bucket digital-commerce-sandbox-media \
-    --query 'TagSet[?Key==\`Application\`].Value' --output text | grep -q 'digital-commerce'"
+  "${LS} s3api get-bucket-tagging --bucket b2b-commerce-sandbox-media \
+    --query 'TagSet[?Key==\`Application\`].Value' --output text | grep -q 'b2b-commerce'"
 
 # Assert 5: secrets list contains DATABASE_URL
 run_assert "secretsmanager:database-url-exists" \
@@ -62,17 +62,17 @@ run_assert "secretsmanager:all-4-secrets" \
 
 # Assert 7: SQS queue exists (environment=sandbox)
 run_assert "sqs:events-queue-exists" \
-  "${LS} sqs get-queue-url --queue-name digital-commerce-sandbox-events"
+  "${LS} sqs get-queue-url --queue-name b2b-commerce-sandbox-events"
 
 # Assert 8: SNS topic exists (environment=sandbox)
 run_assert "sns:events-topic-exists" \
-  "${LS} sns list-topics --query 'Topics[].TopicArn' --output text | grep -q 'digital-commerce-sandbox-events'"
+  "${LS} sns list-topics --query 'Topics[].TopicArn' --output text | grep -q 'b2b-commerce-sandbox-events'"
 
 # Assert 9: AppRegistry NOT in terraform state (count=0 => enable_appregistry=false)
 # Uses S3 backend init (workload root uses S3 backend now, not -backend=false).
 # Rule 8: grep -c || true (never grep -c || echo N in pipefail)
 run_assert "appregistry:count-is-zero" \
-  "docker run --rm --network digital-commerce_ls_net \
+  "docker run --rm --network b2b-commerce_ls_net \
     -v '${ROOT_DIR}/infra/terraform/aws:/workspace' \
     -w /workspace/local \
     -e AWS_ACCESS_KEY_ID=test \
@@ -89,7 +89,7 @@ printf "%b" "${RESULTS}"
 echo "PASS: ${PASS} / FAIL: ${FAIL}"
 
 # Write evidence file
-EVIDENCE_DIR="${ROOT_DIR}/tmp/Digital-Commerce/test-results"
+EVIDENCE_DIR="${ROOT_DIR}/tmp/B2B-Commerce/test-results"
 mkdir -p "${EVIDENCE_DIR}"
 EVIDENCE_FILE="${EVIDENCE_DIR}/tier2-localstack-$(date +%Y-%m-%d).txt"
 {

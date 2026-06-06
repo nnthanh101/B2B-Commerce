@@ -1,4 +1,4 @@
-# Grafana dashboard provisioning — Digital-Commerce observability stack
+# Grafana dashboard provisioning — B2B-Commerce observability stack
 #
 # CA condition grafana-provisioning-files-required:
 #   This file tells Grafana to auto-load all JSON files from /etc/grafana/dashboards
@@ -13,7 +13,7 @@
 apiVersion: 1
 
 providers:
-  - name: "Digital-Commerce Dashboards"
+  - name: "B2B-Commerce Dashboards"
     orgId: 1
     type: file
     disableDeletion: false

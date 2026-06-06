@@ -3,7 +3,7 @@
  *
  * Runs against the already-running Medusa backend (no 2nd-Medusa boot, no DB boot).
  * All assertions are grounded in real curl responses confirmed green in:
- *   tmp/Digital-Commerce/test-results/live-api-smoke-2026-06-04.log
+ *   tmp/B2B-Commerce/test-results/live-api-smoke-2026-06-04.log
  *
  * Persona / B2B pillar mapping
  * ─────────────────────────────────────────────────────────────────────────────

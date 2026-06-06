@@ -15,7 +15,7 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-const reportDir = resolve(process.argv[2] ?? "tmp/Digital-Commerce/test-results");
+const reportDir = resolve(process.argv[2] ?? "tmp/B2B-Commerce/test-results");
 
 const readJson = (p) => {
   if (!existsSync(p)) return null;

@@ -49,11 +49,11 @@ const REPO_ROOT = path.resolve(__dirname, "../..");
 
 export const TEST_RESULTS_DIR =
   process.env.PLAYWRIGHT_TEST_RESULTS ||
-  path.join(REPO_ROOT, "tmp/Digital-Commerce/test-results");
+  path.join(REPO_ROOT, "tmp/B2B-Commerce/test-results");
 
 export const SCREENSHOTS_DIR =
   process.env.PLAYWRIGHT_SCREENSHOTS ||
-  path.join(REPO_ROOT, "tmp/Digital-Commerce/screenshots");
+  path.join(REPO_ROOT, "tmp/B2B-Commerce/screenshots");
 
 export const HTML_REPORT_DIR =
   process.env.PLAYWRIGHT_HTML_REPORT ||
@@ -86,6 +86,9 @@ export const ADMIN_PASSWORD =
 
 /**
  * Regional test variant (storefront URL path prefix)
+ * CRITICAL: Must match a seeded region. Seed configures "nz" (Oceania/NZD) as primary + "gb","de","se","fr","es","it" (Europe/EUR).
+ * Primary test region is "nz" because OceanSoft is based in Auckland, NZ.
+ * The storefront middleware validates country_code against seeded regions; "nz" IS seeded.
  */
 export const TEST_REGION_COUNTRY =
   process.env.TEST_REGION_COUNTRY || "nz";

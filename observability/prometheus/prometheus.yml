@@ -1,4 +1,4 @@
-# Prometheus scrape configuration — Digital-Commerce local observability stack
+# Prometheus scrape configuration — B2B-Commerce local observability stack
 #
 # CA conditions honoured:
 #   compose-override-network-join       — all targets use Docker DNS service names (NOT localhost)
@@ -15,7 +15,7 @@ global:
   # FOCUS labels applied globally — Sprint 5 cloud promotion keeps identical shape
   external_labels:
     environment: local
-    application: digital-commerce
+    application: b2b-commerce
     service: observability
 
 # ─── Alert rules (placeholder — wire in Sprint 5 CloudWatch promotion) ─────────
@@ -36,7 +36,7 @@ scrape_configs:
           - ec:9000
         labels:
           service: backend
-          application: digital-commerce
+          application: b2b-commerce
           environment: local
 
   # 2. Postgres exporter (prometheuscommunity/postgres-exporter:v0.15.0)
@@ -50,7 +50,7 @@ scrape_configs:
           - postgres-exporter:9187
         labels:
           service: postgres
-          application: digital-commerce
+          application: b2b-commerce
           environment: local
 
   # 3. Redis exporter (oliver006/redis_exporter:v1.62.0)
@@ -64,7 +64,7 @@ scrape_configs:
           - redis-exporter:9121
         labels:
           service: redis
-          application: digital-commerce
+          application: b2b-commerce
           environment: local
 
   # 4. Node exporter (prom/node-exporter:v1.8.0)
@@ -78,5 +78,5 @@ scrape_configs:
           - node-exporter:9100
         labels:
           service: node
-          application: digital-commerce
+          application: b2b-commerce
           environment: local

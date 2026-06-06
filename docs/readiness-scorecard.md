@@ -1,9 +1,9 @@
-# Digital-Commerce — Enterprise GTM Readiness Assessment
+# B2B-Commerce — Enterprise GTM Readiness Assessment
 
 > **Scoring date**: 2026-06-05
 > **Scorer**: product-owner agent (under HITL authority)
 > **Scope**: Phase 1 local-first skeleton, alpha customer OceanSoft
-> **Authority**: PO+CA coordination logs at `tmp/Digital-Commerce/coordination-logs/{product-owner,cloud-architect}-digital-commerce-p1-2026-06-05.json`
+> **Authority**: PO+CA coordination logs at `tmp/B2B-Commerce/coordination-logs/{product-owner,cloud-architect}-b2b-commerce-p1-2026-06-05.json`
 > **Re-scored**: v1.2.0 (2026-06-05) — Technical Architecture +2 for E2E test coverage green (15+/27 passing) + idempotency proof (DC-IDEM gate operational)
 
 ## Summary
@@ -101,7 +101,7 @@ Roadmap gates that lift each category to the next band are listed per-category b
 
 ## Category 5: Go-to-Market Differentiation — 7 / 20
 
-**Current**: Clear positioning ("quote-assisted B2B marketplace for ANZ regulated industries"); 7-element unfair advantage stack defined; alpha customer OceanSoft validates the workflow; FOCUS 1.2+ + APRA CPS 234 wedge differentiates from Shopify Plus B2B / BigCommerce in regulator-anchored conversations.
+**Current**: Clear positioning ("quote-assisted B2B-Commerce for ANZ regulated industries"); 7-element unfair advantage stack defined; alpha customer OceanSoft validates the workflow; FOCUS 1.2+ + APRA CPS 234 wedge differentiates from Shopify Plus B2B / BigCommerce in regulator-anchored conversations.
 
 **Why not 10/20**: 0 paying customers. 0 case studies. 0 proof-point benchmarks (e.g., "quote cycle reduced from X weeks to Y days"). No public press / analyst coverage. No partner channel (no SI / ISV partners signed).
 

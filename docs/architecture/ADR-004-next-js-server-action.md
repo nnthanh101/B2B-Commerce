@@ -3,11 +3,11 @@
 **Status**: Accepted (Phase 1 storefront, v0.1)
 **Date**: 2026-06-04
 **Deciders**: cloud-architect, product-owner, HITL
-**Authority**: `tmp/Digital-Commerce/coordination-logs/cloud-architect-batch-2-order-1-2026-06-04.json`
+**Authority**: `tmp/B2B-Commerce/coordination-logs/cloud-architect-batch-2-order-1-2026-06-04.json`
 
 ## Summary
 
-Digital-Commerce **uses Next.js Server Actions** for B2B-specific UI mutations (quote requests, approval decisions, quote messaging, cart operations). Server Actions provide a **server-side mutation pattern with built-in CSRF protection, cookie-based auth pass-through, and no additional API-layer orchestration**. Long-running negotiation loops (quote → approval → PO) use the **Medusa workflow engine** (async, durable state machine), not Server Actions (which are request-response, not workflow-native). This ADR makes the distinction explicit so future developers do not conflate UI mutations (Server Actions) with business orchestration (Medusa workflows).
+B2B-Commerce **uses Next.js Server Actions** for B2B-specific UI mutations (quote requests, approval decisions, quote messaging, cart operations). Server Actions provide a **server-side mutation pattern with built-in CSRF protection, cookie-based auth pass-through, and no additional API-layer orchestration**. Long-running negotiation loops (quote → approval → PO) use the **Medusa workflow engine** (async, durable state machine), not Server Actions (which are request-response, not workflow-native). This ADR makes the distinction explicit so future developers do not conflate UI mutations (Server Actions) with business orchestration (Medusa workflows).
 
 ## Context
 

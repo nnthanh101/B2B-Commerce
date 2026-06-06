@@ -1,4 +1,4 @@
-# Grafana datasource provisioning — Digital-Commerce observability stack
+# Grafana datasource provisioning — B2B-Commerce observability stack
 #
 # CA condition adr-004-datasource-uid-deterministic:
 #   uid MUST be the literal string "prometheus" (not an auto-generated UUID).

@@ -3,7 +3,7 @@
 set -euo pipefail
 
 BACKEND_URL="${1:-http://localhost:9000}"
-REPORT_DIR="${2:-tmp/Digital-Commerce/test-results}"
+REPORT_DIR="${2:-tmp/B2B-Commerce/test-results}"
 REPO_ROOT="${3:-.}"
 
 # Gate: backend must be up

@@ -1,12 +1,12 @@
-# Discovery Brief — Digital-Commerce (Quote-Assisted B2B Marketplace)
+# Discovery Brief — B2B-Commerce (Quote-Assisted B2B-Commerce)
 
 > **Status**: Phase 1 — local-first B2B skeleton, alpha customer OceanSoft
 > **Owners**: HITL (T-Shape solo founder) + AI specialist agents (ADLC v1.2.0)
-> **Scope reference**: `tmp/Digital-Commerce/coordination-logs/product-owner-digital-commerce-p1-2026-06-04.json`
+> **Scope reference**: `tmp/B2B-Commerce/coordination-logs/product-owner-b2b-commerce-p1-2026-06-04.json`
 
 ## Executive Summary
 
-Digital-Commerce is a **quote-assisted B2B marketplace** built on Medusa 2.x for ANZ regulated-industry buyers (Energy, FSI, Telecom). The product replaces 6-week email-PDF procurement cycles with a deterministic Quote → Approval → PO → Invoice → SOW workflow. Phase 1 ships the local-first developer skeleton today; Phase 2 lifts the same artifacts onto a single AWS account with FinOps FOCUS 1.2+ tagging.
+B2B-Commerce is a **quote-assisted B2B-Commerce** built on Medusa 2.x for ANZ regulated-industry buyers (Energy, FSI, Telecom). The product replaces 6-week email-PDF procurement cycles with a deterministic Quote → Approval → PO → Invoice → SOW workflow. Phase 1 ships the local-first developer skeleton today; Phase 2 lifts the same artifacts onto a single AWS account with FinOps FOCUS 1.2+ tagging.
 
 ## Why
 
@@ -65,7 +65,7 @@ Built today: steps 1–3 (Medusa company, quote, approval modules + 9 quote work
 **So that** I can demonstrate the product to a prospect without 2 days of environment setup
 
 **Acceptance criteria** (excerpt — full AC in coordination log):
-- AC1: `task up` exits 0 in <600 seconds on cold-cache fresh clone (evidence: `tmp/Digital-Commerce/test-results/startup-time-YYYY-MM-DD.txt`)
+- AC1: `task up` exits 0 in <600 seconds on cold-cache fresh clone (evidence: `tmp/B2B-Commerce/test-results/startup-time-YYYY-MM-DD.txt`)
 - AC2: 4 services healthy: postgres, redis, ec (backend), storefront
 - AC3: Admin UI reachable at `localhost:9000/app`; storefront at `localhost:8000`
 
@@ -562,4 +562,4 @@ _As a Platform Admin, I want every quote/approval/order/agent action logged with
 - Module reality: `apps/backend/src/modules/{company,quote,approval}/` (3 modules wired in `medusa-config.ts`)
 - Workflow reality: `apps/backend/src/workflows/quote/workflows/` (9 files), `apps/backend/src/workflows/approval/workflows/` (5 files)
 - Storefront reality: `apps/storefront/src/modules/account/components/` (23 B2B account UI components)
-- Coordination authority: `tmp/Digital-Commerce/coordination-logs/product-owner-digital-commerce-p1-2026-06-04.json`
+- Coordination authority: `tmp/B2B-Commerce/coordination-logs/product-owner-b2b-commerce-p1-2026-06-04.json`

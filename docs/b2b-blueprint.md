@@ -1,12 +1,12 @@
-# B2B Blueprint — Digital-Commerce
+# B2B Blueprint — B2B-Commerce
 
 > **ADR style**: Summary → Context → Decision → Consequences
 > **Status**: Phase 1 (local-first) approved 2026-06-04 — Phase 2 (single AWS account) gated on Phase 1 evidence
-> **Authority**: `tmp/Digital-Commerce/coordination-logs/cloud-architect-digital-commerce-p1-2026-06-04.json`
+> **Authority**: `tmp/B2B-Commerce/coordination-logs/cloud-architect-b2b-commerce-p1-2026-06-04.json`
 
 ## Executive Decision
 
-Digital-Commerce is positioned as a **quote-assisted B2B marketplace for ANZ regulated industries (Energy, FSI, Telecom)** — not a generic B2B storefront. Quote → Approval → PO → Invoice → SOW is the canonical workflow; spending-limit enforcement, multi-step approval, and FOCUS 1.2+ tagged infrastructure are non-negotiable defaults. The product is delivered as an open-core monorepo (MIT-licensed apps + infra + docs) with a commercial Medusa plugin (`@oceansoft/medusa-plugin-b2b`) reserved for licensee distribution.
+B2B-Commerce is positioned as a **quote-assisted B2B-Commerce for ANZ regulated industries (Energy, FSI, Telecom)** — not a generic B2B storefront. Quote → Approval → PO → Invoice → SOW is the canonical workflow; spending-limit enforcement, multi-step approval, and FOCUS 1.2+ tagged infrastructure are non-negotiable defaults. The product is delivered as an open-core monorepo (MIT-licensed apps + infra + docs) with a commercial Medusa plugin (`@oceansoft/medusa-plugin-b2b`) reserved for licensee distribution.
 
 ---
 
@@ -26,7 +26,7 @@ Existing options force a tradeoff:
 | BigCommerce B2B Edition | Quote app — limited workflows | Single-level approval | SOC2 — vendor-controlled | No |
 | SAP Commerce / Hybris | Full enterprise | Multi-level | Enterprise (heavy) | Yes — high ops cost |
 | Medusa B2B (community) | None built-in | None built-in | Self-managed | Yes |
-| **Digital-Commerce** | **Built-in (3 modules, 22 workflows)** | **Built-in (5 approval workflows)** | **FOCUS 1.2+ tagged IaC + ADLC governance from day 1** | **Yes — open-core** |
+| **B2B-Commerce** | **Built-in (3 modules, 22 workflows)** | **Built-in (5 approval workflows)** | **FOCUS 1.2+ tagged IaC + ADLC governance from day 1** | **Yes — open-core** |
 
 ---
 
@@ -38,7 +38,7 @@ Seven differentiators thread through every architectural decision. The stack is 
 2. **AWS + Azure + Terraform native** — single Terraform skeleton targets multi-cloud from line 1. Container base `nnthanh101/terraform:2.6.0` (CA-confirmed) is the reproducible IaC harness. Differentiates from SaaS-only competitors.
 3. **FinOps FOCUS 1.2+ from line 1** — 9 mandatory tags (`Service, Environment, Owner, CostCenter, Project, BillingTag, ManagedBy, Compliance, DataClassification`) enforced via `infracost breakdown` checks in CI. Multi-tenant cost attribution wired before customer #2 onboards.
 4. **Claude subagents + ADLC v1.2.0** — 7 non-negotiable principles (Acceptable Agency, Interoperability, Evaluation-First, Hybrid Deployment, Observability, Governance, Agent Engineering) constrain every commit. PO + CA coordination gates are blocking — no agent ships standalone.
-5. **Evidence-first runbooks** — every claim has an evidence path in `tmp/Digital-Commerce/`. `NATO_VIOLATION` and `SKIP_EVIDENCE` are hook-blocked. Buyer-side audits land on a folder, not a story.
+5. **Evidence-first runbooks** — every claim has an evidence path in `tmp/B2B-Commerce/`. `NATO_VIOLATION` and `SKIP_EVIDENCE` are hook-blocked. Buyer-side audits land on a folder, not a story.
 6. **One-HITL solo-founder operating model** — T-Shape human-in-the-loop manager coordinates 38 specialist AI agents. Low coordination tax, high velocity per sprint. Competitor teams of 5–15 cannot match the per-sprint slope with the same cost base.
 7. **Energy / FSI / Telecom credibility** — alpha customer OceanSoft anchors the GTM narrative in regulated-industry references. First three customer logos targeted in Energy and FSI verticals (roadmap, not booked).
 
@@ -240,5 +240,5 @@ See [discovery-brief](./discovery-brief.md) §Phase 2 Sprint Plan for INVEST acc
 - Build for current scale: `.claude/memory/feedback_build_for_current_scale.md`
 - Product vs customer brand naming: `.claude/memory/feedback_product_vs_customer_brand.md`
 - 5S Sort self-check before delegation: `.claude/memory/feedback_5s_sort_before_delegation.md`
-- CA stack decisions (Node 22, Medusa 2.15.5+, container base): `tmp/Digital-Commerce/coordination-logs/cloud-architect-digital-commerce-p1-2026-06-04.json`
-- PO INVEST validation (9 stories): `tmp/Digital-Commerce/coordination-logs/product-owner-digital-commerce-p1-2026-06-04.json`
+- CA stack decisions (Node 22, Medusa 2.15.5+, container base): `tmp/B2B-Commerce/coordination-logs/cloud-architect-b2b-commerce-p1-2026-06-04.json`
+- PO INVEST validation (9 stories): `tmp/B2B-Commerce/coordination-logs/product-owner-b2b-commerce-p1-2026-06-04.json`

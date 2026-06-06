@@ -14,7 +14,7 @@
 locals {
   common_tags = {
     # FOCUS ServiceName → AppRegistry rollup key.
-    Application = "digital-commerce"
+    Application = "b2b-commerce"
 
     # FOCUS group-by axis — enum: backend|storefront|data|edge|async.
     Service = var.service

@@ -24,7 +24,7 @@ Bootstrap breaks the cycle by using a **local filesystem backend**. Its own stat
 ```bash
 export AWS_DEFAULT_REGION=ap-southeast-2
 task tf:local:up
-task tf:bootstrap:local          # creates digital-commerce-sandbox-tfstate in LocalStack
+task tf:bootstrap:local          # creates b2b-commerce-sandbox-tfstate in LocalStack
 awslocal s3 ls                   # verify bucket visible
 task tf:local:provision          # workload init -backend-config=backend-local.hcl + apply
 task tf:local:assert             # state-object-in-bucket proof + workload assertions
@@ -47,9 +47,9 @@ terraform -chdir=infra/terraform/aws/bootstrap apply -var="environment=dev"
 
 | Environment | Bucket name |
 |-------------|-------------|
-| sandbox (LocalStack) | `digital-commerce-sandbox-tfstate` |
-| dev | `digital-commerce-dev-tfstate` |
-| prod | `digital-commerce-prod-tfstate` |
+| sandbox (LocalStack) | `b2b-commerce-sandbox-tfstate` |
+| dev | `b2b-commerce-dev-tfstate` |
+| prod | `b2b-commerce-prod-tfstate` |
 
 ## Security Controls
 

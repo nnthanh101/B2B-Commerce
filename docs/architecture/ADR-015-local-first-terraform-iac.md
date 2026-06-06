@@ -5,19 +5,19 @@
 **Deciders**: product-owner, cloud-architect, HITL
 **Consensus**: PO+CA **93%** (Option A "superset on plugin base")
 **Authority**:
-- `tmp/Digital-Commerce/coordination-logs/product-owner-2026-06-05.json`
-- `tmp/Digital-Commerce/coordination-logs/cloud-architect-2026-06-05.json`
+- `tmp/B2B-Commerce/coordination-logs/product-owner-2026-06-05.json`
+- `tmp/B2B-Commerce/coordination-logs/cloud-architect-2026-06-05.json`
 **Related**: [ADR-006](./ADR-006-tag-only-github-actions.md) (S3-native lock / OIDC), [ADR-007](./ADR-007-grafana-prometheus-local-first.md) (observability SSOT), [ADR-001](./ADR-001-single-aws-account.md), [ADR-002](./ADR-002-rds-single-az.md)
 
 ## Summary
 
-Digital-Commerce provisions AWS infrastructure with **Terraform, local-first via LocalStack Community**, structured so the *same* modules promote to real AWS by swapping provider endpoints + one feature flag — no rewrite. This ADR supersedes the untracked validate-only skeleton (`null_resource` placeholders, $0 infracost) and locks: (1) the **commerce-plugin FOCUS 1.2+ tag SSOT as a superset base** (8 manual + 1 auto-injected tag), (2) a **per-env-root-module layout** under `infra/terraform/aws/<env>/`, (3) a **foundation slice** of AWS resources that LocalStack Community can genuinely apply end-to-end, (4) an **S3-native state backend** (`use_lockfile`, no DynamoDB), and (5) **AppRegistry (AWS myApplications)** as a count-guarded, AWS-only module. Runtime separation: **docker-compose remains the local application runtime**; Terraform/LocalStack validates the AWS *provisioning* path only.
+B2B-Commerce provisions AWS infrastructure with **Terraform, local-first via LocalStack Community**, structured so the *same* modules promote to real AWS by swapping provider endpoints + one feature flag — no rewrite. This ADR supersedes the untracked validate-only skeleton (`null_resource` placeholders, $0 infracost) and locks: (1) the **commerce-plugin FOCUS 1.2+ tag SSOT as a superset base** (8 manual + 1 auto-injected tag), (2) a **per-env-root-module layout** under `infra/terraform/aws/<env>/`, (3) a **foundation slice** of AWS resources that LocalStack Community can genuinely apply end-to-end, (4) an **S3-native state backend** (`use_lockfile`, no DynamoDB), and (5) **AppRegistry (AWS myApplications)** as a count-guarded, AWS-only module. Runtime separation: **docker-compose remains the local application runtime**; Terraform/LocalStack validates the AWS *provisioning* path only.
 
 ## Context
 
 The repository carried an untracked Terraform skeleton at `infra/terraform/` (single root + `environments/{dev,staging,prod}/` compositions + `modules/{network,compute,data,observability}/`, all `null_resource`). It had two defects against the commerce plugin (the enterprise SSOT the platform standardizes on, `adlc-framework/.claude/plugins/commerce/skills/focus-tag-schema/SKILL.md`):
 
-1. **Tag-schema conflict.** The skeleton set `Service = "digital-commerce"` (the *business-app* name in the *component* slot) and carried `Project` + `BillingTag`. The plugin SSOT requires `Application = "digital-commerce"` (business app → AppRegistry/FOCUS `ServiceName`) and `Service = enum[backend|storefront|data|edge|async]` (the FOCUS group-by axis). The skeleton's schema **breaks the `commerce_cost_by_service` FOCUS rollup contract**.
+1. **Tag-schema conflict.** The skeleton set `Service = "b2b-commerce"` (the *business-app* name in the *component* slot) and carried `Project` + `BillingTag`. The plugin SSOT requires `Application = "b2b-commerce"` (business app → AppRegistry/FOCUS `ServiceName`) and `Service = enum[backend|storefront|data|edge|async]` (the FOCUS group-by axis). The skeleton's schema **breaks the `commerce_cost_by_service` FOCUS rollup contract**.
 2. **Layout conflict.** The plugin hook (`focus-tag-precommit.sh`), `/commerce:tag-audit`, `/commerce:tf-plan`, and CI are all wired to `infra/terraform/aws/**`. The skeleton's `infra/terraform/environments/` paths engage none of that tooling.
 
 The platform is **hybrid-cloud (AWS + Azure)** (root `CLAUDE.md`) and local-first / Docker-first by mandate. We need IaC that proves real provisioning locally at $0, carries FinOps cost attribution from day one, and is 100% ready to scale to PROD.
@@ -39,7 +39,7 @@ Enterprise-grade production-ready · FinOps FOCUS 1.2+ · AWS myApplications (Ap
 | `Owner` | `team-commerce@oceansoft.io` | plugin SSOT | Support Group / `cmdb_ci.support_group` |
 | `CostCenter` | `CC-COMMERCE-001` (`^CC-[0-9]{4,6}$`) | plugin SSOT | `cmdb_ci.cost_center`; FOCUS `BilledCost` rollup (subsumes BillingTag) |
 | `Environment` | `dev\|staging\|prod\|sandbox\|dr` | plugin SSOT | Application Service env |
-| `Application` | `digital-commerce` | plugin SSOT | CSDM Business Application; FOCUS `ServiceName` |
+| `Application` | `b2b-commerce` | plugin SSOT | CSDM Business Application; FOCUS `ServiceName` |
 | `Service` | `backend\|storefront\|data\|edge\|async` | plugin SSOT | Technical Service; FOCUS group-by axis |
 | `ManagedBy` | `terraform` | plugin SSOT | `cmdb_ci.discovery_source` |
 | `Compliance` | `n/a\|soc2\|apra-cps234\|gdpr` | skeleton (RETAINED) | `sn_grc` control scope |
@@ -97,7 +97,7 @@ LocalStack Community fully emulates S3, SQS, SNS, Secrets Manager, IAM, STS. The
 ```hcl
 resource "aws_servicecatalogappregistry_application" "this" {
   count = var.enable_appregistry ? 1 : 0
-  name  = "digital-commerce"
+  name  = "b2b-commerce"
 }
 # provider default_tags:
 tags = merge(local.common_tags, try(module.appregistry.application_tag, {}))

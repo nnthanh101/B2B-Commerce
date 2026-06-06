@@ -1,7 +1,7 @@
-# Digital-Commerce E2E Test Cases (Track 4 — Converge to Honest Green)
+# B2B-Commerce E2E Test Cases (Track 4 — Converge to Honest Green)
 
 ## Summary
-The E2E test suite validates the B2B marketplace workflow across admin and buyer personas. **TRACK 4 FINAL**: All tests converged to honest green (6 PASS, 5 SKIP, 0 FAIL). Tests aligned to REAL storefront components (auth guards implemented, quote routes exist, order confirmation page verified). Skipped tests are expected on clean env without prior quote submissions (no regression).
+The E2E test suite validates the B2B-Commerce workflow across admin and buyer personas. **TRACK 4 FINAL**: All tests converged to honest green (6 PASS, 5 SKIP, 0 FAIL). Tests aligned to REAL storefront components (auth guards implemented, quote routes exist, order confirmation page verified). Skipped tests are expected on clean env without prior quote submissions (no regression).
 
 ## Test Tiers
 

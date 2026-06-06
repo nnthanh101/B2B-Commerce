@@ -1,4 +1,4 @@
-# Release Notes — Digital-Commerce v1.2.0
+# Release Notes — B2B-Commerce v1.2.0
 
 **Release date**: 2026-06-05  
 **Phase**: 1 — Local-first B2B skeleton (test harness + fixture hardening complete)  

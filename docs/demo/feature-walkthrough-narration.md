@@ -1,4 +1,4 @@
-# Demo Narration — Digital-Commerce Passing Flows (3-Flow Gate)
+# Demo Narration — B2B-Commerce Passing Flows (3-Flow Gate)
 
 > **Purpose**: Timestamped voice-over script for HITL to read while the demo video plays. Three complete, passing feature flows shown at production quality. Every scene has a `[mm:ss]` cue (cumulative running clock). One narration paragraph per vignette = 1–2 natural spoken sentences.
 >
@@ -23,7 +23,7 @@
 
 ### Scene 1.1 [00:00]
 
-**[00:00]** "A buyer arrives at the digital-commerce storefront. The catalog is company-scoped, not public."
+**[00:00]** "A buyer arrives at the b2b-commerce storefront. The catalog is company-scoped, not public."
 
 *(Screenshot: `generated-ctq-01-product-page.png`)*
 
@@ -181,11 +181,11 @@ All screenshots in this narration are from verified passing `/commerce:autotest`
 - `generated-approval-*.png` → approval workflow (9 screenshots)
 - `generated-quick-order-pad-*.png` → quick-order-pad bulk add (7 screenshots)
 
-Evidence location: `/Volumes/Working/projects/Digital-Commerce/tmp/Digital-Commerce/screenshots/`
+Evidence location: `/Volumes/Working/projects/B2B-Commerce/tmp/B2B-Commerce/screenshots/`
 
 Verification command:
 ```bash
-ls -1 tmp/Digital-Commerce/screenshots/generated-{ctq,approval,quick-order-pad}-*.png | wc -l
+ls -1 tmp/B2B-Commerce/screenshots/generated-{ctq,approval,quick-order-pad}-*.png | wc -l
 # Should return: 24 (8 + 9 + 7)
 ```
 

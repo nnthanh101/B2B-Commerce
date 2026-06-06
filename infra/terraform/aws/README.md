@@ -6,7 +6,7 @@
 
 | Tag | Value / Pattern | FOCUS / CSDM mapping |
 |---|---|---|
-| `Application` | `digital-commerce` | FOCUS `ServiceName`; AppRegistry rollup key |
+| `Application` | `b2b-commerce` | FOCUS `ServiceName`; AppRegistry rollup key |
 | `Service` | `backend\|storefront\|data\|edge\|async` | FOCUS group-by axis; component enum |
 | `Environment` | `dev\|staging\|prod\|sandbox\|dr\|local` | Application Service env |
 | `Owner` | `team-commerce@oceansoft.io` | FOCUS Owner; `cmdb_ci.support_group` |
@@ -45,7 +45,7 @@ if foundation owned its own state bucket. See `bootstrap/README.md` for run-once
 
 ```
 bootstrap/ (local backend)
-  └── creates: digital-commerce-{env}-tfstate  ← S3 bucket
+  └── creates: b2b-commerce-{env}-tfstate  ← S3 bucket
         ↑
         └── local/, dev/, staging/, prod/ store their state here (S3 backend)
 ```
@@ -56,7 +56,7 @@ bootstrap/ (local backend)
 Tier-1  task tf:validate ENV=local          # $0 — HCL syntax + plan (no LocalStack needed)
          task tf:test                        # mock_provider tests (foundation, tags, appregistry)
 Tier-2  task tf:local:up                    # start LocalStack
-         task tf:bootstrap:local             # genesis: creates digital-commerce-sandbox-tfstate
+         task tf:bootstrap:local             # genesis: creates b2b-commerce-sandbox-tfstate
          task tf:local:provision             # workload init -backend-config=backend-local.hcl + apply
          task tf:local:assert               # proves bootstrap bucket + state object + workload resources
 Tier-3  task tf:validate ENV=dev            # plan review (HITL-gated apply)
