@@ -21,7 +21,7 @@ export default async function PendingApprovalRequestsAdminList({
 
   const totalPages = Math.ceil((count || 0) / limit)
 
-  if (carts_with_approvals.length > 0) {
+  if (carts_with_approvals && carts_with_approvals.length > 0) {
     return (
       <div className="flex flex-col gap-y-4 w-full">
         <div className="flex flex-col gap-y-2">

@@ -64,6 +64,9 @@ test.describe("B2B promotions flow [generated]", () => {
     if (isFreeShippingVisible) {
       const progressText = await freeShippingLocator.textContent();
       console.log(`[promotions] CONTENT CHECK (runtime-extracted): Free-shipping progress = "${progressText}"`);
+      // CONCRETE ASSERT: free-shipping progress text mentions a spending threshold (e.g., "DKK 100000 more")
+      await expect(freeShippingLocator).toContainText(/[0-9]+|spend|more/i);
+      console.log("[promotions] CONCRETE ASSERT PASS: Free-shipping threshold value visible");
     } else {
       console.log("[promotions] CONTENT CHECK: Free-shipping progress not visible in this cart state");
     }

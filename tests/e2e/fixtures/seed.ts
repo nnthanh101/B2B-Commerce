@@ -212,6 +212,95 @@ export async function seedEmployee(companyId: string, customerEmail?: string) {
 }
 
 /**
+ * Seed: Create admin employee for approval workflows.
+ * Links the admin user (from TEST_ADMIN_EMAIL) to the company with is_admin=true.
+ * This allows the admin to access /store/approvals and manage approval workflows.
+ */
+export async function seedAdminEmployee(companyId: string) {
+  const adminHeaders = await getAdminHeaders();
+  const adminEmail = ADMIN_EMAIL;
+
+  // Step 1: Fetch admin customer by email (admin user auto-created by Medusa)
+  const customersRes = await fetch(
+    `${MEDUSA_BACKEND_URL}/admin/customers?q=${encodeURIComponent(adminEmail)}`,
+    {
+      method: "GET",
+      ...adminHeaders,
+    }
+  );
+
+  if (!customersRes.ok) {
+    console.warn(
+      `⚠️  seedAdminEmployee: Failed to list admin customer (${customersRes.status()}). ` +
+      `Admin may not be seeded yet.`
+    );
+    return { id: "admin-stub", companyId };
+  }
+
+  const { customers = [] } = await customersRes.json();
+  const adminCustomer = customers.find((c: { email: string }) => c.email === adminEmail);
+
+  if (!adminCustomer || !adminCustomer.id) {
+    console.warn(
+      `⚠️  seedAdminEmployee: Admin customer "${adminEmail}" not found. ` +
+      `Skipping admin employee seeding.`
+    );
+    return { id: "admin-stub", companyId };
+  }
+
+  // Step 2: Check if admin employee already exists
+  const listEmployeesRes = await fetch(
+    `${MEDUSA_BACKEND_URL}/admin/companies/${companyId}/employees`,
+    {
+      method: "GET",
+      ...adminHeaders,
+    }
+  );
+
+  if (listEmployeesRes.ok) {
+    const { employees = [] } = await listEmployeesRes.json();
+    const existingAdmin = employees.find(
+      (e: { customer_id?: string; is_admin?: boolean }) =>
+        e.customer_id === adminCustomer.id && e.is_admin === true
+    );
+    if (existingAdmin) {
+      console.log(
+        `Admin employee for "${adminEmail}" already linked to company ${companyId}`
+      );
+      return existingAdmin;
+    }
+  }
+
+  // Step 3: Create admin employee (link admin customer to company with is_admin=true)
+  const adminEmployeeRes = await fetch(
+    `${MEDUSA_BACKEND_URL}/admin/companies/${companyId}/employees`,
+    {
+      method: "POST",
+      ...adminHeaders,
+      body: JSON.stringify({
+        customer_id: adminCustomer.id,
+        is_admin: true,
+      }),
+    }
+  );
+
+  if (!adminEmployeeRes.ok) {
+    const text = await adminEmployeeRes.text();
+    console.warn(
+      `⚠️  seedAdminEmployee: Failed to create admin employee: ${adminEmployeeRes.status()} ${text}. ` +
+      `Admin approvals workflows may fail.`
+    );
+    return { id: "admin-stub", companyId, customer_id: adminCustomer.id };
+  }
+
+  const adminEmployee = await adminEmployeeRes.json();
+  console.log(
+    `✓ Admin employee created: customer ${adminCustomer.id} linked to company ${companyId} with is_admin=true`
+  );
+  return adminEmployee.employee || adminEmployee;
+}
+
+/**
  * Seed: Create a product for the store.
  * POST /admin/products
  * Idempotent: GET by handle first, return if exists, only POST if absent.
@@ -441,7 +530,7 @@ export async function seedProduct() {
 
   // Step 6: PRE-ASSERT product visibility via store API with variant details
   // This is critical — fail fast if the product is not visible or has no price
-  const regionId = "dk"; // Matches TEST_REGION_COUNTRY from config.ts
+  const regionId = "nz"; // Matches TEST_REGION_COUNTRY from config.ts
   const storeRes = await fetch(
     `${MEDUSA_BACKEND_URL}/store/products?region_id=${regionId}`,
     {

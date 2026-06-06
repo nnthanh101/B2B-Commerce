@@ -5,7 +5,7 @@ import { BACKEND_URL, TEST_REGION_COUNTRY, getPublishableKey } from "../config";
  * Helper: Resolve region UUID from /store/regions
  *
  * CRITICAL: The region_id parameter in POST /store/carts MUST be a UUID (reg_...)
- * NOT a country code like "dk". This function performs the lookup.
+ * NOT a country code like "nz". This function performs the lookup.
  *
  * @returns region UUID (e.g., "reg_01KTB6993S0NGH6G1Z5KCHH9NE")
  */

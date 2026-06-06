@@ -28,8 +28,15 @@ tasks:
   # Platform lifecycle
   # ---------------------------------------------------------------------------
 
+  preflight:context:
+    desc: "Guard: fail fast if Docker build-context exceeds 50 MB or heavy dirs (node_modules, .terraform) are not excluded"
+    cmds:
+      - bash scripts/preflight-build-context.sh
+
   up:
     desc: "Start all platform services (builds images if needed)"
+    deps:
+      - preflight:context
     cmds:
       - docker compose up --build -d
 
@@ -69,7 +76,7 @@ tasks:
   lint:scripts:
     desc: "Shellcheck all helper scripts in scripts/ for syntax and safety"
     cmds:
-      - shellcheck -x scripts/lib/common.sh scripts/preflight-backend.sh scripts/e2e.sh scripts/live-smoke.sh scripts/visual-verify.sh scripts/localstack-up.sh scripts/localstack-assert.sh scripts/db-local-up.sh scripts/preflight-images.sh scripts/lint-test-paths.sh
+      - shellcheck -x scripts/lib/common.sh scripts/preflight-backend.sh scripts/e2e.sh scripts/live-smoke.sh scripts/visual-verify.sh scripts/localstack-up.sh scripts/localstack-assert.sh scripts/db-local-up.sh scripts/preflight-images.sh scripts/lint-test-paths.sh scripts/preflight-build-context.sh
 
   test:unit:
     desc: "Run unit tests across all workspaces"

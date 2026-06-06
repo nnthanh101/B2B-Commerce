@@ -2,7 +2,7 @@ import { test } from "./fixtures/auth";
 
 test("Debug: Check HTML structure and variants", async ({ buyerPage }) => {
   const STOREFRONT_URL = "http://localhost:8000";
-  const TEST_REGION_COUNTRY = "dk";
+  const TEST_REGION_COUNTRY = "nz";
   
   // Go to store listing
   await buyerPage.goto(`${STOREFRONT_URL}/${TEST_REGION_COUNTRY}/store`);

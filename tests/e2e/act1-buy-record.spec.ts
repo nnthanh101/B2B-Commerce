@@ -4,7 +4,7 @@ import { seedCompany, seedEmployee, seedProduct, seedApprovalSettings } from "./
 import { SCREENSHOTS_DIR } from "./config";
 
 const STOREFRONT_URL = process.env.STOREFRONT_URL || "http://localhost:8000";
-const TEST_REGION_COUNTRY = process.env.TEST_REGION_COUNTRY || "dk";
+const TEST_REGION_COUNTRY = process.env.TEST_REGION_COUNTRY || "nz";
 
 /**
  * Act 1: "Buy" — Full B2B Buyer Journey Recording

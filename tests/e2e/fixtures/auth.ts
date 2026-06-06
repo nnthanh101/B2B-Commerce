@@ -106,7 +106,7 @@ export const test = base.extend<{
     // Step 1: Use the demo buyer that's already seeded in the system
     const DEMO_BUYER_EMAIL = "demo-buyer@democorp.local";
     const DEMO_BUYER_PASSWORD = "Test1234!";
-    const TEST_REGION_COUNTRY = process.env.TEST_REGION_COUNTRY || "dk";
+    const TEST_REGION_COUNTRY = process.env.TEST_REGION_COUNTRY || "nz";
 
     // Step 2: API-based registration + customer record creation + login (3-phase auth flow)
     // CRITICAL FIX: In Medusa v2, /auth/customer/emailpass/register creates an AUTH IDENTITY

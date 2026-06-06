@@ -26,7 +26,7 @@ export const GET = async (
   const companyId = customer?.employee?.company?.id as string;
 
   if (!companyId) {
-    return res.json({ approvals: [], count: 0 });
+    return res.json({ carts_with_approvals: [], count: 0 });
   }
 
   const {

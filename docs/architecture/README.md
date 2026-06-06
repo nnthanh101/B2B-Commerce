@@ -17,7 +17,7 @@ This directory contains accepted architectural decisions for the Digital-Commerc
 | [adr-005](./adr-005-postgres-full-text-search.md) | Postgres FTS (Algolia at Roadmap v0.5+) |
 | [adr-006](./adr-006-tag-only-github-actions.md) | Tag-Push GitHub Actions (HITL gate) |
 | [adr-007](./adr-007-grafana-prometheus-local-first.md) | Grafana + Prometheus Local-First Observability **(amended 2026-06-05: hybrid-cloud SSOT, execute NOW)** |
-| [adr-008](./adr-008-medusa-modules-reuse-vs-new.md) | Reuse Medusa B2B Starter Modules |
+| [adr-008](./adr-008-medusa-modules-reuse-vs-new.md) | Reuse B2B Commerce Modules |
 | [adr-009](./adr-009-apps-as-first-party-not-upstream.md) | apps/ as First-Party OceanSoft IP |
 | [adr-010](./adr-010-medusa-ootb-extended.md) | Medusa OOTB-Extended Pattern |
 | [adr-011](./adr-011-stripe-connect-marketplace.md) | Stripe Connect Express Marketplace |

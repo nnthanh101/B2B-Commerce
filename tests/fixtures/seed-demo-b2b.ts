@@ -390,7 +390,7 @@ async function createApprovalAsCartRequest(
   };
 
   // Create cart
-  const regionId = TEST_REGION_COUNTRY || "dk";
+  const regionId = TEST_REGION_COUNTRY || "nz";
   const cartRes = await fetch(`${BACKEND_URL}/store/carts`, {
     method: "POST",
     ...buyerHeaders,

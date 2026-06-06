@@ -8,7 +8,7 @@ import {
 const MEDUSA_BACKEND_URL =
   process.env.MEDUSA_BACKEND_URL || "http://localhost:9000";
 const STOREFRONT_URL = process.env.STOREFRONT_URL || "http://localhost:8000";
-const TEST_REGION_COUNTRY = process.env.TEST_REGION_COUNTRY || "dk";
+const TEST_REGION_COUNTRY = process.env.TEST_REGION_COUNTRY || "nz";
 
 /**
  * Global setup: ping backend /health endpoint to gate test execution.

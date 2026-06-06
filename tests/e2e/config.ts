@@ -88,7 +88,7 @@ export const ADMIN_PASSWORD =
  * Regional test variant (storefront URL path prefix)
  */
 export const TEST_REGION_COUNTRY =
-  process.env.TEST_REGION_COUNTRY || "dk";
+  process.env.TEST_REGION_COUNTRY || "nz";
 
 /**
  * Feature flags

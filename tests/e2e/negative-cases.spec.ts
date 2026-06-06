@@ -3,7 +3,7 @@ import { test, expect } from "./fixtures/auth";
 import { SCREENSHOTS_DIR } from "./config";
 
 const STOREFRONT_URL = process.env.STOREFRONT_URL || "http://localhost:8000";
-const TEST_REGION_COUNTRY = process.env.TEST_REGION_COUNTRY || "dk";
+const TEST_REGION_COUNTRY = process.env.TEST_REGION_COUNTRY || "nz";
 
 /**
  * Negative Test Cases — B2B Security & Access Control

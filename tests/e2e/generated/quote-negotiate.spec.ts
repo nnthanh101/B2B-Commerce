@@ -110,6 +110,9 @@ test.describe("B2B quote-negotiate flow [generated]", () => {
         const totalText = await quoteTotalLocator.textContent();
         console.log(`[quote-negotiate] CONCRETE ASSERT PASS: Quote total visible = "${totalText}"`);
         await expect(quoteTotalLocator).toBeVisible({ timeout: 5000 });
+        // CONCRETE ASSERT: quote total contains numeric value (DKK or currency symbol)
+        await expect(quoteTotalLocator).toContainText(/[0-9]/);
+        console.log("[quote-negotiate] CONCRETE ASSERT PASS: Quote total contains numeric value");
       } else {
         console.log("[quote-negotiate] CONTENT CHECK: Quote total not visible (quote may be minimal/empty)");
       }

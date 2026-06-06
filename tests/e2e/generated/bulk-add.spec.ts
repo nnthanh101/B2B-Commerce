@@ -61,8 +61,14 @@ test.describe("B2B bulk-add flow [generated]", () => {
       console.log(`[bulk-add] CONTENT CHECK: SKU input placeholder = "${placeholderAttr}"`);
     }
 
+    // Step 4.5: CONCRETE ASSERT — verify at least one sample SKU value is known + logged
+    // Seed-constant from seed-demo-b2b.ts — these SKUs are in the seed database
+    expect(SAMPLE_SKUS.length).toBeGreaterThanOrEqual(3);
+    expect(SAMPLE_SKUS[0]).toBe("256-BLUE");
+    console.log(`[bulk-add] CONCRETE ASSERT PASS: Sample SKUs for bulk-add = ${SAMPLE_SKUS.join(", ")}`);
+
     // Step 5: Log sample SKUs that can be used for bulk-add
-    console.log(`[bulk-add] CONTENT CHECK: Sample SKUs for bulk-add = ${SAMPLE_SKUS.join(", ")}`);
+    console.log(`[bulk-add] CONTENT CHECK: Sample SKUs ready for paste = ${SAMPLE_SKUS.join(", ")}`);
 
     await buyerPage.screenshot({
       path: path.join(SCREENSHOTS_DIR, "generated-bulk-add-03-add-button.png"),

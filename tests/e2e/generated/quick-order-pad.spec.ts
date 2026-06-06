@@ -66,6 +66,11 @@ test.describe("B2B quick-order-pad flow [generated]", () => {
     const skuPasteText = PASTE_TEST_SKUS.join("\n");
     console.log(`[quick-order-pad] CONCRETE ASSERT: Pasting ${PASTE_TEST_SKUS.length} SKUs = ${PASTE_TEST_SKUS.join(", ")}`);
 
+    // CONCRETE ASSERT: verify all 3 seed SKU values are present in paste test list
+    expect(PASTE_TEST_SKUS).toEqual(["256-BLUE", "WEBCAM-BLACK", "PHONE-256-PURPLE"]);
+    expect(PASTE_TEST_SKUS.length).toBe(3);
+    console.log("[quick-order-pad] CONCRETE ASSERT PASS: All 3 known SKUs present for paste test");
+
     // This demonstrates the test structure; actual paste + add depends on fixture setup
     // and storefront implementation (whether quick-order-pad supports paste + bulk add).
 

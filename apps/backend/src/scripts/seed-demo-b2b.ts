@@ -71,6 +71,7 @@ export default async function seedDemoB2B({
 }) {
   const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
   const link = container.resolve(ContainerRegistrationKeys.LINK)
+  const query = container.resolve(ContainerRegistrationKeys.QUERY)
 
   const approvalModule =
     container.resolve<IApprovalModuleService>(APPROVAL_MODULE)
@@ -195,17 +196,74 @@ export default async function seedDemoB2B({
   } else {
     const { result: emp } = await createEmployeesWorkflow(container).run({
       input: {
+        // customer_id is NOT a column on Employee — it is stored as a remote link.
+        // Pass only the ORM-mapped fields; customerId drives the link step below.
         employeeData: {
-          customer_id: customer.id,
           company_id: company.id,
           spending_limit: 500000,
           is_admin: true,
-        },
+        } as any,
         customerId: customer.id,
       },
     })
     employee = emp
     logger.info(`  Employee created: ${employee.id}`)
+  }
+
+  // ── Step 4b: Admin user as company admin (for approval workflows) ─────────
+
+  logger.info("Step 4b: Admin user company link...")
+
+  const userModule = container.resolve(Modules.USER)
+  const adminUsers = await userModule.listUsers()
+  const adminUser = adminUsers[0]
+
+  if (!adminUser) {
+    logger.warn(`  No admin user found — skipping admin employee creation`)
+  } else {
+    const adminCustomers = await customerModule.listCustomers({
+      email: adminUser.email,
+    })
+
+    let adminCustomer: any
+    if (adminCustomers.length > 0) {
+      adminCustomer = adminCustomers[0]
+      logger.info(`  Admin customer found: ${adminCustomer.id}`)
+    } else {
+      adminCustomer = await customerModule.createCustomers({
+        email: adminUser.email,
+        first_name: adminUser.first_name || "Admin",
+        last_name: adminUser.last_name || "User",
+      })
+      logger.info(`  Admin customer created: ${adminCustomer.id}`)
+    }
+
+    // Employee↔Customer is a remote link (not a column on the Employee model).
+    // Query all employees for the company, then check which one is linked to adminCustomer.
+    const { data: companyEmployees } = await query.graph({
+      entity: "employee",
+      fields: ["id", "customer.*"],
+      filters: { company_id: company.id },
+    })
+    const adminEmployees = companyEmployees.filter(
+      (e: any) => e.customer?.id === adminCustomer.id
+    )
+
+    if (adminEmployees.length > 0) {
+      logger.info(`  Admin employee already exists (${adminEmployees[0].id})`)
+    } else {
+      const { result: adminEmp } = await createEmployeesWorkflow(container).run({
+        input: {
+          // customer_id is NOT a column on Employee — stored as a remote link only.
+          employeeData: {
+            company_id: company.id,
+            is_admin: true,
+          } as any,
+          customerId: adminCustomer.id,
+        },
+      })
+      logger.info(`  Admin employee created: ${adminEmp.id}`)
+    }
   }
 
   // ── Step 5: Cart linked to company ──────────────────────────────────────
@@ -228,8 +286,6 @@ export default async function seedDemoB2B({
   const salesChannel = salesChannels[0]
 
   // Check if this company already has a cart linked (via link table)
-  const query = container.resolve(ContainerRegistrationKeys.QUERY)
-
   const { data: companyWithCarts } = await query.graph({
     entity: "company",
     fields: ["id", "carts.*"],

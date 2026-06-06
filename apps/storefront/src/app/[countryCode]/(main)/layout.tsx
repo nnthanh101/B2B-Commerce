@@ -36,10 +36,10 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
 
           <a
             className="group hover:text-ui-fg-interactive-hover text-ui-fg-interactive self-end small:self-auto"
-            href="https://cloud.medusajs.com"
+            href="https://oceansoft.io"
             target="_blank"
           >
-            Deploy to Medusa Cloud
+            Deploy to Cloud
             <ArrowUpRightMini className="group-hover:text-ui-fg-interactive-hover inline text-ui-fg-interactive" />
           </a>
         </div>

@@ -1,6 +1,7 @@
 import { COMPANY_MODULE } from "./src/modules/company"
 import { QUOTE_MODULE } from "./src/modules/quote"
 import { APPROVAL_MODULE } from "./src/modules/approval"
+import { INVITE_MODULE } from "./src/modules/invite"
 import { defineConfig, loadEnv } from "@medusajs/framework/utils"
 
 loadEnv(process.env.NODE_ENV || "development", process.cwd())
@@ -30,6 +31,9 @@ module.exports = defineConfig({
     },
     [APPROVAL_MODULE]: {
       resolve: "./modules/approval",
+    },
+    [INVITE_MODULE]: {
+      resolve: "./modules/invite",
     },
     // [Modules.FILE] is intentionally omitted: Medusa v2 framework (express-loader.js L124)
     // unconditionally mounts express.static(baseDir/static) at /static — no module config needed.

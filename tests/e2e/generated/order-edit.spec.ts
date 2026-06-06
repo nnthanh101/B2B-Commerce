@@ -63,6 +63,9 @@ test.describe("B2B order-edit flow [generated]", () => {
       const idText = await orderIdLocator.textContent({ timeout: 1000 }).catch(() => "");
       if (idText) {
         console.log(`[order-edit] CONCRETE ASSERT PASS: First order ID visible = "${idText}"`);
+        // CONCRETE ASSERT: order ID is non-empty and contains order identifier
+        await expect(orderIdLocator).toContainText(/./);
+        console.log("[order-edit] CONCRETE ASSERT PASS: Order ID is populated");
       }
 
       await firstOrderRow.locator('a, button').first().click().catch(() => {

@@ -373,7 +373,7 @@ _As a Company Admin, I want to register my company, so that my organization can 
 - **Given** a valid business email **When** I submit company name, address, and admin details **Then** a company account is created and I become its admin.
 - **And** an audit event `company.created` is emitted.
 
-*Implementation status*: **BUILT** — company module per [adr-008](./architecture/adr-008-medusa-modules-reuse-vs-new.md); Medusa B2B starter foundation.
+*Implementation status*: **BUILT** — company module per [adr-008](./architecture/adr-008-medusa-modules-reuse-vs-new.md); B2B Commerce foundation.
 
 #### US-A2 — Invite an employee · `S` · `todo`
 

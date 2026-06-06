@@ -1,6 +1,6 @@
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import LogoIcon from "@/modules/common/icons/logo"
-import MedusaCTA from "@/modules/layout/components/medusa-cta"
+import CommerceCTA from "@/modules/layout/components/medusa-cta"
 
 export default function CheckoutLayout({
   children,
@@ -14,7 +14,7 @@ export default function CheckoutLayout({
           <LocalizedClientLink className="hover:text-ui-fg-base" href="/">
             <h1 className="text-base font-medium flex items-center">
               <LogoIcon className="inline mr-2" />
-              Medusa B2B Starter
+              B2B Commerce
             </h1>
           </LocalizedClientLink>
         </nav>
@@ -23,7 +23,7 @@ export default function CheckoutLayout({
         {children}
       </div>
       <div className="py-4 w-full flex items-center justify-center">
-        <MedusaCTA />
+        <CommerceCTA />
       </div>
     </div>
   )

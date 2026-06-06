@@ -217,7 +217,7 @@ task test:integration
 
 - **Bug reports** — Use GitHub Issues
 - **Commercial license inquiries** — Contact sales@oceansoft.io
-- **Technical questions** — See `docs/` or check Medusa docs at medusajs.com
+- **Technical questions** — See `docs/` or check Medusa docs at oceansoft.io
 
 ## Contributing
 

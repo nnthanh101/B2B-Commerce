@@ -40,7 +40,7 @@ export default async function Company() {
         <Heading level="h2" className="text-lg text-neutral-950">
           Invite Employees
         </Heading>
-        <InviteEmployeeCard company={company} />
+        <InviteEmployeeCard />
       </div>
     </div>
   )

@@ -17,7 +17,7 @@ import { SCREENSHOTS_DIR } from "./config";
  */
 
 const STOREFRONT_URL = process.env.STOREFRONT_URL || "http://localhost:8000";
-const CC = process.env.TEST_REGION_COUNTRY || "dk";
+const CC = process.env.TEST_REGION_COUNTRY || "nz";
 
 test.describe("Buyer-employee — checkout smoke (browse → cart → checkout → order)", () => {
   test("CS-1: storefront home + product list reachable", async ({ buyerPage }) => {

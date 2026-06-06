@@ -1,4 +1,4 @@
-# ADR-008: Reuse Medusa B2B Starter Modules (Company, Quote, Approval)
+# ADR-008: Reuse B2B Commerce Modules (Company, Quote, Approval)
 
 **Status**: Accepted
 **Date**: 2026-06-04
@@ -7,7 +7,7 @@
 
 ## Summary
 
-Digital-Commerce **reuses the Medusa B2B starter modules** (`company`, `quote`, `approval`) as the canonical implementation of the quote-assisted B2B workflow. These modules were borrowed as 1st-init drafts from `medusajs/b2b-starter` (MIT) and are now owned outright by OceanSoft from v0.1.0 forward — no upstream sync, no resync CI. The decision is grounded in `feedback_borrow_as_init_draft.md`: borrow the scaffold, then forget upstream.
+Digital-Commerce **reuses the B2B Commerce modules** (`company`, `quote`, `approval`) as the canonical implementation of the quote-assisted B2B workflow. These modules were borrowed as 1st-init drafts from `medusajs/b2b-starter` (MIT) and are now owned outright by OceanSoft from v0.1.0 forward — no upstream sync, no resync CI. The decision is grounded in `feedback_borrow_as_init_draft.md`: borrow the scaffold, then forget upstream.
 
 ## Context
 
@@ -23,15 +23,15 @@ The quote-assisted B2B workflow (Quote → Approval → PO → Invoice → SOW) 
 Two options were considered:
 
 1. **Build from scratch** as `@oceansoft/medusa-plugin-b2b` from line 1
-2. **Reuse the Medusa B2B starter** (MIT-licensed open-core scaffold) and own it as first-party code from v0.1.0
+2. **Reuse the B2B Commerce** (MIT-licensed open-core scaffold) and own it as first-party code from v0.1.0
 
-The Medusa B2B starter at `medusajs/b2b-starter` already implements ~80% of the surface above with proven module wiring. Building from scratch would burn 4-6 weeks rebuilding what already works, with no functional differentiation at the module level (the differentiation is in ANZ regulator context, FOCUS 1.2+ tags, and ADLC governance — none of which are module-internal).
+The B2B Commerce at `medusajs/b2b-starter` already implements ~80% of the surface above with proven module wiring. Building from scratch would burn 4-6 weeks rebuilding what already works, with no functional differentiation at the module level (the differentiation is in ANZ regulator context, FOCUS 1.2+ tags, and ADLC governance — none of which are module-internal).
 
 The borrow-as-init-draft pattern is explicit in the project memory at `.claude/memory/feedback_borrow_as_init_draft.md`: "utilise all of code/docs/material/templates from Medusa as 1st-init draft ONLY, then forget them — maintain & develop our own IP & deliverables."
 
 ## Decision
 
-**Reuse the three Medusa B2B starter modules as first-party OceanSoft code from v0.1.0:**
+**Reuse the three B2B Commerce modules as first-party OceanSoft code from v0.1.0:**
 
 - **`apps/backend/src/modules/company/`** — company + employee entities, spending limits, approval settings. Built and wired in `apps/backend/medusa-config.ts` via `COMPANY_MODULE` token.
 - **`apps/backend/src/modules/quote/`** — quote entity, line items, status transitions, message thread. Built and wired via `QUOTE_MODULE` token.
@@ -56,7 +56,7 @@ modules: {
 **IP ownership directive** (from CA coordination log, lines 51-58):
 
 - All `package.json` files declare `author: "OceanSoft"`; root, apps, infra, docs use `license: "MIT"`; `packages/medusa-plugin-b2b/` uses `license: "SEE LICENSE IN LICENSE.md"` (commercial).
-- Single `THIRD-PARTY-NOTICES.md` at repo root captures Medusa B2B starter / DTC starter MIT compliance. No per-file attribution comments.
+- Single `THIRD-PARTY-NOTICES.md` at repo root captures B2B Commerce / DTC starter MIT compliance. No per-file attribution comments.
 - Every specialist delegation prompt for Row 5 (plugin extraction) includes an explicit IP-scrub directive: `grep -rn "from b2b-starter\|based on dtc-starter\|borrowed from" packages/ apps/` MUST return 0 results before the row passes.
 - README and docs present artifacts as OceanSoft products, NOT as "forks of X."
 - Post v0.1.0: no upstream sync, no Renovate watch on Medusa starter repos. Only `@medusajs/*` package versions are tracked (the framework, not the starter).
@@ -83,12 +83,12 @@ modules: {
 **Trade-offs**:
 
 - We own all bugs in the borrowed code from v0.1.0 — no "wait for upstream fix." Mitigation: the borrowed modules are small (< 5k LOC combined); ownership is tractable.
-- Future Medusa B2B starter improvements are not free — they are deliberate cherry-picks treated as feature work. Acceptable: removes cognitive overhead of "should we resync?" on every feature.
+- Future B2B Commerce improvements are not free — they are deliberate cherry-picks treated as feature work. Acceptable: removes cognitive overhead of "should we resync?" on every feature.
 
 **Rejected**:
 
 - **Build from scratch** — 4-6 week schedule slip with no functional differentiation at module layer.
-- **Fork-and-track** Medusa B2B starter as a vendored upstream — creates ongoing sync debt that destroys ownership clarity. Explicit anti-pattern: `UPSTREAM_SYNC_DEBT`.
+- **Fork-and-track** B2B Commerce as a vendored upstream — creates ongoing sync debt that destroys ownership clarity. Explicit anti-pattern: `UPSTREAM_SYNC_DEBT`.
 
 ## Cross-References
 

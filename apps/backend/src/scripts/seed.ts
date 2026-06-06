@@ -63,7 +63,7 @@ export default async function seed({
     ModuleRegistrationName.FULFILLMENT
   )
 
-  const countries = ["gb", "de", "dk", "se", "fr", "es", "it"]
+  const countries = ["gb", "de", "nz", "se", "fr", "es", "it"]
 
   // ── Sales channel ────────────────────────────────────────────────────────────
   logger.info("Seeding store data...")
@@ -206,8 +206,8 @@ export default async function seed({
             {
               name: "European Warehouse",
               address: {
-                city: "Copenhagen",
-                country_code: "DK",
+                city: "Auckland",
+                country_code: "NZ",
                 address_1: "",
               },
             },

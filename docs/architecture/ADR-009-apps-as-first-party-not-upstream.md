@@ -57,7 +57,7 @@ This grep runs as part of the Row 4 (fullstack apps) and Row 5 (plugin) completi
 **Upgrade discipline** (post v0.1.0):
 
 - `@medusajs/framework` and `@medusajs/admin-sdk` are pinned npm dependencies — these stay tracked via standard package-version management (Renovate / Dependabot only). The framework is upstream; the application shell is OceanSoft.
-- Medusa B2B starter / DTC starter repositories are **NOT** tracked. No Renovate watch, no sync CI, no "we should resync from upstream" sprint items.
+- B2B Commerce / DTC starter repositories are **NOT** tracked. No Renovate watch, no sync CI, no "we should resync from upstream" sprint items.
 - Medusa core version bumps (e.g. 2.15.5 → 2.16.x) land via PR with full test re-run (Playwright golden-path + plugin build). No auto-merge — OceanSoft owns the upgrade decision and rollback discipline.
 - Bug in `@medusajs/framework` itself → file upstream issue, do not patch in our codebase unless blocking.
 
@@ -95,6 +95,6 @@ This grep runs as part of the Row 4 (fullstack apps) and Row 5 (plugin) completi
 
 - [b2b-blueprint.md — Unfair Advantage Stack](../b2b-blueprint.md)
 - [discovery-brief.md — 5S Sort discipline and buyer personas](../discovery-brief.md)
-- [ADR-008: Reuse Medusa B2B Starter Modules](./adr-008-medusa-modules-reuse-vs-new.md) — companion decision at module layer
+- [ADR-008: Reuse B2B Commerce Modules](./adr-008-medusa-modules-reuse-vs-new.md) — companion decision at module layer
 - Memory: `.claude/memory/feedback_borrow_as_init_draft.md`
 - Attribution: `THIRD-PARTY-NOTICES.md` at repo root
