@@ -21,7 +21,7 @@ This file provides guidance to Claude Code when working with this repository.
 | **Commerce Plugin** | `.adlc/.claude/plugins/commerce/` | `1xOps/adlc-framework` | **PRIVATE** | B2B commerce ADLC skills, `/commerce:*` commands, agents | NEVER edit here; edit in framework repo |
 | **Product Code** | `apps/backend/` + `apps/storefront/` | This repo | MIT Licensed | Medusa v2 backend + Next.js 15 storefront | PRODUCT TEAM: full autonomy |
 | **Product Docs** | `README.md`, `CHANGELOG.md`, `RELEASE_NOTES.md`, `docs/` | This repo | MIT Licensed | B2B commerce user guides, release notes | PRODUCT TEAM: full autonomy |
-| **Infrastructure Code** | `infra/`, `observability/`, + `terraform-aws/` submodule | `nnthanh101/terraform-aws` (PUBLIC) | MIT Licensed | IaC for AWS deployment (consumed as git submodule) | INFRASTRUCTURE TEAM: public repo; coordinate for changes |
+| **Infrastructure Code** | `infra/` (incl. `observability/`), + `terraform-aws/` submodule | `nnthanh101/terraform-aws` (PUBLIC) | MIT Licensed | IaC for AWS deployment (consumed as git submodule) | INFRASTRUCTURE TEAM: public repo; coordinate for changes |
 
 ---
 
@@ -118,6 +118,20 @@ docker compose restart      # Reset containers (use --force-recreate to reload e
 - **Visual-content verification**: `.adlc/.claude/rules/engineering/visual-content-verify-gate.md`
 - **Constitution**: `.adlc/.specify/memory/constitution.md` (7 ADLC principles)
 - **Project memory**: `.claude/memory/MEMORY.md` (project-specific lessons learned)
+
+---
+
+## Documentation (llm-docs)
+
+B2B-Commerce documentation is **LLM-compiled** from raw sources (code, infra, tests, coordination logs) into a persistent Docusaurus wiki, not hand-written or RAG-derived per query.
+
+| Karpathy Layer | B2B-Commerce Instance | Role |
+|---|---|---|
+| **IDE** | Claude Code | Where agents edit docs and code |
+| **Programmer** | ADLC agent team (Opus/Sonnet/Haiku) | Compiles raw sources into wiki via `/commerce:docs-ingest\|lint\|query` |
+| **Wiki / Codebase** | `docs/content/` (Docusaurus 3.10) | Living knowledge base; emits `llms.txt` + MCP endpoint |
+
+**Schema contract**: `AGENTS.md` defines page schema, answer formats, directory structure, Ingest/Query/Lint workflows, and enforcement rules. All doc-compilation agents follow this schema. See `AGENTS.md` for full details — do NOT duplicate framework governance rules here.
 
 ---
 

@@ -38,6 +38,8 @@ import {
 } from "@medusajs/framework/utils"
 import {
   createOrdersWorkflow,
+  createOrderWorkflow,
+  completeOrderWorkflow,
   beginOrderEditOrderWorkflow,
 } from "@medusajs/medusa/core-flows"
 import { OrderStatus } from "@medusajs/framework/utils"
@@ -377,13 +379,20 @@ export default async function seedDemoB2B({
   const regionModule = container.resolve(Modules.REGION)
   const regions = await regionModule.listRegions()
 
-  // CRITICAL: Find the Oceania (NZD) region by country iso_2 = "nz"
-  // This ensures demo quotes and orders show NZD, not EUR (from Europe region)
-  let region = regions.find((r: any) =>
-    r.countries?.some((c: any) => c.iso_2 === "nz")
-  )
+  // CRITICAL: Find the Oceania (NZD) region.
+  // listRegions() does NOT populate the countries relationship, so we cannot
+  // filter by iso_2. Instead: look up by name "Oceania" (created by seed.ts)
+  // then fall back to country-filter approach and finally first region.
+  const oceaniaRegions = await regionModule.listRegions({ name: "Oceania" })
+  let region = oceaniaRegions.length > 0 ? oceaniaRegions[0] : null
 
-  // Fallback: if no Oceania region, use first region (but log warning)
+  if (!region) {
+    // Secondary fallback: country relationship check (may work if populated)
+    region = regions.find((r: any) =>
+      r.countries?.some((c: any) => c.iso_2 === "nz")
+    ) ?? null
+  }
+
   if (!region) {
     logger.warn(
       "WARNING: No Oceania (nz) region found. Using first region. " +
@@ -542,6 +551,171 @@ export default async function seedDemoB2B({
     })
 
     logger.info(`  Quote created: ${(quote as any).id} (status=pending_merchant)`)
+  }
+
+  // ── Step 8: Completed NZD order (idempotent) ─────────────────────────────
+  //
+  // Creates one completed, non-draft order for the demo-buyer so that
+  // /nz/account/orders renders a real order row (flow-08 order-edit reel).
+  //
+  // Customer resolution: the seed may have created customer A in Step 3, but
+  // the invite-accept or registration flow may have created customer B for the
+  // same email. The store API authenticates via JWT actor_id which resolves to
+  // app_metadata.customer_id in the auth identity. We must find the auth
+  // identity for DEMO_BUYER_EMAIL and use its customer_id for the order, so
+  // that /store/orders returns the order for the logged-in buyer.
+  //
+  // Idempotency: list orders for the resolved customer_id where
+  // is_draft_order=false and currency_code=nzd and metadata.demo_completed_order=true.
+  //
+  // Product line-item: KEYBOARD-BLACK variant (NZD 159 unit_price).
+  // Wrapped in try/catch so a failure here does NOT abort the company/quote seed.
+
+  logger.info("Step 8: Completed NZD order for demo-buyer...")
+
+  try {
+    const orderModule = container.resolve(Modules.ORDER)
+    const productModule = container.resolve(Modules.PRODUCT)
+
+    // Resolve the authoritative customer_id from the emailpass auth identity.
+    // The store login uses this identity's app_metadata.customer_id as actor_id.
+    let orderCustomerId = customer.id
+    try {
+      const providerIdentities = await (authModule as any).listProviderIdentities({
+        entity_id: DEMO_BUYER_EMAIL,
+        provider: "emailpass",
+      })
+      if (providerIdentities.length > 0) {
+        const authIdentity = await (authModule as any).retrieveAuthIdentity(
+          providerIdentities[0].auth_identity_id,
+          { select: ["id", "app_metadata"] }
+        )
+        if (authIdentity.app_metadata?.customer_id) {
+          orderCustomerId = authIdentity.app_metadata.customer_id
+          if (orderCustomerId !== customer.id) {
+            logger.info(
+              `  Auth identity customer_id (${orderCustomerId}) differs from seed customer (${customer.id}) — ` +
+              `using auth identity customer for order so /store/orders returns it`
+            )
+          }
+        }
+      }
+    } catch (authErr: any) {
+      logger.warn(`  Could not resolve auth identity customer_id — using seed customer: ${authErr.message}`)
+    }
+
+    // Idempotency check — look for an NZD demo-completed order on the resolved customer.
+    const existingOrders = await orderModule.listOrders({
+      customer_id: orderCustomerId,
+      is_draft_order: false,
+      currency_code: region.currency_code,
+    })
+    const existingDemoOrder = existingOrders.find(
+      (o: any) => o.metadata?.demo_completed_order === true
+    )
+
+    if (existingDemoOrder) {
+      logger.info(
+        `  Demo completed order already exists (${existingDemoOrder.id}, ` +
+        `currency=${existingDemoOrder.currency_code}, ` +
+        `total=${existingDemoOrder.total}) — skipping`
+      )
+    } else {
+      // Find a seeded variant with an NZD price — prefer KEYBOARD-BLACK (SKU)
+      const [keyboardVariant] = await productModule.listProductVariants({
+        sku: "KEYBOARD-BLACK",
+      })
+
+      let variantId: string
+      let unitPrice: number
+      let itemTitle: string
+
+      if (keyboardVariant) {
+        variantId = keyboardVariant.id
+        unitPrice = 159 // NZD price from seed.ts
+        itemTitle = "Wireless Keyboard | Touch ID | Numeric Keypad (Black)"
+      } else {
+        // Fallback: find any variant from seeded products
+        const allVariants = await productModule.listProductVariants({})
+        if (allVariants.length === 0) {
+          throw new Error(
+            "No product variants found — run the base seed.ts first " +
+            "(npx medusa exec ./src/scripts/seed.ts)"
+          )
+        }
+        variantId = allVariants[0].id
+        unitPrice = 99 // conservative NZD fallback
+        itemTitle = (allVariants[0] as any).title || "Demo Product"
+      }
+
+      // Resolve the email for the order customer
+      const orderCustomers = await customerModule.listCustomers({ id: orderCustomerId })
+      const orderCustomerEmail = orderCustomers.length > 0
+        ? orderCustomers[0].email
+        : customer.email
+
+      // Create the order in "pending" status first (createOrderWorkflow requirement)
+      const { result: newOrder } = await createOrderWorkflow(container).run({
+        input: {
+          is_draft_order: false,
+          status: "pending" as any,
+          region_id: region.id,
+          currency_code: region.currency_code,
+          sales_channel_id: salesChannel?.id,
+          email: orderCustomerEmail,
+          customer_id: orderCustomerId,
+          billing_address: {
+            first_name: "Demo",
+            last_name: "Buyer",
+            address_1: "1 Demo Street",
+            city: "Auckland",
+            country_code: "nz",
+            postal_code: "0622",
+          },
+          shipping_address: {
+            first_name: "Demo",
+            last_name: "Buyer",
+            address_1: "1 Demo Street",
+            city: "Auckland",
+            country_code: "nz",
+            postal_code: "0622",
+          },
+          items: [
+            {
+              variant_id: variantId,
+              quantity: 2,
+              title: itemTitle,
+              unit_price: unitPrice,
+            },
+          ],
+          shipping_methods: [],
+          metadata: {
+            demo_completed_order: true,
+            company_id: company.id,
+          },
+        },
+      })
+
+      // Mark the order as completed
+      await completeOrderWorkflow(container).run({
+        input: { orderIds: [newOrder.id] },
+      })
+
+      // Retrieve refreshed order to log final total
+      const [finalOrder] = await orderModule.listOrders({ id: newOrder.id })
+      const total = (finalOrder as any)?.total ?? unitPrice * 2
+
+      logger.info(
+        `  Demo completed order created: ${newOrder.id} ` +
+        `currency=${region.currency_code} ` +
+        `total=${total}`
+      )
+    }
+  } catch (err: any) {
+    logger.warn(
+      `  Step 8 FAILED (completed order) — company/quote seed is unaffected. ` +
+      `Error: ${err.message}`
+    )
   }
 
   // ── Summary ──────────────────────────────────────────────────────────────
