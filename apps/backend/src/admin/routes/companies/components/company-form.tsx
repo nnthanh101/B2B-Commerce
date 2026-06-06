@@ -45,7 +45,7 @@ export function CompanyForm({
             name="name"
             value={formData.name}
             onChange={handleChange}
-            placeholder="Medusa"
+            placeholder="B2B-Commerce"
           />
           <Label size="xsmall">Company Phone</Label>
           <Input

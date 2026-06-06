@@ -61,6 +61,7 @@ import { createApprovalsWorkflow } from "../workflows/approval/workflows"
 const DEMO_COMPANY_NAME = "Demo Corp"
 const DEMO_COMPANY_EMAIL = "contact@democorp.local"
 const DEMO_BUYER_EMAIL = "demo-buyer@democorp.local"
+const DEMO_BUYER_PASSWORD = "Test1234!"
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 
@@ -80,6 +81,7 @@ export default async function seedDemoB2B({
   const quoteModule = container.resolve<IQuoteModuleService>(QUOTE_MODULE)
   const customerModule = container.resolve(Modules.CUSTOMER)
   const cartModule = container.resolve(Modules.CART)
+  const authModule = container.resolve(Modules.AUTH)
 
   logger.info("=== Demo B2B Seed ===")
 
@@ -181,6 +183,64 @@ export default async function seedDemoB2B({
     logger.info(`  Customer created: ${customer.id}`)
   }
 
+  // ── Step 3b: Buyer auth identity (allows storefront login) ──────────────
+
+  logger.info("Step 3b: Buyer auth identity...")
+
+  try {
+    const existingIdentities = await (authModule as any).listProviderIdentities({
+      entity_id: DEMO_BUYER_EMAIL,
+      provider: "emailpass",
+    })
+
+    if (existingIdentities.length > 0) {
+      const authIdentity = await (authModule as any).retrieveAuthIdentity(
+        existingIdentities[0].auth_identity_id,
+        { select: ["id", "app_metadata"] }
+      )
+      if (!authIdentity.app_metadata?.customer_id) {
+        await (authModule as any).updateAuthIdentities({
+          id: authIdentity.id,
+          app_metadata: {
+            ...(authIdentity.app_metadata || {}),
+            customer_id: customer.id,
+          },
+        })
+        logger.info(`  Auth identity updated: app_metadata.customer_id = ${customer.id}`)
+      } else {
+        logger.info(`  Auth identity already exists and has customer_id — skipping`)
+      }
+    } else {
+      // Register auth identity for emailpass (store scope)
+      const { success, authIdentity, error } = await (authModule as any).register(
+        "emailpass",
+        {
+          url: "",
+          headers: {},
+          query: {},
+          body: { email: DEMO_BUYER_EMAIL, password: DEMO_BUYER_PASSWORD },
+          authScope: "store",
+        }
+      )
+
+      if (!success || !authIdentity) {
+        logger.warn(`  Failed to create buyer auth identity: ${error ?? "unknown"}`)
+      } else {
+        // Link customer_id into app_metadata so /auth/customer/emailpass returns actor_id
+        await (authModule as any).updateAuthIdentities({
+          id: authIdentity.id,
+          app_metadata: {
+            ...(authIdentity.app_metadata || {}),
+            customer_id: customer.id,
+          },
+        })
+        logger.info(`  Buyer auth identity created: ${authIdentity.id}, customer_id linked`)
+      }
+    }
+  } catch (err: any) {
+    logger.warn(`  Could not create/update buyer auth identity: ${err.message}`)
+  }
+
   // ── Step 4: Employee link (customer ↔ company) ───────────────────────────
 
   logger.info("Step 4: Employee link...")
@@ -215,7 +275,6 @@ export default async function seedDemoB2B({
   logger.info("Step 4b: Admin user company link...")
 
   const userModule = container.resolve(Modules.USER)
-  const authModule = container.resolve(Modules.AUTH)
   const adminUsers = await userModule.listUsers()
   const adminUser = adminUsers[0]
 

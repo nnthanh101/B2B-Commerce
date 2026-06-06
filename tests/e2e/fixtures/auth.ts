@@ -376,13 +376,18 @@ export const test = base.extend<{
         throw new Error(`Failed to fetch regions: ${regionsRes.status}`);
       }
       const regionsData = (await regionsRes.json()) as {
-        regions?: Array<{ id: string }>;
+        regions?: Array<{ id: string; countries?: Array<{ iso_2: string }> }>;
       };
-      const regionId = regionsData.regions?.[0]?.id;
+      // Find region matching TEST_REGION_COUNTRY (nz) by iso_2 field
+      const targetRegion = regionsData.regions?.find((r) =>
+        r.countries?.some((c) => c.iso_2 === TEST_REGION_COUNTRY)
+      );
+      const regionId = targetRegion?.id || regionsData.regions?.[0]?.id;
       if (!regionId) {
         throw new Error("No regions found in store — cannot create cart");
       }
-      console.log(`[auth] ✓ Region resolved (first available): ${regionId}`);
+      const regionMsg = targetRegion ? `matching ${TEST_REGION_COUNTRY}` : "(first available fallback)";
+      console.log(`[auth] ✓ Region resolved ${regionMsg}: ${regionId}`);
 
       // Get first available variant from products
       const productsRes = await fetch(

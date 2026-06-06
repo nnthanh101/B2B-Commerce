@@ -1,5 +1,5 @@
 /**
- * Integration tests for approvals -- live HTTP calls against Medusa.
+ * Integration tests for approvals -- live HTTP calls against B2B-Commerce.
  * Run via: task test:integration  (TEST_TYPE=integration:http jest --runInBand --forceExit)
  * Database: clean, ephemeral (tmpfs in docker-compose.test.yml)
  *

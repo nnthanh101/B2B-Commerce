@@ -17,7 +17,7 @@ async function getRegionMap(cacheId: string) {
     !regionMap.keys().next().value ||
     regionMapUpdated < Date.now() - 3600 * 1000
   ) {
-    // Fetch regions from Medusa. We can't use the JS client here because middleware is running on Edge and the client needs a Node environment.
+    // Fetch regions from B2B-Commerce. We can't use the JS client here because middleware is running on Edge and the client needs a Node environment.
     const { regions } = await fetch(`${BACKEND_URL}/store/regions`, {
       headers: {
         "x-publishable-api-key": PUBLISHABLE_API_KEY!,
@@ -38,7 +38,7 @@ async function getRegionMap(cacheId: string) {
 
     if (!regions?.length) {
       throw new Error(
-        "No regions found. Please set up regions in your Medusa Admin."
+        "No regions found. Please set up regions in your B2B-Commerce Admin."
       )
     }
 
@@ -56,7 +56,7 @@ async function getRegionMap(cacheId: string) {
 }
 
 /**
- * Fetches regions from Medusa and sets the region cookie.
+ * Fetches regions from B2B-Commerce and sets the region cookie.
  * @param request
  * @param response
  */
@@ -88,7 +88,7 @@ async function getCountryCode(
   } catch (error) {
     if (process.env.NODE_ENV === "development") {
       console.error(
-        "Middleware.ts: Error getting the country code. Did you set up regions in your Medusa Admin and define a NEXT_PUBLIC_MEDUSA_BACKEND_URL environment variable?"
+        "Middleware.ts: Error getting the country code. Did you set up regions in your B2B-Commerce Admin and define a NEXT_PUBLIC_MEDUSA_BACKEND_URL environment variable?"
       )
     }
   }

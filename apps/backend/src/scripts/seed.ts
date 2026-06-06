@@ -44,7 +44,7 @@ import {
 import { createUserAccountWorkflow } from "@medusajs/core-flows"
 
 // SEED_IMAGE_BASE_URL controls where product images are fetched from at seed time.
-// Default: local Medusa /static directory (offline-safe, no S3 dependency).
+// Default: local B2B-Commerce /static directory (offline-safe, no S3 dependency).
 // Override: set SEED_IMAGE_BASE_URL=https://medusa-public-images.s3.eu-west-1.amazonaws.com
 //   in your .env to seed from the reference bucket (reference fallback only — never hardcoded).
 // Forward pattern: all future products/categories read their image base from this const.
@@ -87,7 +87,7 @@ export default async function seed({
         salesChannelsData: [
           {
             name: "Default Sales Channel",
-            description: "Created by Medusa",
+            description: "Created by B2B-Commerce",
           },
         ],
       },

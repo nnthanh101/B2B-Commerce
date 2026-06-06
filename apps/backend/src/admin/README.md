@@ -1,6 +1,6 @@
 # Admin Customizations
 
-You can extend the Medusa Admin to add widgets and new pages. Your customizations interact with API routes to provide merchants with custom functionalities.
+You can extend the B2B-Commerce Admin to add widgets and new pages. Your customizations interact with API routes to provide merchants with custom functionalities.
 
 ## Example: Create a Widget
 

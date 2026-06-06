@@ -25,7 +25,7 @@ cp apps/storefront/.env.template apps/storefront/.env
 ## Start the Stack
 
 ```bash
-# 3. Build and start all services (Medusa backend, Next.js storefront, Postgres, Redis)
+# 3. Build and start all services (B2B-Commerce backend, Next.js storefront, Postgres, Redis)
 task up
 # Exit codes: 0 = success, expect ~90–120 seconds startup time
 # Services should be live when you see "frontend running on :8000"
@@ -34,7 +34,7 @@ task up
 ## Verify Services
 
 ```bash
-# 4. Check that Medusa backend is responding (admin API)
+# 4. Check that B2B-Commerce backend is responding (admin API)
 curl -fsS http://localhost:9000/health
 # Expected: 200 OK (JSON response)
 
@@ -51,7 +51,7 @@ docker compose ps
 
 ## Access the Application
 
-**Medusa Admin Dashboard**: http://localhost:9000/app
+**B2B-Commerce Admin Dashboard**: http://localhost:9000/app
 - Login with email/password from `.env` (defaults: `admin@oceansoft.io` / `admin`)
 - Verify B2B routes exist: Companies, Quotes, Approvals (in left sidebar)
 

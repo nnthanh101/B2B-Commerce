@@ -14,7 +14,7 @@ const ShippingDetails = ({ order }: ShippingDetailsProps) => {
   //   country_code: "DE",
   //   postal_code: "10557",
   //   city: "Berlin",
-  //   company: "MedusaJS Aps",
+  //   company: "B2B-Commerce Aps",
   // }
   // order.billing_address = {
   //   first_name: "Riqwan",

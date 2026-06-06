@@ -1,4 +1,4 @@
-import { retrieveCart } from "@/lib/data/cart"
+import { getOrSetCart } from "@/lib/data/cart"
 import { retrieveCustomer } from "@/lib/data/customer"
 import { listCartFreeShippingPrices } from "@/lib/data/fulfillment"
 import { getBaseURL } from "@/lib/util/env"
@@ -15,9 +15,13 @@ export const metadata: Metadata = {
   metadataBase: new URL(getBaseURL()),
 }
 
-export default async function PageLayout(props: { children: React.ReactNode }) {
+export default async function PageLayout(props: {
+  children: React.ReactNode
+  params: Promise<{ countryCode: string }>
+}) {
+  const { countryCode } = await props.params
   const customer = await retrieveCustomer().catch(() => null)
-  const cart = await retrieveCart()
+  const cart = await getOrSetCart(countryCode).catch(() => null)
   let freeShippingPrices: StoreFreeShippingPrice[] = []
 
   if (cart) {

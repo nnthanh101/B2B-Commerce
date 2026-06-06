@@ -5,7 +5,7 @@
  * guarantees that exactly ONE Counter and ONE Histogram exist in the process,
  * regardless of which module Node.js loads first.
  *
- * Singleton guard: globalThis survives Medusa hot-reload re-evaluation so
+ * Singleton guard: globalThis survives B2B-Commerce hot-reload re-evaluation so
  * duplicate-registration errors never surface in development.
  *
  * Metric names (ADR-007 SSOT):
@@ -26,14 +26,14 @@ if (!g.__dcMetricsInit) {
 
   g.httpReq = new Counter({
     name: "medusa_http_requests_total",
-    help: "Total Medusa HTTP requests",
+    help: "Total B2B-Commerce HTTP requests",
     labelNames: ["method", "route", "status"],
     registers: [register],
   })
 
   g.httpDur = new Histogram({
     name: "medusa_http_request_duration_seconds",
-    help: "Medusa HTTP request duration in seconds",
+    help: "B2B-Commerce HTTP request duration in seconds",
     labelNames: ["method", "route", "status"],
     buckets: [0.005, 0.01, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
     registers: [register],
