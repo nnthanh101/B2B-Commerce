@@ -5,15 +5,15 @@
  *
  * DETERMINISTIC SPEC — no LLM/MCP/agent imports. Plain Playwright.
  *
- * Pre-condition: seed-demo-b2b.ts has created a company record.
+ * Pre-condition: seed-demo-b2b.ts has created a company record (Demo Corp).
  * R1: imports use ../ (spec in tests/e2e/generated/, one dir deeper)
  * Config SSOT: all URLs/creds from ../config (no hardcoded values)
  *
  * Flow: admin logs in → /app/companies → view company list
- *       assert company name is visible in admin dashboard
+ *       HARD assert company name "Demo Corp" is visible
+ *       CONTENT CHECK: extract employee count if available
  *
- * NOTE: Spending limit UI and employee invite are noted as GAP-006/deferred (per handoff);
- * this flow validates the core company listing capability.
+ * Approach A (seed-constant): Demo Corp company name from seed-demo-b2b.ts
  */
 
 import path from "node:path";
@@ -26,7 +26,7 @@ import {
 const ADMIN_APP_URL = BACKEND_URL;
 
 test.describe("B2B company-mgmt flow [generated]", () => {
-  test("admin views company list and can navigate to company details", async ({ adminPage }) => {
+  test("admin views company list and sees Demo Corp company", async ({ adminPage }) => {
     // Step 1: navigate to /app/companies
     await adminPage.goto(`${ADMIN_APP_URL}/app/companies`);
     await adminPage.waitForLoadState("networkidle");
@@ -54,17 +54,30 @@ test.describe("B2B company-mgmt flow [generated]", () => {
       path: path.join(SCREENSHOTS_DIR, "generated-company-mgmt-02-company-row.png"),
     });
 
-    // Step 4: HARD assertion — company name (Test Corp) is visible in the list
-    const companyNameText = adminPage.getByText(/Test Corp|Demo|OceanSoft/i).first();
-    await expect(companyNameText).toBeVisible({ timeout: 8000 });
-    const nameValue = await companyNameText.textContent();
-    console.log(`[company-mgmt] CONTENT CHECK: Company name = "${nameValue}"`);
+    // Step 4: CONCRETE ASSERT (Approach A) — "Demo Corp" company name is visible
+    // Seed-constant from seed-demo-b2b.ts:61 DEMO_COMPANY_NAME = "Demo Corp"
+    const demoCorpText = adminPage.getByText(/Demo Corp/i);
+    await expect(demoCorpText.first()).toBeVisible({ timeout: 8000 });
+    const demoCorpValue = await demoCorpText.first().textContent();
+    console.log(`[company-mgmt] CONCRETE ASSERT PASS: Demo Corp visible = "${demoCorpValue}"`);
 
     await adminPage.screenshot({
-      path: path.join(SCREENSHOTS_DIR, "generated-company-mgmt-03-company-name.png"),
+      path: path.join(SCREENSHOTS_DIR, "generated-company-mgmt-03-demo-corp.png"),
     });
 
-    // Step 5: Attempt to click company row to navigate to details (soft-pass if not clickable)
+    // Step 5: CONTENT CHECK (Approach B) — extract employee count if visible
+    const employeeCountLocator = adminPage.locator('[data-testid="employee-count"]')
+      .or(adminPage.locator('text=/Employee|employee/i').first());
+
+    const employeeCountVisible = await employeeCountLocator.isVisible({ timeout: 2000 }).catch(() => false);
+    if (employeeCountVisible) {
+      const employeeText = await employeeCountLocator.textContent();
+      console.log(`[company-mgmt] CONTENT CHECK (runtime-extracted): Employee count = "${employeeText}"`);
+    } else {
+      console.log("[company-mgmt] CONTENT CHECK: Employee count not visible in this view");
+    }
+
+    // Step 6: Attempt to click company row to navigate to details (soft-pass if not clickable)
     try {
       const clickable = firstCompanyRow.locator('a, button').first()
         .or(firstCompanyRow);
@@ -84,6 +97,6 @@ test.describe("B2B company-mgmt flow [generated]", () => {
       });
     }
 
-    console.log("[company-mgmt] Flow complete — company list assertion passed");
+    console.log("[company-mgmt] Flow complete — Demo Corp concrete assert passed");
   });
 });

@@ -46,6 +46,11 @@ test.describe("B2B cart-to-quote flow [generated]", () => {
     await expect(cartContainer.first()).toBeVisible({ timeout: 5000 });
     console.log("[cart-to-quote] Cart page rendered");
 
+    // Step 2.5: Wait for cart data to fully hydrate (Checkout button is only visible after cart API response)
+    const checkoutBtn = buyerPage.getByRole("button", { name: /Checkout|Log in to Checkout/ })
+    await expect(checkoutBtn.first()).toBeVisible({ timeout: 5000 })
+    console.log("[cart-to-quote] Cart hydrated — Checkout button visible");
+
     // Step 3: click "Request Quote" — HARD ASSERTION (buyer is auth + has items in cart)
     const requestQuoteBtn = buyerPage.getByRole("button", { name: "Request Quote" });
     await expect(requestQuoteBtn.first()).toBeVisible({ timeout: 5000 });

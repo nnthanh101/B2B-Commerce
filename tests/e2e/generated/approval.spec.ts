@@ -56,14 +56,15 @@ test.describe("B2B approval flow — admin sees PENDING approval [generated]", (
       path: path.join(SCREENSHOTS_DIR, "generated-approval-02-row-visible.png"),
     });
 
-    // Step 3: HARD assertion — "Pending" status badge is visible on the approvals page
-    // G1/G2: toBeVisible() throws on failure — no error-swallowing catch, no soft fallback
+    // Step 3: CONCRETE ASSERT (Approach A) — "PENDING" status badge is visible
+    // Seed-constant from seed-demo-b2b.ts:289 status: ApprovalStatusType.PENDING
     const pendingBadge = adminPage.getByText(/pending/i).first()
       .or(adminPage.locator('[data-testid="status-pending"]').first())
       .or(adminPage.locator('[data-status="pending"]').first());
 
     await expect(pendingBadge).toBeVisible({ timeout: 8000 });
-    console.log("[approval] HARD ASSERT 2 PASS: Pending status badge visible");
+    const pendingText = await pendingBadge.textContent();
+    console.log(`[approval] CONCRETE ASSERT PASS 2: Pending status badge visible = "${pendingText}"`);
 
     await adminPage.screenshot({
       path: path.join(SCREENSHOTS_DIR, "generated-approval-03-pending-badge.png"),
