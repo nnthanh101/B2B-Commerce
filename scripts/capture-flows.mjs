@@ -51,7 +51,7 @@ const FLOWS = [
   ["07", "full-ecommerce", "buyer-employee", `/${REGION}/store`, "Maria browses products in NZD", null],
   ["08", "order-edit", "sales-manager", "/app/orders/:orderId", "Priya edits specific order detail", "order-detail"],
   ["09", "bulk-add", "buyer-employee", `/${REGION}/products/hi-fi-gaming-headset-pro-grade-dac-hi-res-certified`, "Maria bulk-adds via product page", "scroll-to-bulk-table"],
-  ["10", "quick-order-pad", "buyer-employee", `/${REGION}/cart`, "Maria uses Quick Order Pad sidebar", "cart-then-quick-order-open"],
+  ["10", "quick-order-pad", "buyer-employee", `/${REGION}/cart`, "Maria uses Quick Order Pad from cart (Quick Order visible at bottom)", "cart-with-items"],
   ["11", "invite-employee", "admin", "/app/companies/:companyId", "David opens company detail to invite employee", "company-direct-nav"],
 ];
 

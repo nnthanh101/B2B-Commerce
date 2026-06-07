@@ -318,7 +318,7 @@ for flow_md in "${FLOW_FILES[@]}"; do
   fi
 
   # ---- 10d. Define output paths ----
-  flow_build_dir="${OUT_DIR}/${slug}-build"
+  flow_build_dir="${REPO_ROOT}/tmp/Digital-Commerce/demo/video-build/${slug}"
   reel_mp4="${OUT_DIR}/${slug}.mp4"
   reel_m4a="${OUT_DIR}/${slug}.m4a"
 
