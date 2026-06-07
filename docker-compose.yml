@@ -1,0 +1,77 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: ec_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ec-store
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ec_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: ec_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - ec_network
+
+  ec:
+    build: .
+    container_name: ec_backend
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "9000:9000"
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/ec-store
+      - REDIS_URL=redis://redis:6379
+    env_file:
+      - apps/backend/.env
+    volumes:
+      - .:/server
+      - /server/node_modules
+      - /server/apps/backend/node_modules
+      - ./tests/fixtures/seed-images:/server/apps/backend/static:ro
+    networks:
+      - ec_network
+
+  storefront:
+    build: .
+    container_name: ec_storefront
+    restart: unless-stopped
+    depends_on:
+      - ec
+    ports:
+      - "8000:8000"
+    environment:
+      - NEXT_PUBLIC_MEDUSA_BACKEND_URL=http://ec:9000
+    env_file:
+      - apps/storefront/.env
+    volumes:
+      - .:/server
+      - /server/node_modules
+      - /server/apps/backend/node_modules
+      - /server/apps/storefront/node_modules
+      - /server/apps/storefront/.next
+    entrypoint: ["./scripts/start-storefront.sh"]
+    networks:
+      - ec_network
+
+volumes:
+  postgres_data:
+
+networks:
+  ec_network:
+    driver: bridge

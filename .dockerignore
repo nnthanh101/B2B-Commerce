@@ -1,0 +1,45 @@
+node_modules
+apps/backend/node_modules
+apps/storefront/node_modules
+packages/medusa-plugin-b2b/node_modules
+# Catch-all: excludes node_modules in any workspace added in future (pnpm, turbo, etc.)
+**/node_modules
+apps/backend/.medusa
+apps/storefront/.next
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.git
+.gitignore
+README.md
+.env.test
+.nyc_output
+coverage
+.DS_Store
+*.log
+dist
+build
+tmp
+
+# -----------------------------------------------------------------------
+# Terraform provider binaries — the root cause of the "no space left on
+# device" build failure (8 GB of .terraform/ dirs pulled into COPY . .).
+# Neither the backend nor the storefront image needs any IaC artefacts.
+# -----------------------------------------------------------------------
+**/.terraform/
+**/.terraform.lock.hcl
+**/*.tfstate
+**/*.tfstate.*
+**/.terragrunt-cache/
+terraform-aws/
+infra/terraform/
+
+# -----------------------------------------------------------------------
+# Other heavy / non-image paths the Dockerfiles do not COPY or need.
+# -----------------------------------------------------------------------
+docs/
+observability/
+test-results/
+playwright-report/
+tests/e2e/
+tests/screenshots/

@@ -1,0 +1,32 @@
+{
+  "name": "b2b-commerce",
+  "private": true,
+  "description": "B2B-Commerce — B2B headless commerce + marketplace for oceansoft.io. Medusa 2 + Next.js 15 on AWS via Terraform (terraform-aws modules), FOCUS 1.2+ FinOps tagging, ADLC AI gateway.",
+  "homepage": "https://www.oceansoft.io",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nnthanh101/B2B-Commerce.git"
+  },
+  "license": "MIT",
+  "packageManager": "pnpm@10.11.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "turbo": "^2.3.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/react": "19.0.5",
+      "@types/react-dom": "19.0.5"
+    }
+  }
+}

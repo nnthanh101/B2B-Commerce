@@ -1,0 +1,109 @@
+name: CI
+
+# 5S "Sustain": the gate that holds every file/line to standard on every change.
+on:
+  push:
+    branches: [b2b, main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint · Format · Markdown
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.11.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: ESLint (Turborepo)
+        run: pnpm lint
+      - name: Prettier check (our files; apps/ & markdown excluded via .prettierignore)
+        run: pnpm dlx prettier@3 --check .
+      - name: Markdown lint
+        run: pnpm dlx markdownlint-cli2 "**/*.md" "!apps/**" "!**/node_modules/**"
+
+  build:
+    name: Build apps
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.11.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+  iac:
+    name: Terraform fmt (when infra exists)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - name: terraform fmt -check
+        run: |
+          if [ -d infra/terraform ]; then
+            terraform fmt -check -recursive infra/terraform
+          else
+            echo "No infra/terraform yet — skipping (Phase 2)."
+          fi
+
+  test:
+    name: Integration tests (HTTP tier)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.11.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Bring up test datastore
+        run: docker compose -f docker-compose.test.yml -p ec_test up -d --wait
+
+      - name: Run integration gate
+        run: |
+          cd apps/backend
+          mkdir -p ../../tmp/B2B-Commerce/test-results
+          DB_HOST=localhost \
+          DB_PORT=5433 \
+          DB_USERNAME=postgres \
+          DB_PASSWORD=postgres \
+          DATABASE_URL=postgres://postgres:postgres@localhost:5433/ec-store-test \
+          REDIS_URL=redis://localhost:6380 \
+          TEST_TYPE=integration:http \
+          NODE_OPTIONS=--experimental-vm-modules \
+          pnpm exec jest --silent=false --runInBand --forceExit \
+            --json --outputFile=../../tmp/B2B-Commerce/test-results/jest-integration.json
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: |
+            tmp/B2B-Commerce/test-results/jest-integration.json
+          retention-days: 14
+
+      - name: Tear down test datastore
+        if: always()
+        run: docker compose -f docker-compose.test.yml -p ec_test down -v

@@ -1,0 +1,38 @@
+# B2B-Commerce — ephemeral TEST datastore stack (RQ2/RQ3 automation harness)
+# Postgres + Redis ONLY. The Medusa app boots in-process via @medusajs/test-utils
+# (medusaIntegrationTestRunner inApp:true) which creates/drops its own throwaway DB.
+#
+# Idempotency (G1): tmpfs data dir => virgin DB on every `up`. Suite runs twice green.
+# Isolation: alt host ports (5433/6380) + product-flavor names (ec_*_test) so the
+# dev stack (5432/6379) is never touched. Customer names live in overrides, not here.
+#
+#   docker compose -f docker-compose.test.yml -p ec_test up -d
+#   cd apps/backend && pnpm test:integration:http        # DATABASE_URL -> localhost:5433
+#   docker compose -f docker-compose.test.yml -p ec_test down -v
+
+services:
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: ec_postgres_test
+    environment:
+      POSTGRES_DB: ec-store-test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data   # ephemeral: no persistent volume => deterministic
+    networks:
+      - ec_network_test
+
+  redis-test:
+    image: redis:7-alpine
+    container_name: ec_redis_test
+    ports:
+      - "6380:6379"
+    networks:
+      - ec_network_test
+
+networks:
+  ec_network_test:
+    driver: bridge

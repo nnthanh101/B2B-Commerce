@@ -1,0 +1,82 @@
+# Prometheus scrape configuration — B2B-Commerce local observability stack
+#
+# CA conditions honoured:
+#   compose-override-network-join       — all targets use Docker DNS service names (NOT localhost)
+#   FOCUS-labels-day-1                  — environment + application global labels
+#
+# AMENDMENT 2026-06-05 (ADR-007):
+#   - Scrape target updated: ec:9000 on ec_network (was backend:9000 on ec_network_b2b)
+#   - Basic auth REMOVED: dev mode metrics endpoint is open (NODE_ENV != production)
+#   - Metric names aligned to producer: medusa_http_requests_total / medusa_http_request_duration_seconds
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  # FOCUS labels applied globally — Sprint 5 cloud promotion keeps identical shape
+  external_labels:
+    environment: local
+    application: b2b-commerce
+    service: observability
+
+# ─── Alert rules (placeholder — wire in Sprint 5 CloudWatch promotion) ─────────
+rule_files: []
+
+# ─── Scrape jobs ────────────────────────────────────────────────────────────────
+scrape_configs:
+
+  # 1. Medusa backend /admin/metrics  (prom-client HTTP histogram + default metrics)
+  #    Dev: open endpoint (no auth required when NODE_ENV != production)
+  #    Target: ec service on ec_network (Docker DNS name from docker-compose.yml)
+  - job_name: medusa
+    scrape_interval: 15s
+    metrics_path: /admin/metrics
+    scheme: http
+    static_configs:
+      - targets:
+          - ec:9000
+        labels:
+          service: backend
+          application: b2b-commerce
+          environment: local
+
+  # 2. Postgres exporter (prometheuscommunity/postgres-exporter:v0.15.0)
+  #    Sidecar running in ec_network; no auth required (internal DNS only)
+  - job_name: postgres
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scheme: http
+    static_configs:
+      - targets:
+          - postgres-exporter:9187
+        labels:
+          service: postgres
+          application: b2b-commerce
+          environment: local
+
+  # 3. Redis exporter (oliver006/redis_exporter:v1.62.0)
+  #    Sidecar running in ec_network; no auth required (internal DNS only)
+  - job_name: redis
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scheme: http
+    static_configs:
+      - targets:
+          - redis-exporter:9121
+        labels:
+          service: redis
+          application: b2b-commerce
+          environment: local
+
+  # 4. Node exporter (prom/node-exporter:v1.8.0)
+  #    Host CPU, memory, disk, filesystem metrics
+  - job_name: node
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scheme: http
+    static_configs:
+      - targets:
+          - node-exporter:9100
+        labels:
+          service: node
+          application: b2b-commerce
+          environment: local

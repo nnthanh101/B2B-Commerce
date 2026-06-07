@@ -1,0 +1,313 @@
+version: "3"
+
+# =============================================================================
+# B2B-Commerce — Manager Menu (HITL-readable)
+# =============================================================================
+# This file is the top-level control panel for the platform.
+# Each task is named for WHAT it does, not HOW it does it.
+#
+# Quick reference:
+#   task up          — start everything
+#   task down        — stop everything
+#   task seed        — load product + image data into the database
+#   task test:all    — run the full test suite (needs Docker up)
+#   task tf:validate — check Terraform config for the local environment
+#   task lint:scripts — shellcheck all helper scripts in scripts/
+#
+# Full list: task --list
+# =============================================================================
+
+includes:
+  test:
+    taskfile: ./tests/Taskfile.yml
+    dir: ./tests
+
+tasks:
+
+  # ---------------------------------------------------------------------------
+  # Platform lifecycle
+  # ---------------------------------------------------------------------------
+
+  preflight:context:
+    desc: "Guard: fail fast if Docker build-context exceeds 50 MB or heavy dirs (node_modules, .terraform) are not excluded"
+    cmds:
+      - bash scripts/preflight-build-context.sh
+
+  up:
+    desc: "Start all platform services (builds images if needed)"
+    deps:
+      - preflight:context
+    cmds:
+      - docker compose up --build -d
+
+  down:
+    desc: "Stop and remove all platform containers"
+    cmds:
+      - docker compose down
+
+  logs:
+    desc: "Stream live logs from all services"
+    cmds:
+      - docker compose logs -f
+
+  ps:
+    desc: "Show which containers are running and their status"
+    cmds:
+      - docker compose ps
+
+  # ---------------------------------------------------------------------------
+  # Data management
+  # ---------------------------------------------------------------------------
+
+  seed:
+    desc: "Load the database with products, users, and categories"
+    cmds:
+      - docker compose exec ec sh -c "cd /server/apps/backend && pnpm seed"
+
+  seed:demo:
+    desc: "Seed B2B demo data (companies, quotes, completed NZD orders, buyer auth) via medusa exec. Local-dev autonomous."
+    cmds:
+      - docker compose exec ec sh -c "cd /server/apps/backend && npx medusa exec ./src/scripts/seed-demo-b2b.ts"
+
+  db:generate:
+    desc: "Generate a Medusa migration file from model.define changes (agent-ok: writes file only, no DB mutation). Usage: task db:generate -- <module>"
+    cmds:
+      - docker compose exec ec sh -c "cd /server/apps/backend && pnpm medusa db:generate {{.CLI_ARGS}}"
+
+  db:migrate:
+    desc: "Apply pending Medusa migrations to the database (SCHEMA MUTATION — Principle I: HITL only). Run: CONFIRM=1 task db:migrate"
+    cmds:
+      - |
+        if [ "${CONFIRM:-}" != "1" ]; then
+          echo "Principle I: schema mutation — HITL must run this, not agents."
+          echo "  HITL: CONFIRM=1 task db:migrate"
+          exit 1
+        fi
+      - docker compose exec ec sh -c "cd /server/apps/backend && pnpm medusa db:migrate"
+
+  # ---------------------------------------------------------------------------
+  # Code quality
+  # ---------------------------------------------------------------------------
+
+  lint:
+    desc: "Check all code for style and type errors"
+    cmds:
+      - docker compose exec ec sh -c "cd /server && pnpm turbo lint"
+
+  lint:scripts:
+    desc: "Shellcheck all helper scripts in scripts/ for syntax and safety"
+    cmds:
+      - shellcheck -x scripts/lib/common.sh scripts/preflight-backend.sh scripts/e2e.sh scripts/live-smoke.sh scripts/visual-verify.sh scripts/localstack-up.sh scripts/localstack-assert.sh scripts/db-local-up.sh scripts/preflight-images.sh scripts/lint-test-paths.sh scripts/preflight-build-context.sh
+
+  test:unit:
+    desc: "Run unit tests across all workspaces"
+    cmds:
+      - docker compose exec ec sh -c "cd /server && pnpm turbo test"
+
+  # ---------------------------------------------------------------------------
+  # Terraform — infrastructure validation (no cloud credentials required for local)
+  # ENV default = local (Tier-2 LocalStack). Override: task tf:validate ENV=dev
+  # ---------------------------------------------------------------------------
+
+  tf:preflight:
+    desc: "ACT-TF-004: Verify all referenced nnthanh101/* image tags are pullable (fail-fast on ghost tags)"
+    cmds:
+      - bash scripts/preflight-images.sh
+
+  tf:lint:paths:
+    desc: "ACT-TF-005: Fail if playwright.config.* or test files contain machine-absolute or repo-escaping paths"
+    cmds:
+      - bash scripts/lint-test-paths.sh
+
+  tf:init:
+    desc: "Initialise Terraform for ENV (default: local)"
+    vars:
+      ENV: '{{.ENV | default "local"}}'
+    cmds:
+      - docker run --rm
+        -v "{{.ROOT_DIR}}/infra/terraform/aws:/workspace"
+        -w /workspace/{{.ENV}}
+        nnthanh101/terraform:slim
+        sh -c "terraform init -backend=false"
+
+  tf:validate:
+    desc: "Validate Terraform config for ENV (default: local)"
+    vars:
+      ENV: '{{.ENV | default "local"}}'
+    cmds:
+      - docker run --rm
+        -v "{{.ROOT_DIR}}/infra/terraform/aws:/workspace"
+        -w /workspace/{{.ENV}}
+        nnthanh101/terraform:slim
+        sh -c "terraform init -backend=false && terraform validate"
+
+  tf:test:
+    desc: "Run native terraform test for all modules (foundation, tags, appregistry)"
+    cmds:
+      - docker run --rm
+        -v "{{.ROOT_DIR}}/infra/terraform/aws:/workspace"
+        -w /workspace/modules/foundation
+        nnthanh101/terraform:slim
+        sh -c "terraform init -backend=false && terraform test"
+      - docker run --rm
+        -v "{{.ROOT_DIR}}/infra/terraform/aws:/workspace"
+        -w /workspace/modules/tags
+        nnthanh101/terraform:slim
+        sh -c "terraform init -backend=false && terraform test"
+      - docker run --rm
+        -v "{{.ROOT_DIR}}/infra/terraform/aws:/workspace"
+        -w /workspace/modules/appregistry
+        nnthanh101/terraform:slim
+        sh -c "terraform init -backend=false && terraform test"
+
+  tf:cost:
+    desc: "Estimate monthly cloud cost for ENV (default: local)"
+    vars:
+      ENV: '{{.ENV | default "local"}}'
+    cmds:
+      - docker run --rm
+        -v "{{.ROOT_DIR}}/infra/terraform/aws:/workspace"
+        -v "{{.ROOT_DIR}}/tmp/B2B-Commerce/test-results:/out"
+        -w /workspace/{{.ENV}}
+        infracost/infracost:ci-latest
+        breakdown --path /workspace/{{.ENV}} --format json
+        --out-file /out/infracost-breakdown.json
+
+  # ---------------------------------------------------------------------------
+  # LocalStack — Tier-2 local AWS simulation (no real cloud account needed)
+  # Requires: AWS_DEFAULT_REGION env var
+  # ---------------------------------------------------------------------------
+
+  tf:local:up:
+    desc: "Start LocalStack (local AWS simulator) and wait until healthy"
+    cmds:
+      - bash scripts/localstack-up.sh
+
+  tf:bootstrap:local:
+    desc: "Bootstrap: create the Terraform state S3 bucket in LocalStack (genesis step)"
+    cmds:
+      - |
+        docker run --rm \
+          --network b2b-commerce_ls_net \
+          -v "{{.ROOT_DIR}}/infra/terraform/aws:/workspace" \
+          -w /workspace/bootstrap \
+          -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION}" \
+          -e AWS_ENDPOINT_URL=http://localstack:4566 \
+          -e AWS_ACCESS_KEY_ID=test \
+          -e AWS_SECRET_ACCESS_KEY=test \
+          nnthanh101/terraform:slim \
+          sh -c "terraform init -reconfigure && terraform apply -auto-approve -var='environment=sandbox'"
+      - |
+        echo "--- bootstrap bucket verification ---"
+        docker exec -i dc-localstack awslocal s3 ls | grep tfstate
+
+  tf:local:provision:
+    desc: "Provision workload resources to LocalStack (bootstrap bucket must exist first)"
+    cmds:
+      - |
+        docker run --rm \
+          --network b2b-commerce_ls_net \
+          -v "{{.ROOT_DIR}}/infra/terraform/aws:/workspace" \
+          -w /workspace/local \
+          -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION}" \
+          -e AWS_ENDPOINT_URL=http://localstack:4566 \
+          -e AWS_ACCESS_KEY_ID=test \
+          -e AWS_SECRET_ACCESS_KEY=test \
+          nnthanh101/terraform:slim \
+          sh -c "terraform init -reconfigure -backend-config=backend-local.hcl && terraform apply -auto-approve"
+
+  tf:local:assert:
+    desc: "Run resource checks against LocalStack — proves bootstrap bucket + state object + workload resources"
+    cmds:
+      - bash scripts/localstack-assert.sh "{{.ROOT_DIR}}"
+
+  tf:local:down:
+    desc: "Stop LocalStack and clean up containers and volumes"
+    cmds:
+      - docker compose -f docker-compose.localstack.yml down -v
+
+  # ---------------------------------------------------------------------------
+  # Docs (Docusaurus 3.10) — private-engine / public-content split
+  #
+  # IP ARCHITECTURE:
+  #   PRIVATE engine  → .claude/plugins/commerce/templates/docusaurus/
+  #                      (config, sidebars, package.json, components, scripts)
+  #   PUBLIC content  → docs/content/   (MIT-licensed compiled markdown)
+  #   Build output    → docs/site/      (gitignored; created at build time)
+  #
+  # All npm commands run INSIDE a node:22 container; npm is blocked on the host.
+  # Container mount geometry (EBUSY-safe: out-dir is a subdir of the mount root):
+  #   /docs          ← private template (Docusaurus root + package.json)
+  #   /docs/content  ← public content (docs/content/ bind-mounted over it)
+  #   /site_out      ← host docs/ bind-mounted here; engine writes /site_out/site
+  #                    → host receives output at docs/site/ (never mount docs/site
+  #                      directly — that would make out-dir == mount root = EBUSY)
+  #
+  # CI: .github/workflows/docs.yml — PAT sparse-checkout of private engine,
+  # public content copy, npm ci + build, upload-pages-artifact → deploy-pages.
+  # ADLC_FRAMEWORK_PAT secret required (fine-grained read-only, adlc-framework).
+  # ---------------------------------------------------------------------------
+
+  docs:install:
+    desc: "Install Docusaurus npm dependencies inside node:22 container (private template)"
+    vars:
+      DOCS_TMPL: "{{.ROOT_DIR}}/.claude/plugins/commerce/templates/docusaurus"
+    cmds:
+      - docker run --rm
+        -v "{{.DOCS_TMPL}}:/docs"
+        -w /docs
+        node:22
+        npm install
+
+  docs:build:
+    desc: "Build Docusaurus static site (private engine + public content) → docs/site/"
+    vars:
+      DOCS_TMPL: "{{.ROOT_DIR}}/.claude/plugins/commerce/templates/docusaurus"
+      DOCS_CONTENT: "{{.ROOT_DIR}}/docs/content"
+      # Mount host docs/ → /site_out; engine writes /site_out/site → host docs/site/
+      # (registry exemption: upstream node toolchain; no nnthanh101/* node image available)
+      DOCS_PARENT: "{{.ROOT_DIR}}/docs"
+    cmds:
+      - mkdir -p "{{.ROOT_DIR}}/docs/static/video/demo/flows"
+      - docker run --rm
+        -v "{{.DOCS_TMPL}}:/docs"
+        -v "{{.DOCS_CONTENT}}:/docs/content"
+        -v "{{.DOCS_PARENT}}:/site_out"
+        -v "{{.ROOT_DIR}}/docs/static/img/demo:/docs/static/img/demo"
+        -v "{{.ROOT_DIR}}/docs/static/video:/docs/static/video"
+        -w /docs
+        -e ENABLE_DOCS_MCP=false
+        -e ENABLE_DOCS_FASTER=false
+        node:22
+        npm run build
+
+  docs:dev:
+    desc: "Start Docusaurus dev server on port 5001 (private engine + public content; live preview)"
+    vars:
+      DOCS_TMPL: "{{.ROOT_DIR}}/.claude/plugins/commerce/templates/docusaurus"
+      DOCS_CONTENT: "{{.ROOT_DIR}}/docs/content"
+    cmds:
+      - docker run --rm
+        -v "{{.DOCS_TMPL}}:/docs"
+        -v "{{.DOCS_CONTENT}}:/docs/content"
+        -v "{{.ROOT_DIR}}/docs/static/img/demo:/docs/static/img/demo"
+        -v "{{.ROOT_DIR}}/docs/static/video:/docs/static/video"
+        -w /docs
+        -p 5001:3000
+        -e ENABLE_DOCS_MCP=false
+        -e ENABLE_DOCS_FASTER=false
+        node:22
+        npm run start -- --host 0.0.0.0
+
+  docs:lint:
+    desc: "Run validate-wiki.sh against docs/content/ (wiki health gate — pure bash in node:22 container)"
+    vars:
+      DOCS_TMPL: "{{.ROOT_DIR}}/.claude/plugins/commerce/templates/docusaurus"
+      DOCS_CONTENT: "{{.ROOT_DIR}}/docs/content"
+    cmds:
+      - docker run --rm
+        -v "{{.DOCS_TMPL}}:/docs"
+        -v "{{.DOCS_CONTENT}}:/docs/content"
+        -w /docs
+        node:22
+        bash scripts/validate-wiki.sh

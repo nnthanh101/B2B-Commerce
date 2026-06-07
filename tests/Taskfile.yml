@@ -1,0 +1,169 @@
+version: "3"
+
+# =============================================================================
+# B2B-Commerce — Test Suite Menu (HITL-readable)
+# =============================================================================
+# Included from root Taskfile.yml as the "test:" namespace.
+# All tasks here run under: task test:<name>
+#
+# Typical flows:
+#   Full suite (needs Docker):   task test:all
+#   Step-by-step:
+#     task test:preflight        — confirm backend is up
+#     task test:static           — type-check and lint (no Docker needed)
+#     task test:db:up            — start ephemeral test database
+#     task test:integration      — backend HTTP integration tests
+#     task test:e2e              — Playwright browser tests
+#     task test:live             — live API smoke against running backend
+#     task test:visual           — screenshots (browser + terminal)
+#     task test:report           — aggregate results into REPORT.md
+#     task test:db:down          — clean up test database
+#
+# No-Docker path (host postgres + redis):
+#   export DATABASE_URL=postgres://postgres@localhost:5432/ec_store_test
+#   export REDIS_URL=redis://localhost:6379
+#   task test:db:up:local && task test:integration
+# =============================================================================
+
+vars:
+  REPO: "{{.TASKFILE_DIR}}/.."
+  REPORT_DIR: "{{.TASKFILE_DIR}}/../tmp/B2B-Commerce/test-results"
+  COMPOSE_FILE: "{{.TASKFILE_DIR}}/../docker-compose.test.yml"
+  PROJECT: ec_test
+  DB_URL: "postgres://postgres:postgres@localhost:5433/ec-store-test"
+  REDIS: "redis://localhost:6380"
+  BACKEND_URL: "http://localhost:9000"
+
+tasks:
+
+  default:
+    desc: "List all available test targets"
+    cmds:
+      - task --list
+
+  # ---------------------------------------------------------------------------
+  # Pre-flight gate
+  # ---------------------------------------------------------------------------
+
+  preflight:
+    desc: "Confirm the backend API is up before running tests (exits 1 if not)"
+    cmds:
+      - bash {{.REPO}}/scripts/preflight-backend.sh "{{.BACKEND_URL}}"
+
+  # ---------------------------------------------------------------------------
+  # Tier 1 — static checks (no Docker, no database)
+  # ---------------------------------------------------------------------------
+
+  static:
+    desc: "Tier 1 — type-check and lint all workspaces (no Docker needed)"
+    dir: "{{.REPO}}"
+    cmds:
+      - task lint
+
+  # ---------------------------------------------------------------------------
+  # Database lifecycle (ephemeral test database)
+  # ---------------------------------------------------------------------------
+
+  db:up:
+    desc: "Start ephemeral test database (Postgres :5433 + Redis :6380)"
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} -p {{.PROJECT}} up -d --wait
+    status:
+      - docker compose -f {{.COMPOSE_FILE}} -p {{.PROJECT}} ps --status running | grep -q postgres-test
+
+  db:down:
+    desc: "Remove ephemeral test database and volumes (safe to run anytime)"
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} -p {{.PROJECT}} down -v --remove-orphans || true
+
+  db:up:local:
+    desc: "Provision local test database on host Postgres (no Docker required)"
+    cmds:
+      - bash {{.REPO}}/scripts/db-local-up.sh
+
+  # ---------------------------------------------------------------------------
+  # Tier 3a — integration tests
+  # ---------------------------------------------------------------------------
+
+  integration:
+    desc: "Tier 3a — backend HTTP integration tests (requires test:db:up)"
+    dir: "{{.REPO}}"
+    env:
+      DATABASE_URL: "{{.DB_URL}}"
+      REDIS_URL: "{{.REDIS}}"
+      DB_HOST: "localhost"
+      DB_PORT: "5433"
+      DB_USERNAME: "postgres"
+      DB_PASSWORD: "postgres"
+      TEST_TYPE: "integration:http"
+      NODE_OPTIONS: "--experimental-vm-modules"
+    cmds:
+      - mkdir -p {{.REPORT_DIR}}
+      - |
+        JEST={{.REPO}}/apps/backend/node_modules/.bin/jest && \
+        cd {{.REPO}}/apps/backend && \
+        "$JEST" --no-silent --runInBand --forceExit \
+          --json --outputFile={{.REPORT_DIR}}/jest-integration.json
+
+  # ---------------------------------------------------------------------------
+  # Tier 3b — E2E + live smoke
+  # ---------------------------------------------------------------------------
+
+  e2e:
+    desc: "Tier 3b — Playwright browser tests (exits 1 if backend is unreachable)"
+    dir: "{{.REPO}}"
+    cmds:
+      - bash scripts/e2e.sh "{{.BACKEND_URL}}" "tmp/B2B-Commerce/test-results" "."
+
+  live:
+    desc: "Tier 3a-live — HTTP smoke against the running backend (needs 'task up')"
+    dir: "{{.REPO}}"
+    vars:
+      ADMIN_EMAIL: '{{.ADMIN_EMAIL | default "admin@test.local"}}'
+      ADMIN_PW: '{{.ADMIN_PW | default "Test1234!"}}'
+    cmds:
+      - bash scripts/live-smoke.sh "{{.BACKEND_URL}}" "{{.ADMIN_EMAIL}}" "{{.ADMIN_PW}}"
+
+  # ---------------------------------------------------------------------------
+  # Tier 4 — visual verification
+  # ---------------------------------------------------------------------------
+
+  visual:
+    desc: "Tier 4 — browser screenshots (Playwright) + terminal capture (screencapture)"
+    dir: "{{.REPO}}"
+    cmds:
+      - bash scripts/visual-verify.sh "{{.BACKEND_URL}}" "tmp/B2B-Commerce/test-results"
+
+  # ---------------------------------------------------------------------------
+  # Reporting + idempotency
+  # ---------------------------------------------------------------------------
+
+  report:
+    desc: "Aggregate all test results into REPORT.md and REPORT.html"
+    cmds:
+      - mkdir -p {{.REPORT_DIR}}
+      - node {{.TASKFILE_DIR}}/report/aggregate-report.mjs {{.REPORT_DIR}}
+
+  idem:
+    desc: "Idempotency proof — runs the full test suite twice back-to-back (needs backend up)"
+    cmds:
+      - task: preflight
+      - task: all
+      - task: all
+
+  # ---------------------------------------------------------------------------
+  # Full graph
+  # ---------------------------------------------------------------------------
+
+  all:
+    desc: "Full suite: preflight → static → db:up → integration → e2e → live → visual → report → db:down"
+    cmds:
+      - task: preflight
+      - task: static
+      - task: db:up
+      - task: integration
+      - task: e2e
+      - task: live
+      - task: visual
+      - task: report
+      - task: db:down

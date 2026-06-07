@@ -1,0 +1,37 @@
+name: image-preflight
+
+# ACT-TF-004 + ACT-TF-005: Guard rails that fail fast on ghost image tags and
+# machine-absolute/repo-escaping test-config paths.
+#
+# Runs on every PR so regressions are caught before merge.
+# Also runs on push to b2b and main as a post-merge safety net.
+
+on:
+  pull_request:
+  push:
+    branches: [b2b, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  image-tag-preflight:
+    name: "ACT-TF-004 · Image-tag existence"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # docker manifest inspect is available on GitHub-hosted runners without
+      # any extra setup; experimental features not required since Docker 20.10.
+      - name: Verify all nnthanh101/* image tags are pullable
+        run: bash scripts/preflight-images.sh
+
+  test-path-lint:
+    name: "ACT-TF-005 · Test-config path lint"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fail on machine-absolute or repo-escaping paths in test configs
+        run: bash scripts/lint-test-paths.sh

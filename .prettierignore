@@ -1,0 +1,8 @@
+node_modules
+dist
+.next
+.medusa
+tmp
+pnpm-lock.yaml
+*.min.*
+*.lock

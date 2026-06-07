@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "declaration": false,
+    "noEmitOnError": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "useDefineForClassFields": false,
+    "lib": ["ES2022", "DOM"],
+    "jsx": "react-jsx",
+    "outDir": "./.medusa/server",
+    "rootDir": "./",
+    "baseUrl": ".",
+    "inlineSourceMap": true,
+    "sourceMap": false,
+    "checkJs": false
+  },
+  "ts-node": {
+    "swc": true
+  },
+  "include": ["**/*", ".medusa/types/*"],
+  "exclude": ["node_modules", ".medusa/server", ".medusa/admin", ".cache"]
+}

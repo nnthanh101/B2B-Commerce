@@ -1,0 +1,88 @@
+name: terraform-validate
+
+on:
+  pull_request:
+    paths:
+      - "infra/terraform/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    # Container-first: nnthanh101/terraform:slim bundles terraform, tflint,
+    # checkov, trivy, shellcheck — no host-side tool installs.
+    # Reference: ADLC docker-image-strategy (nnthanh101/* images only).
+    container:
+      image: nnthanh101/terraform:slim
+      options: --user 0
+    strategy:
+      matrix:
+        env: [local, dev]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: terraform fmt check
+        run: terraform fmt -check -recursive infra/terraform/
+
+      - name: terraform init (backend disabled)
+        working-directory: infra/terraform/aws/${{ matrix.env }}
+        run: terraform init -backend=false
+
+      - name: terraform validate
+        working-directory: infra/terraform/aws/${{ matrix.env }}
+        run: terraform validate -json
+
+      # tflint: non-blocking at P1 (|| true) — rules will tighten at v0.3
+      # when real AWS resources are present and provider plugin is installed.
+      - name: tflint
+        run: tflint --recursive --chdir infra/terraform/ || true
+
+      # checkov: non-blocking at P1 — CKV_ findings will be reviewed at v0.3.
+      # Remove || true and add --soft-fail-on LOW,MEDIUM when going to production.
+      - name: checkov
+        run: checkov -d infra/terraform/ --quiet || true
+
+  test:
+    runs-on: ubuntu-latest
+    needs: validate
+    container:
+      image: nnthanh101/terraform:slim
+      options: --user 0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: terraform test — foundation module
+        working-directory: infra/terraform/aws/modules/foundation
+        run: terraform init -backend=false && terraform test
+
+      - name: terraform test — tags module
+        working-directory: infra/terraform/aws/modules/tags
+        run: terraform init -backend=false && terraform test
+
+      - name: terraform test — appregistry module
+        working-directory: infra/terraform/aws/modules/appregistry
+        run: terraform init -backend=false && terraform test
+
+  infracost:
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+
+      # infracost/infracost:ci-latest is the official infracost Docker image.
+      # It is exempt from the nnthanh101/* registry rule as it is a dedicated
+      # FinOps reporting tool with no equivalent in the nnthanh101/* catalog.
+      - name: infracost breakdown
+        uses: docker://infracost/infracost:ci-latest
+        env:
+          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
+        with:
+          args: breakdown --path infra/terraform/aws/dev --format json --out-file /tmp/infracost.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: infracost-breakdown
+          path: /tmp/infracost.json
