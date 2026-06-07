@@ -9,14 +9,14 @@ source_refs:
 last_compiled: "2026-06-07T00:00:00Z"
 ---
 
-import { Note } from '@site/src/components/Note';
+# Persona: Priya (Sales Manager)
 
-<Note>This page is a migration stub. Run <code>/commerce:docs-ingest docs/demo/personas/sales-manager.md</code> to compile full content.</Note>
+Priya is a sales operations manager at a B2B software vendor. She handles 20+ quote negotiations per week, countering buyer pricing with custom discounts, and tracking approvals. Her frustration: negotiation happens across email, Slack, and spreadsheets — there's no single source of truth, and deals slip through the cracks.
 
-# Persona: Sales Manager
+**What Priya cares about**: One-platform negotiation (counter quotes, track messages, see approval status instantly) and discount automation (bulk and time-based offers apply without manual intervention).
 
-The sales manager reviews pending quotes, negotiates pricing via message threads, approves or rejects, and enforces spending limits.
+**Key capability she unlocks**: In-app quote negotiation with message threads, bulk discount auto-application, and instant visibility into which deals are approved and ready for fulfillment.
 
-**Key flows**: Quote negotiation, approval, company spending-limit management.
-
-**Source**: `docs/demo/personas/sales-manager.md`
+## Flows Priya owns
+- Flow 05: Quote Negotiation (currently excluded)
+- Flow 06: Promotions (shared with Maria)

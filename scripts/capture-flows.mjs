@@ -16,14 +16,15 @@ import { chromium } from "@playwright/test";
 import path from "node:path";
 import fs from "node:fs";
 
-const REPO_ROOT = "/Volumes/Working/projects/B2B-Commerce";
+const REPO_ROOT = "/Volumes/Working/projects/Digital-Commerce";
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:9000";
 const STOREFRONT_URL = process.env.STOREFRONT_URL || "http://localhost:8000";
 const REGION = process.env.CAPTURE_REGION || process.env.TEST_REGION_COUNTRY || "nz";
 const EXPECTED_CURRENCY = process.env.CAPTURE_CURRENCY || "NZ$";
 const DEMO_BUYER_EMAIL = "demo-buyer@democorp.local";
 const DEMO_BUYER_PASSWORD = "Test1234!";
-const FLOWS_DIR = path.join(REPO_ROOT, "tmp/B2B-Commerce/demo/flows");
+const FLOWS_DIR = path.join(REPO_ROOT, "tmp/Digital-Commerce/demo/flows");
+const SCREENSHOTS_DIR = path.join(REPO_ROOT, "docs/demo/screenshots");
 
 // Flows: [num, slug, persona, path, description]
 const FLOWS = [
@@ -31,10 +32,10 @@ const FLOWS = [
   ["02", "approval", "admin", "/app/approvals", "David approves/rejects quote"],
   ["03", "company-mgmt", "admin", "/app/companies", "David manages company members"],
   ["04", "spending-limit", "buyer-employee", `/${REGION}/cart`, "Maria checks spending limit"],
-  ["05", "quote-negotiate", "sales-manager", "/app/quotes", "Sofia negotiates quote price"],
+  ["05", "quote-negotiate", "sales-manager", "/app/quotes", "Priya negotiates quote price"],
   ["06", "promotions", "buyer-employee", `/${REGION}`, "Maria sees auto-applied discounts"],
   ["07", "full-ecommerce", "buyer-employee", `/${REGION}`, "Maria browses and checks out"],
-  ["08", "order-edit", "admin", "/app/orders", "David edits order post-placement"],
+  ["08", "order-edit", "sales-manager", "/app/orders", "Priya edits order post-placement"],
   ["09", "bulk-add", "buyer-employee", `/${REGION}/cart`, "Maria bulk-adds items"],
   ["10", "quick-order-pad", "buyer-employee", `/${REGION}/quickorder`, "Maria uses quick-order pad"],
   ["11", "invite-employee", "admin", "/app/employees", "David invites employee via token"],
@@ -158,6 +159,15 @@ async function captureFlow(flow) {
     const screenshotPath = path.join(flowDir, "step-01.png");
     await page.screenshot({ path: screenshotPath });
     console.log(`  Screenshot: ${screenshotPath}`);
+
+    // Also save to docs/demo/screenshots for public documentation
+    fs.mkdirSync(SCREENSHOTS_DIR, { recursive: true });
+    const docsScreenshotPath = path.join(
+      SCREENSHOTS_DIR,
+      `${num}-${slug}-${new Date().toISOString().split("T")[0]}.png`
+    );
+    await page.screenshot({ path: docsScreenshotPath });
+    console.log(`  Docs screenshot: ${docsScreenshotPath}`);
 
     // Determine verdict
     const hasErrors = errorMarkersFound.length > 0;

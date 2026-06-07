@@ -55,9 +55,7 @@ jobs:
         with:
           repository: 1xOps/adlc-framework
           token: ${{ secrets.ADLC_FRAMEWORK_PAT }}
-          sparse-checkout: |
-            .claude/plugins/commerce/templates/docusaurus
-          sparse-checkout-cone-mode: false
+          sparse-checkout: .claude/plugins/commerce/templates/docusaurus
           path: _engine
 
       - name: Set up Node 22

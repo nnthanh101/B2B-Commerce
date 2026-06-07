@@ -68,7 +68,7 @@ export const TEST_RESULTS_DIR =
 
 export const SCREENSHOTS_DIR =
   process.env.PLAYWRIGHT_SCREENSHOTS ||
-  path.join(REPO_ROOT, "tmp/B2B-Commerce/screenshots");
+  path.join(REPO_ROOT, "tmp/Digital-Commerce/demo/flows/markets");
 
 export const HTML_REPORT_DIR =
   process.env.PLAYWRIGHT_HTML_REPORT ||

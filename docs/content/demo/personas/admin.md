@@ -9,14 +9,15 @@ source_refs:
 last_compiled: "2026-06-07T00:00:00Z"
 ---
 
-import { Note } from '@site/src/components/Note';
+# Persona: David (Admin)
 
-<Note>This page is a migration stub. Run <code>/commerce:docs-ingest docs/demo/personas/admin.md</code> to compile full content.</Note>
+David is a procurement director at an enterprise buyer. He oversees a 40-person procurement team, manages company spend policies, approves quotes above threshold, and tracks every decision in audit logs for compliance. His frustration: approving quotes via email creates audit gaps, and managing team members (roles, spending limits, invites) requires repeated manual tickets to support.
 
-# Persona: Admin
+**What David cares about**: Audit trails (every decision on record), delegation (approve/reject in one click), and team governance (roles and limits without support tickets).
 
-The admin manages company accounts, quote negotiations, approval settings, and bulk order fulfillment from the Medusa admin UI at `localhost:9000/app`.
+**Key capability he unlocks**: One-click approval with comments and audit logs, self-service company and employee management, and full visibility into team spending and quote negotiation history.
 
-**Key flows**: Company management, approval configuration, order editing.
-
-**Source**: `docs/demo/personas/admin.md`
+## Flows David owns
+- Flow 02: Approval Workflow
+- Flow 03: Company Management
+- Flow 11: Invite Employee

@@ -50,7 +50,7 @@ test.describe("Per-Market Currency Rendering", () => {
     const marketIso2 = "nz";
     const market = SUPPORTED_MARKETS.find((m) => m.iso2 === marketIso2);
 
-    await page.goto(`${STOREFRONT_URL}/${marketIso2}/products/test-product-b2b`, {
+    await page.goto(`${STOREFRONT_URL}/${marketIso2}/products/wireless-keyboard-touch-id-numeric-keypad`, {
       waitUntil: "networkidle",
       timeout: 60000,
     });
@@ -92,7 +92,7 @@ test.describe("Per-Market Currency Rendering", () => {
     const marketIso2 = "au";
     const market = SUPPORTED_MARKETS.find((m) => m.iso2 === marketIso2);
 
-    await page.goto(`${STOREFRONT_URL}/${marketIso2}/products/test-product-b2b`, {
+    await page.goto(`${STOREFRONT_URL}/${marketIso2}/products/wireless-keyboard-touch-id-numeric-keypad`, {
       waitUntil: "networkidle",
       timeout: 60000,
     });
@@ -135,7 +135,7 @@ test.describe("Per-Market Currency Rendering", () => {
     const marketIso2 = "vn";
     const market = SUPPORTED_MARKETS.find((m) => m.iso2 === marketIso2);
 
-    await page.goto(`${STOREFRONT_URL}/${marketIso2}/products/test-product-b2b`, {
+    await page.goto(`${STOREFRONT_URL}/${marketIso2}/products/wireless-keyboard-touch-id-numeric-keypad`, {
       waitUntil: "networkidle",
       timeout: 60000,
     });
@@ -181,7 +181,7 @@ test.describe("Per-Market Currency Rendering", () => {
     const marketIso2 = "us";
     const market = SUPPORTED_MARKETS.find((m) => m.iso2 === marketIso2);
 
-    await page.goto(`${STOREFRONT_URL}/${marketIso2}/products/test-product-b2b`, {
+    await page.goto(`${STOREFRONT_URL}/${marketIso2}/products/wireless-keyboard-touch-id-numeric-keypad`, {
       waitUntil: "networkidle",
       timeout: 60000,
     });
@@ -199,7 +199,8 @@ test.describe("Per-Market Currency Rendering", () => {
     ).not.toBeVisible();
 
     // Assert $ symbol is present (US dollar)
-    expect(priceText).toMatch(/^\s*\$|USD/i);
+    // Note: priceText may be "From $99.00" — match $ anywhere, not just at start
+    expect(priceText).toMatch(/\$|USD/i);
 
     // Assert decimal places are shown
     expect(priceText).toMatch(/\.\d{2}/);
@@ -222,7 +223,7 @@ test.describe("Per-Market Currency Rendering", () => {
     const marketIso2 = "gb";
     const market = SUPPORTED_MARKETS.find((m) => m.iso2 === marketIso2);
 
-    await page.goto(`${STOREFRONT_URL}/${marketIso2}/products/test-product-b2b`, {
+    await page.goto(`${STOREFRONT_URL}/${marketIso2}/products/wireless-keyboard-touch-id-numeric-keypad`, {
       waitUntil: "networkidle",
       timeout: 60000,
     });
@@ -263,7 +264,7 @@ test.describe("Per-Market Currency Rendering", () => {
     const marketIso2 = "sg";
     const market = SUPPORTED_MARKETS.find((m) => m.iso2 === marketIso2);
 
-    await page.goto(`${STOREFRONT_URL}/${marketIso2}/products/test-product-b2b`, {
+    await page.goto(`${STOREFRONT_URL}/${marketIso2}/products/wireless-keyboard-touch-id-numeric-keypad`, {
       waitUntil: "networkidle",
       timeout: 60000,
     });
