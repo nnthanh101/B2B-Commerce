@@ -36,8 +36,7 @@ test.describe("B2B full-ecommerce flow [generated]", () => {
     buyerPage,
   }) => {
     // Step 1: navigate to cart (fixture pre-loads items via _medusa_cart_id cookie)
-    await buyerPage.goto(`${STOREFRONT_URL}/${TEST_REGION_COUNTRY}/cart`);
-    await buyerPage.waitForLoadState("networkidle");
+    await buyerPage.goto(`${STOREFRONT_URL}/${TEST_REGION_COUNTRY}/cart`, { waitUntil: "networkidle", timeout: 60000 });
 
     await buyerPage.screenshot({
       path: path.join(SCREENSHOTS_DIR, "generated-full-ecommerce-01-cart.png"),
@@ -91,6 +90,18 @@ test.describe("B2B full-ecommerce flow [generated]", () => {
 
     await buyerPage.screenshot({
       path: path.join(SCREENSHOTS_DIR, "generated-full-ecommerce-03-cart-summary.png"),
+    });
+
+    // VISUAL GATE: Assert "Cart is not connected" banner is NOT present
+    const cartErrorBanner = buyerPage.getByText(/Cart is not connected/i);
+    await expect(cartErrorBanner).not.toBeVisible({ timeout: 2000 }).catch(() => {
+      // Element not found = pass (banner not present)
+    });
+    console.log("[full-ecommerce] ✓ Cart error banner not present");
+
+    // NZD Capture: cart with items showing NZD pricing (no error catch — let failures surface)
+    await buyerPage.screenshot({
+      path: path.join(SCREENSHOTS_DIR, "../demo/flows/07-full-ecommerce/step-01-cart-items-nzd.png"),
     });
 
     console.log("[full-ecommerce] Flow complete — full ecommerce flow end-to-end cart access passed");

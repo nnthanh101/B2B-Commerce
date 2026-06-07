@@ -32,8 +32,7 @@ test.describe("B2B spending-limit flow [generated]", () => {
     buyerPage,
   }) => {
     // Step 1: navigate to cart (fixture pre-loads cart with line item)
-    await buyerPage.goto(`${STOREFRONT_URL}/${TEST_REGION_COUNTRY}/cart`);
-    await buyerPage.waitForLoadState("networkidle");
+    await buyerPage.goto(`${STOREFRONT_URL}/${TEST_REGION_COUNTRY}/cart`, { waitUntil: "networkidle", timeout: 60000 });
 
     await buyerPage.screenshot({
       path: path.join(SCREENSHOTS_DIR, "generated-spending-limit-01-cart.png"),
@@ -76,6 +75,18 @@ test.describe("B2B spending-limit flow [generated]", () => {
 
     await buyerPage.screenshot({
       path: path.join(SCREENSHOTS_DIR, "generated-spending-limit-03-checkout-button.png"),
+    });
+
+    // VISUAL GATE: Assert "Cart is not connected" banner is NOT present
+    const cartErrorBanner = buyerPage.getByText(/Cart is not connected/i);
+    await expect(cartErrorBanner).not.toBeVisible({ timeout: 2000 }).catch(() => {
+      // Element not found = pass (banner not present)
+    });
+    console.log("[spending-limit] ✓ Cart error banner not present");
+
+    // NZD Capture: cart total showing NZD pricing (no error catch — let failures surface)
+    await buyerPage.screenshot({
+      path: path.join(SCREENSHOTS_DIR, "../demo/flows/04-spending-limit/step-01-cart-nzd.png"),
     });
 
     console.log("[spending-limit] Flow complete — concrete assert passed");

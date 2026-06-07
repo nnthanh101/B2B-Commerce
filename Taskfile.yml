@@ -225,3 +225,82 @@ tasks:
     desc: "Stop LocalStack and clean up containers and volumes"
     cmds:
       - docker compose -f docker-compose.localstack.yml down -v
+
+  # ---------------------------------------------------------------------------
+  # Docs (Docusaurus 3.10) — private-engine / public-content split
+  #
+  # IP ARCHITECTURE:
+  #   PRIVATE engine  → .claude/plugins/commerce/templates/docusaurus/
+  #                      (config, sidebars, package.json, components, scripts)
+  #   PUBLIC content  → docs/content/   (MIT-licensed compiled markdown)
+  #   Build output    → docs/build/     (gitignored; created at build time)
+  #
+  # All npm commands run INSIDE a node:22 container; npm is blocked on the host.
+  # Both volumes are mounted so the container sees:
+  #   /docs          ← private template (Docusaurus root + package.json)
+  #   /docs/content  ← public content (docs/content/ bind-mounted over it)
+  #   /docs/build    ← output bind-mounted to docs/build/
+  #
+  # CI DEFERRED: docs:build requires the private .claude framework in the runner.
+  # GitHub Actions cannot pull the private template from a public runner without
+  # credentials; wire CI only after the private template is available as an
+  # authenticated registry package or submodule in the runner image.
+  # ---------------------------------------------------------------------------
+
+  docs:install:
+    desc: "Install Docusaurus npm dependencies inside node:22 container (private template)"
+    vars:
+      DOCS_TMPL: "{{.ROOT_DIR}}/.claude/plugins/commerce/templates/docusaurus"
+    cmds:
+      - docker run --rm
+        -v "{{.DOCS_TMPL}}:/docs"
+        -w /docs
+        node:22
+        npm install
+
+  docs:build:
+    desc: "Build Docusaurus static site (private engine + public content) → docs/build/"
+    vars:
+      DOCS_TMPL: "{{.ROOT_DIR}}/.claude/plugins/commerce/templates/docusaurus"
+      DOCS_CONTENT: "{{.ROOT_DIR}}/docs/content"
+      DOCS_OUT: "{{.ROOT_DIR}}/docs/build"
+    cmds:
+      - mkdir -p "{{.DOCS_OUT}}"
+      - docker run --rm
+        -v "{{.DOCS_TMPL}}:/docs"
+        -v "{{.DOCS_CONTENT}}:/docs/content"
+        -v "{{.DOCS_OUT}}:/docs/build"
+        -w /docs
+        -e ENABLE_DOCS_MCP=false
+        -e ENABLE_DOCS_FASTER=false
+        node:22
+        npm run build
+
+  docs:dev:
+    desc: "Start Docusaurus dev server on port 5001 (private engine + public content; live preview)"
+    vars:
+      DOCS_TMPL: "{{.ROOT_DIR}}/.claude/plugins/commerce/templates/docusaurus"
+      DOCS_CONTENT: "{{.ROOT_DIR}}/docs/content"
+    cmds:
+      - docker run --rm
+        -v "{{.DOCS_TMPL}}:/docs"
+        -v "{{.DOCS_CONTENT}}:/docs/content"
+        -w /docs
+        -p 5001:3000
+        -e ENABLE_DOCS_MCP=false
+        -e ENABLE_DOCS_FASTER=false
+        node:22
+        npm run start -- --host 0.0.0.0
+
+  docs:lint:
+    desc: "Run validate-wiki.sh against docs/content/ (wiki health gate — pure bash in node:22 container)"
+    vars:
+      DOCS_TMPL: "{{.ROOT_DIR}}/.claude/plugins/commerce/templates/docusaurus"
+      DOCS_CONTENT: "{{.ROOT_DIR}}/docs/content"
+    cmds:
+      - docker run --rm
+        -v "{{.DOCS_TMPL}}:/docs"
+        -v "{{.DOCS_CONTENT}}:/docs/content"
+        -w /docs
+        node:22
+        bash scripts/validate-wiki.sh

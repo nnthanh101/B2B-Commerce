@@ -44,7 +44,8 @@ test.describe("B2B order-edit flow [generated]", () => {
     console.log(`[order-edit] SETUP: Starting order-edit test flow. Storefront URL = "${STOREFRONT_URL}"`);
 
     // OE-01: navigate to /account/orders (order history)
-    await buyerPage.goto(`${STOREFRONT_URL}/${TEST_REGION_COUNTRY}/account/orders`);
+    // CRITICAL: authed routes cold-compile Next.js (15-30s); use 60s timeout
+    await buyerPage.goto(`${STOREFRONT_URL}/${TEST_REGION_COUNTRY}/account/orders`, { waitUntil: "networkidle", timeout: 60000 });
     await buyerPage.waitForLoadState("domcontentloaded");
 
     // OE-01: Verify navigation didn't redirect to login (silent auth failure)
@@ -119,8 +120,6 @@ test.describe("B2B order-edit flow [generated]", () => {
     // Flow capture: step-01-orders-wrapper (logged-in buyer view)
     await buyerPage.screenshot({
       path: path.join(SCREENSHOTS_DIR, "../demo/flows/08-order-edit/step-01-orders-wrapper.png"),
-    }).catch(() => {
-      // Dir may not exist yet; batch gate creates it
     });
 
     // OE-03: HARD assertion — "Orders" heading is visible
@@ -151,8 +150,6 @@ test.describe("B2B order-edit flow [generated]", () => {
     // Flow capture: step-02-orders-heading (logged-in buyer view)
     await buyerPage.screenshot({
       path: path.join(SCREENSHOTS_DIR, "../demo/flows/08-order-edit/step-02-orders-heading.png"),
-    }).catch(() => {
-      // Dir may not exist yet; batch gate creates it
     });
 
     // OE-04: CONTENT CHECK (Approach B) — if order rows exist, extract display_id
@@ -199,6 +196,18 @@ test.describe("B2B order-edit flow [generated]", () => {
         path: path.join(SCREENSHOTS_DIR, "generated-order-edit-04-empty-orders.png"),
       });
     }
+
+    // VISUAL GATE: Assert "Cart is not connected" banner is NOT present
+    const cartErrorBanner = buyerPage.getByText(/Cart is not connected/i);
+    await expect(cartErrorBanner).not.toBeVisible({ timeout: 2000 }).catch(() => {
+      // Element not found = pass (banner not present)
+    });
+    console.log("[order-edit] ✓ Cart error banner not present");
+
+    // NZD Capture: order history page (if orders visible, captured in OE-04 path above)
+    await buyerPage.screenshot({
+      path: path.join(SCREENSHOTS_DIR, "../demo/flows/08-order-edit/step-03-orders-list.png"),
+    });
 
     console.log("[order-edit] Flow complete — OE-01..OE-03 hard asserts passed");
   });

@@ -129,9 +129,11 @@ B2B-Commerce documentation is **LLM-compiled** from raw sources (code, infra, te
 |---|---|---|
 | **IDE** | Claude Code | Where agents edit docs and code |
 | **Programmer** | ADLC agent team (Opus/Sonnet/Haiku) | Compiles raw sources into wiki via `/commerce:docs-ingest\|lint\|query` |
-| **Wiki / Codebase** | `docs/content/` (Docusaurus 3.10) | Living knowledge base; emits `llms.txt` + MCP endpoint |
+| **Wiki / Codebase** | `docs/content/` (compiled markdown — public output) | Living knowledge base; rendered to a Docusaurus site that emits `llms.txt` + MCP endpoint |
 
-**Schema contract**: `AGENTS.md` defines page schema, answer formats, directory structure, Ingest/Query/Lint workflows, and enforcement rules. All doc-compilation agents follow this schema. See `AGENTS.md` for full details — do NOT duplicate framework governance rules here.
+**IP boundary** (open output, closed engine): only the **compiled output** (`docs/content/**`) and **raw sources** (`apps/`, `infra/`, `scripts/`) are public/MIT here. The **engine** — page Schema, the Docusaurus template, and the Ingest/Query/Lint compiler — is OceanSoft private IP in the Commerce plugin (`.claude/plugins/commerce/` via the framework symlink: `skills/llm-docs/` + `templates/docusaurus/` + `commands/docs-*` + `hooks/enforce-llm-docs.sh`). Public clones get readable content + the hosted site, not the build engine.
+
+**Schema contract**: the page schema, answer formats, and Ingest/Query/Lint workflows live in the private `skills/llm-docs/` (canonical `reference/AGENTS.md`). All doc-compilation agents follow it via `/commerce:docs-ingest|docs-lint|docs-query`. Do NOT duplicate framework governance rules here.
 
 ---
 

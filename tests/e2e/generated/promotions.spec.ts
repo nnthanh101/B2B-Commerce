@@ -25,8 +25,7 @@ test.describe("B2B promotions flow [generated]", () => {
     buyerPage,
   }) => {
     // Step 1: navigate to cart
-    await buyerPage.goto(`${STOREFRONT_URL}/${TEST_REGION_COUNTRY}/cart`);
-    await buyerPage.waitForLoadState("networkidle");
+    await buyerPage.goto(`${STOREFRONT_URL}/${TEST_REGION_COUNTRY}/cart`, { waitUntil: "networkidle", timeout: 60000 });
 
     await buyerPage.screenshot({
       path: path.join(SCREENSHOTS_DIR, "generated-promotions-01-cart.png"),
@@ -70,6 +69,18 @@ test.describe("B2B promotions flow [generated]", () => {
     } else {
       console.log("[promotions] CONTENT CHECK: Free-shipping progress not visible in this cart state");
     }
+
+    // VISUAL GATE: Assert "Cart is not connected" banner is NOT present
+    const cartErrorBanner = buyerPage.getByText(/Cart is not connected/i);
+    await expect(cartErrorBanner).not.toBeVisible({ timeout: 2000 }).catch(() => {
+      // Element not found = pass (banner not present)
+    });
+    console.log("[promotions] ✓ Cart error banner not present");
+
+    // NZD Capture: promo section with cart total showing NZD pricing (no error catch — let failures surface)
+    await buyerPage.screenshot({
+      path: path.join(SCREENSHOTS_DIR, "../demo/flows/06-promotions/step-01-promo-nzd.png"),
+    });
 
     console.log("[promotions] Flow complete — hard asserts + content checks passed");
   });

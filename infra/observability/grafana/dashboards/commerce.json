@@ -638,85 +638,86 @@
     },
 
     {
-      "collapsed": false,
+      "collapsed": true,
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 36 },
       "id": 104,
-      "title": "Up-Status — All Scrape Targets",
-      "type": "row"
-    },
-
-    {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "description": "UP/DOWN status for all 4 Prometheus scrape targets. Green=UP(1), Red=DOWN(0). Targets: medusa=ec:9000/admin/metrics, postgres-exporter:9187, redis-exporter:9121, node-exporter:9100. PromQL verified 2026-06-05: all 4 targets UP.",
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "mappings": [
-            {
-              "options": {
-                "0": { "color": "red", "index": 0, "text": "DOWN" },
-                "1": { "color": "green", "index": 1, "text": "UP" }
+      "panels": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "description": "UP/DOWN status for all 4 Prometheus scrape targets. Green=UP(1), Red=DOWN(0). Targets: medusa=ec:9000/admin/metrics, postgres-exporter:9187, redis-exporter:9121, node-exporter:9100. PromQL verified 2026-06-05: all 4 targets UP.",
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "mappings": [
+                {
+                  "options": {
+                    "0": { "color": "red", "index": 0, "text": "DOWN" },
+                    "1": { "color": "green", "index": 1, "text": "UP" }
+                  },
+                  "type": "value"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "green", "value": 1 }
+                ]
               },
-              "type": "value"
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 6, "w": 24, "x": 0, "y": 37 },
+          "id": 8,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "justifyMode": "center",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": ["lastNotNull"],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "value_and_name"
+          },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "up{job=\"medusa\"}",
+              "legendFormat": "Medusa Backend (ec:9000)",
+              "refId": "A",
+              "instant": true
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "up{job=\"postgres\"}",
+              "legendFormat": "Postgres Exporter",
+              "refId": "B",
+              "instant": true
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "up{job=\"redis\"}",
+              "legendFormat": "Redis Exporter",
+              "refId": "C",
+              "instant": true
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "expr": "up{job=\"node\"}",
+              "legendFormat": "Node Exporter",
+              "refId": "D",
+              "instant": true
             }
           ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "red", "value": null },
-              { "color": "green", "value": 1 }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 37 },
-      "id": 8,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "value_and_name"
-      },
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "up{job=\"medusa\"}",
-          "legendFormat": "Medusa Backend (ec:9000)",
-          "refId": "A",
-          "instant": true
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "up{job=\"postgres\"}",
-          "legendFormat": "Postgres Exporter",
-          "refId": "B",
-          "instant": true
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "up{job=\"redis\"}",
-          "legendFormat": "Redis Exporter",
-          "refId": "C",
-          "instant": true
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "up{job=\"node\"}",
-          "legendFormat": "Node Exporter",
-          "refId": "D",
-          "instant": true
+          "title": "Up-Status Grid — All Scrape Targets",
+          "type": "stat"
         }
       ],
-      "title": "Up-Status Grid — All Scrape Targets",
-      "type": "stat"
+      "title": "Up-Status — All Scrape Targets",
+      "type": "row"
     }
 
   ],

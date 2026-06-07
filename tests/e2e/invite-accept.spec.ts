@@ -155,8 +155,6 @@ test.describe("B2B invite accept flow [IA-01..IA-05]", () => {
     // Flow capture: step-01-invite-form (logged-in buyer view)
     await buyerPage.screenshot({
       path: path.join(SCREENSHOTS_DIR, "../demo/flows/11-invite-employee/step-01-invite-form.png"),
-    }).catch((err) => {
-      console.log(`[ia] Note: Demo flow capture not written (dir may need manual creation): ${err.message}`);
     });
 
     // ────────────────────────────────────────────────────────────────────
@@ -236,8 +234,6 @@ test.describe("B2B invite accept flow [IA-01..IA-05]", () => {
     // Flow capture: step-02-success (logged-in buyer view)
     await buyerPage.screenshot({
       path: path.join(SCREENSHOTS_DIR, "../demo/flows/11-invite-employee/step-02-success.png"),
-    }).catch((err) => {
-      console.log(`[ia] Note: Demo flow capture not written (dir may need manual creation): ${err.message}`);
     });
 
     // ────────────────────────────────────────────────────────────────────

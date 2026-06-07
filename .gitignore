@@ -75,3 +75,8 @@ infra/terraform/aws/dev/backend-dev.hcl
 infra/terraform/aws/local/backend-local.hcl
 infra/terraform/aws/modules/foundation/tests/foundation_test.tftest.hcl
 tags_test.tftest.hcl
+
+# Docusaurus docs/ (build artifacts only — source is tracked)
+docs/node_modules/
+docs/build/
+docs/.docusaurus/

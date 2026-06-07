@@ -157,16 +157,18 @@ export const test = base.extend<{
     // Use config.ts value to ensure consistency with TEST_REGION_COUNTRY default (gb)
     const TEST_REGION_COUNTRY = CONFIG_TEST_REGION_COUNTRY;
 
-    // Step 2: API-based registration + customer record creation + login (3-phase auth flow)
-    // CRITICAL FIX: In Medusa v2, /auth/customer/emailpass/register creates an AUTH IDENTITY
-    // but NOT a customer record. We must explicitly create the customer record before login
-    // so that /store/customers/me returns customer data (needed for button visibility).
-    console.log(`[auth] Starting buyer auth flow: ${DEMO_BUYER_EMAIL}`);
+    // Step 2: LOGIN-ONLY auth flow
+    // CRITICAL FIX: The fixture no longer creates a customer record via /store/customers POST
+    // (which was creating a duplicate when the auth identity already existed). Instead:
+    // - The seed script (seed-demo-b2b.ts) creates the customer + auth identity + employee link
+    // - The fixture ONLY logs in against /auth/customer/emailpass (which returns a JWT with actor_id)
+    // - If login fails, fail fast with a clear error message — do not auto-register
+    console.log(`[auth] Starting buyer login flow: ${DEMO_BUYER_EMAIL}`);
 
     let customerToken: string;
 
-    // Phase 1: Attempt login first (buyer may already exist)
-    let loginRes = await fetch(`${BACKEND_URL}/auth/customer/emailpass`, {
+    // Attempt login against the pre-seeded buyer account
+    const loginRes = await fetch(`${BACKEND_URL}/auth/customer/emailpass`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -175,96 +177,18 @@ export const test = base.extend<{
       }),
     });
 
-    // Phase 2: If login fails, register the auth identity first
-    if (!loginRes.ok) {
-      console.log(
-        `[auth] Buyer not found (${loginRes.status}); registering auth identity...`
-      );
-
-      const registerRes = await fetch(
-        `${BACKEND_URL}/auth/customer/emailpass/register`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: DEMO_BUYER_EMAIL,
-            password: DEMO_BUYER_PASSWORD,
-          }),
-        }
-      );
-
-      if (!registerRes.ok) {
-        const errText = await registerRes.text();
-        throw new Error(
-          `[auth] Registration failed: ${registerRes.status} ${errText}`
-        );
-      }
-
-      console.log(`[auth] ✓ Auth identity created`);
-
-      // Phase 2b: Create customer record immediately after registration
-      // Get the registration token (has empty actor_id initially)
-      const registerData = (await registerRes.json()) as { token: string };
-      const registerToken = registerData.token;
-
-      console.log(
-        `[auth] Creating customer record (with registration token)...`
-      );
-
-      const createCustomerRes = await fetch(
-        `${BACKEND_URL}/store/customers`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${registerToken}`,
-            "x-publishable-api-key": publishableKey,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: DEMO_BUYER_EMAIL,
-            first_name: "Demo",
-            last_name: "Buyer",
-          }),
-        }
-      );
-
-      if (!createCustomerRes.ok) {
-        const errText = await createCustomerRes.text();
-        throw new Error(
-          `[auth] Customer record creation failed: ${createCustomerRes.status} ${errText}`
-        );
-      }
-
-      console.log(`[auth] ✓ Customer record created`);
-
-      // Phase 3: Re-login now that customer record exists
-      // The new JWT will have actor_id populated (critical for /store/customers/me)
-      loginRes = await fetch(`${BACKEND_URL}/auth/customer/emailpass`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: DEMO_BUYER_EMAIL,
-          password: DEMO_BUYER_PASSWORD,
-        }),
-      });
-
-      if (!loginRes.ok) {
-        const errText = await loginRes.text();
-        throw new Error(
-          `[auth] Login after registration failed: ${loginRes.status} ${errText}`
-        );
-      }
-    }
-
     if (!loginRes.ok) {
       const errText = await loginRes.text();
-      throw new Error(`[auth] buyer login failed: ${loginRes.status} ${errText}`);
+      throw new Error(
+        `[auth] Buyer login failed (${loginRes.status}): ${errText}. ` +
+        `Run 'task seed:demo' first to create the buyer account and auth identity.`
+      );
     }
 
     const loginData = (await loginRes.json()) as { token: string };
     customerToken = loginData.token;
     console.log(
-      `[auth] ✓ Login successful; token=${customerToken.substring(0, 20)}...`
+      `[auth] ✓ Buyer login successful; token=${customerToken.substring(0, 20)}...`
     );
 
     // CRITICAL: Capture the FINAL re-login token (T_final)

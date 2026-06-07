@@ -165,6 +165,13 @@ export default async function seedDemoB2B({
   }
 
   // ── Step 3: Buyer customer (idempotent) ──────────────────────────────────
+  //
+  // DUPLICATE-CUSTOMER GUARD: The E2E fixture's registration path can create a
+  // second customer record for the same email when the auth identity's
+  // app_metadata.customer_id points to a non-existent or different customer.
+  // This leaves two customers: one with the employee link (created by this seed)
+  // and one without (created by the fixture). We must always select the
+  // employee-linked customer so the auth identity stays pointed at the right one.
 
   logger.info("Step 3: Buyer customer...")
 
@@ -173,7 +180,41 @@ export default async function seedDemoB2B({
   })
 
   let customer: any
-  if (existingCustomers.length > 0) {
+  if (existingCustomers.length > 1) {
+    // Multiple customers — find the one already linked to an employee (has
+    // company_company_employee_employee link). We cannot query that link here
+    // without query.graph, but we CAN identify the seed-created one by checking
+    // which customer_id the current employee row references. Use query to check.
+    const { data: employeesWithCustomer } = await query.graph({
+      entity: "employee",
+      fields: ["id", "customer.id"],
+      filters: { company_id: company.id },
+    }).catch(() => ({ data: [] }))
+
+    const linkedCustomerIds = new Set(
+      employeesWithCustomer
+        .filter((e: any) => e.customer?.id)
+        .map((e: any) => e.customer.id)
+    )
+
+    const employeeLinkedCustomer = existingCustomers.find(
+      (c: any) => linkedCustomerIds.has(c.id)
+    )
+
+    if (employeeLinkedCustomer) {
+      customer = employeeLinkedCustomer
+      logger.info(
+        `  Multiple customers found (${existingCustomers.length}); ` +
+        `selected employee-linked customer (${customer.id})`
+      )
+    } else {
+      customer = existingCustomers[0]
+      logger.info(
+        `  Multiple customers found (${existingCustomers.length}); ` +
+        `no employee link yet — using first (${customer.id})`
+      )
+    }
+  } else if (existingCustomers.length === 1) {
     customer = existingCustomers[0]
     logger.info(`  Customer already exists (${customer.id}) — skipping creation`)
   } else {
@@ -186,6 +227,10 @@ export default async function seedDemoB2B({
   }
 
   // ── Step 3b: Buyer auth identity (allows storefront login) ──────────────
+  //
+  // ALWAYS force the auth identity to point at the customer selected in Step 3.
+  // The E2E fixture's registration flow may have overwritten app_metadata.customer_id
+  // to a different (employee-less) customer — we must correct that here every run.
 
   logger.info("Step 3b: Buyer auth identity...")
 
@@ -200,7 +245,8 @@ export default async function seedDemoB2B({
         existingIdentities[0].auth_identity_id,
         { select: ["id", "app_metadata"] }
       )
-      if (!authIdentity.app_metadata?.customer_id) {
+      // Always update — the fixture may have pointed the identity at a wrong customer.
+      if (authIdentity.app_metadata?.customer_id !== customer.id) {
         await (authModule as any).updateAuthIdentities({
           id: authIdentity.id,
           app_metadata: {
@@ -208,9 +254,12 @@ export default async function seedDemoB2B({
             customer_id: customer.id,
           },
         })
-        logger.info(`  Auth identity updated: app_metadata.customer_id = ${customer.id}`)
+        logger.info(
+          `  Auth identity corrected: app_metadata.customer_id = ${customer.id} ` +
+          `(was: ${authIdentity.app_metadata?.customer_id ?? "null"})`
+        )
       } else {
-        logger.info(`  Auth identity already exists and has customer_id — skipping`)
+        logger.info(`  Auth identity already correct (customer_id = ${customer.id})`)
       }
     } else {
       // Register auth identity for emailpass (store scope)

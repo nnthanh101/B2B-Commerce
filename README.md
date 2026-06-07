@@ -91,9 +91,23 @@ B2B-Commerce/
 
 ## Documentation
 
-- **[Quickstart](./docs/quickstart.md)** — Step-by-step setup + verification commands
-- **[Architecture](./docs/architecture.md)** — Component diagram, stack decisions, AWS roadmap
-- **[Licensing](./docs/licensing.md)** — MIT vs. commercial boundary table
+The documentation site is built with Docusaurus 3.10 at `docs/`. GitHub Pages deployment: https://nnthanh101.github.io/B2B-Commerce/
+
+- **[Quickstart](./docs/content/quickstart.md)** — Step-by-step setup + verification commands
+- **[Architecture Overview](./docs/content/architecture/overview.md)** — Component diagram, stack decisions, AWS roadmap
+- **[B2B Blueprint](./docs/content/b2b-blueprint.md)** — Product strategy, feature matrix, roadmap
+- **[Licensing](./docs/content/licensing.md)** — MIT vs. commercial boundary table
+- **[ADRs](./docs/content/architecture/adrs/)** — 16 Architecture Decision Records
+- **[llms.txt](https://nnthanh101.github.io/B2B-Commerce/llms.txt)** — LLM-readable wiki index (built by Docusaurus)
+
+Build the docs locally (requires Docker):
+
+```bash
+task docs:install   # Install npm dependencies (inside node:22 container)
+task docs:build     # Build static site → docs/build/
+task docs:dev       # Start dev server on http://localhost:3001
+task docs:lint      # Run pre-build validation gates
+```
 
 ## Testing & Verification
 
