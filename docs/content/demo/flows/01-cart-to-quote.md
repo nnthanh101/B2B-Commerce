@@ -21,6 +21,8 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 ![Shopping cart ready to quote](pathname:///img/demo/flows/01-cart-to-quote/generated-ctq-01-cart-page.png)
 
+<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/01-cart-to-quote.mp4"></video>
+
 ## Script (voice narration)
 
 **[00:06]** "Cart to Quote skips email approval delays — one click turns a cart into a formal quote request."

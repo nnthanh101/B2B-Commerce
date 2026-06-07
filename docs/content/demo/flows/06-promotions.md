@@ -21,6 +21,8 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 ![Cart showing bulk discount auto-applied](pathname:///img/demo/flows/06-promotions/generated-promotions-01-cart.png)
 
+<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/06-promotions.mp4"></video>
+
 ## Script (voice narration)
 
 **[00:06]** "Promotions auto-apply bulk discounts — savings visible instantly at the cart."

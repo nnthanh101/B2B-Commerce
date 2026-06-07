@@ -24,6 +24,7 @@ on:
       - b2b
     paths:
       - "docs/content/**"
+      - "docs/static/**"
       - ".github/workflows/docs.yml"
   workflow_dispatch:
 
@@ -36,6 +37,9 @@ permissions:
 concurrency:
   group: pages
   cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   build:
@@ -55,7 +59,10 @@ jobs:
         with:
           repository: 1xOps/adlc-framework
           token: ${{ secrets.ADLC_FRAMEWORK_PAT }}
-          sparse-checkout: .claude/plugins/commerce/templates/docusaurus
+          # cone-mode: false required — cone mode silently excludes dotfile dirs (.claude/) at repo root.
+          sparse-checkout: |
+            .claude/plugins/commerce/templates/docusaurus
+          sparse-checkout-cone-mode: false
           path: _engine
 
       - name: Set up Node 22
@@ -71,6 +78,9 @@ jobs:
         run: |
           cp -r docs/content/. \
             _engine/.claude/plugins/commerce/templates/docusaurus/content/
+
+      - name: Copy static assets into engine
+        run: cp -r docs/static/. _engine/.claude/plugins/commerce/templates/docusaurus/static/
 
       - name: Build Docusaurus site
         # The engine npm run build uses --out-dir /site_out/site (Docker bind-mount path).

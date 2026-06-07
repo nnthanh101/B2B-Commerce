@@ -21,6 +21,8 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 ![Cart with spending limit warning displayed](pathname:///img/demo/flows/04-spending-limit/generated-spending-limit-01-cart.png)
 
+<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/04-spending-limit.mp4"></video>
+
 ## Script (voice narration)
 
 **[00:05]** "Spending Limit Enforcement blocks over-policy purchases before submission."

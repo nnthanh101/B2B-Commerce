@@ -21,6 +21,8 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 ![Invite employee form — green token-accept path](pathname:///img/demo/flows/11-invite-employee/step-01-invite-form.png)
 
+<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/11-invite-employee.mp4"></video>
+
 ## Script (voice narration)
 
 **[00:09]** "Invite Employee lets admins enroll new team members without manual user creation."

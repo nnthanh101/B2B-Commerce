@@ -21,6 +21,8 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 ![Cart after bulk SKU import resolved successfully](pathname:///img/demo/flows/09-bulk-add/generated-bulk-add-01-cart.png)
 
+<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/09-bulk-add.mp4"></video>
+
 ## Script (voice narration)
 
 **[00:05]** "Bulk Add imports multi-line SKU lists in seconds — no re-keying, no copy-paste errors."

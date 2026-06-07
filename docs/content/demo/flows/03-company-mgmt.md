@@ -21,6 +21,8 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 ![Company roster with employees and spending limits](pathname:///img/demo/flows/03-company-mgmt/generated-company-mgmt-01-companies-list.png)
 
+<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/03-company-mgmt.mp4"></video>
+
 ## Script (voice narration)
 
 **[00:07]** "Company Management lets admins control team, roles, and spending limits from one console."

@@ -21,6 +21,8 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 ![Approvals dashboard with pending quote](pathname:///img/demo/flows/02-approval/generated-approval-01-approvals-page.png)
 
+<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/02-approval.mp4"></video>
+
 ## Script (voice narration)
 
 **[00:08]** "Approval Workflow gives admins full audit trails for every quote decision."

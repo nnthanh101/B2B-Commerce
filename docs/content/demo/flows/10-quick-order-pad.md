@@ -21,6 +21,8 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 ![Quick order pad with favorite SKUs pre-populated](pathname:///img/demo/flows/10-quick-order-pad/generated-quick-order-pad-01-cart.png)
 
+<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/10-quick-order-pad.mp4"></video>
+
 ## Script (voice narration)
 
 **[00:06]** "Quick Order Pad is the fast lane for repeat orders — familiar SKUs, one-click entry."
