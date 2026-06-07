@@ -57,7 +57,7 @@ TODAY="$(date +%Y-%m-%d)"
 
 FLOWS_DIR="${REPO_ROOT}/docs/content/demo/flows"
 STILLS_ROOT="${REPO_ROOT}/tmp/Digital-Commerce/demo/flows"
-OUT_DIR="${REPO_ROOT}/docs/demo/flows"
+OUT_DIR="${REPO_ROOT}/docs/static/video/demo/flows"
 PERSONA_MAP="${REPO_ROOT}/docs/content/demo/persona-flow-map.md"
 VERDICT_FILE="${REPO_ROOT}/tmp/Digital-Commerce/test-results/flow-green-verdict-${TODAY}.json"
 VOICE="Daniel"

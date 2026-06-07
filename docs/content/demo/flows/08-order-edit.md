@@ -19,6 +19,8 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 **Duration**: ~2 min
 
+![Orders list page in admin console](pathname:///img/demo/flows/08-order-edit/generated-order-edit-01-orders-page.png)
+
 ## Script (voice narration — partial, backend-only)
 
 **[00:08]** "Order Editing lets admins adjust post-purchase line items without reissuing invoices."

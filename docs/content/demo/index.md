@@ -24,6 +24,21 @@ This section contains the demo artifacts for B2B-Commerce: narrated flows, perso
 | [Personas: Sales Manager](./personas/sales-manager.md) | Sales manager persona |
 | [Demo Flows](./flows/index.md) | Individual flow playbooks (11 flows) |
 
+## 6-Market Currency Proof
+
+B2B-Commerce renders localized pricing in 6 major markets. Click each screenshot to verify live currency symbols and regional pricing:
+
+| Market | Currency | Screenshot |
+|--------|----------|------------|
+| New Zealand | NZD | ![New Zealand market: NZ$ symbol and regional pricing proof](pathname:///img/demo/markets/nz-currency-2026-06-07.png) |
+| Australia | AUD | ![Australia market: A$ symbol and regional pricing proof](pathname:///img/demo/markets/au-currency-2026-06-07.png) |
+| Singapore | SGD | ![Singapore market: S$ symbol and regional pricing proof](pathname:///img/demo/markets/sg-currency-2026-06-07.png) |
+| Vietnam | VND | ![Vietnam market: ₫ symbol, zero-decimal VND pricing proof](pathname:///img/demo/markets/vn-currency-2026-06-07.png) |
+| United States | USD | ![United States market: $ symbol and regional pricing proof](pathname:///img/demo/markets/us-currency-2026-06-07.png) |
+| United Kingdom | GBP | ![United Kingdom market: £ symbol and regional pricing proof](pathname:///img/demo/markets/gb-currency-2026-06-07.png) |
+
+**Investor value**: Zero-configuration multi-currency cart reconciliation. Each market uses its own FX-generated pricing from a single Medusa v2 pricelist.
+
 ## Quick Start
 
 ```bash

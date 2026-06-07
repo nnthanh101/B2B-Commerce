@@ -83,3 +83,4 @@ docs/.docusaurus/
 
 # act secret file — NEVER commit real tokens; copy from .secrets.example
 .secrets
+docker-compose.override.yml

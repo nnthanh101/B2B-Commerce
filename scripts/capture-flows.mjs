@@ -28,16 +28,16 @@ const SCREENSHOTS_DIR = path.join(REPO_ROOT, "docs/demo/screenshots");
 
 // Flows: [num, slug, persona, path, description]
 const FLOWS = [
-  ["01", "cart-to-quote", "buyer-employee", `/${REGION}/cart`, "Maria converts cart to quote"],
+  ["01", "cart-to-quote", "buyer-employee", `/${REGION}/store`, "Maria converts cart to quote"],
   ["02", "approval", "admin", "/app/approvals", "David approves/rejects quote"],
   ["03", "company-mgmt", "admin", "/app/companies", "David manages company members"],
-  ["04", "spending-limit", "buyer-employee", `/${REGION}/cart`, "Maria checks spending limit"],
+  ["04", "spending-limit", "buyer-employee", `/${REGION}/store`, "Maria checks spending limit"],
   ["05", "quote-negotiate", "sales-manager", "/app/quotes", "Priya negotiates quote price"],
-  ["06", "promotions", "buyer-employee", `/${REGION}`, "Maria sees auto-applied discounts"],
+  ["06", "promotions", "buyer-employee", `/${REGION}/store`, "Maria sees auto-applied discounts"],
   ["07", "full-ecommerce", "buyer-employee", `/${REGION}`, "Maria browses and checks out"],
   ["08", "order-edit", "sales-manager", "/app/orders", "Priya edits order post-placement"],
-  ["09", "bulk-add", "buyer-employee", `/${REGION}/cart`, "Maria bulk-adds items"],
-  ["10", "quick-order-pad", "buyer-employee", `/${REGION}/quickorder`, "Maria uses quick-order pad"],
+  ["09", "bulk-add", "buyer-employee", `/${REGION}/store`, "Maria bulk-adds items"],
+  ["10", "quick-order-pad", "buyer-employee", `/${REGION}/store`, "Maria uses quick-order pad"],
   ["11", "invite-employee", "admin", "/app/employees", "David invites employee via token"],
 ];
 
@@ -134,6 +134,45 @@ async function captureFlow(flow) {
 
     await page.goto(url, { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000); // Allow rendering
+
+    // Dismiss dev UI elements before screenshot
+    await page.evaluate(() => {
+      // 1. Next.js dev overlay (the "N X Issues" badge)
+      const devSelectors = [
+        'nextjs-portal',
+        '[data-nextjs-dialog-overlay]',
+        '[data-nextjs-toast]',
+        '#__next-build-watcher',
+        'button[data-nextjs-toast-errors-hint-expand-button]',
+      ];
+      devSelectors.forEach(sel => {
+        document.querySelectorAll(sel).forEach(el => el.remove());
+      });
+
+      // 2. Starter template "Build your own B2B store" / "Deploy to Cloud" banner
+      //    Targets the bg-neutral-900 announcement bar in layout.tsx (lines 34-50)
+      document.querySelectorAll('div.bg-neutral-900').forEach(el => {
+        if (el.textContent && el.textContent.includes('Deploy to Cloud')) {
+          el.remove();
+        }
+      });
+      // Fallback: hide any element containing that exact link text
+      document.querySelectorAll('a').forEach(a => {
+        if (a.textContent && a.textContent.trim().startsWith('Deploy to Cloud')) {
+          const banner = a.closest('div[class*="bg-neutral"]') || a.parentElement;
+          if (banner) banner.style.display = 'none';
+        }
+      });
+
+      // CSS suppression for anything late-mounted
+      const style = document.createElement('style');
+      style.textContent = [
+        'nextjs-portal { display: none !important; }',
+        '[data-nextjs-dialog-overlay] { display: none !important; }',
+        '[data-nextjs-toast] { display: none !important; }',
+      ].join('\n');
+      document.head.appendChild(style);
+    }).catch(() => {}); // Non-fatal
 
     // Scan for error markers
     const pageText = await page.evaluate(() => document.body.innerText);

@@ -268,10 +268,13 @@ tasks:
       # (registry exemption: upstream node toolchain; no nnthanh101/* node image available)
       DOCS_PARENT: "{{.ROOT_DIR}}/docs"
     cmds:
+      - mkdir -p "{{.ROOT_DIR}}/docs/static/video/demo/flows"
       - docker run --rm
         -v "{{.DOCS_TMPL}}:/docs"
         -v "{{.DOCS_CONTENT}}:/docs/content"
         -v "{{.DOCS_PARENT}}:/site_out"
+        -v "{{.ROOT_DIR}}/docs/static/img/demo:/docs/static/img/demo"
+        -v "{{.ROOT_DIR}}/docs/static/video:/docs/static/video"
         -w /docs
         -e ENABLE_DOCS_MCP=false
         -e ENABLE_DOCS_FASTER=false
@@ -287,6 +290,8 @@ tasks:
       - docker run --rm
         -v "{{.DOCS_TMPL}}:/docs"
         -v "{{.DOCS_CONTENT}}:/docs/content"
+        -v "{{.ROOT_DIR}}/docs/static/img/demo:/docs/static/img/demo"
+        -v "{{.ROOT_DIR}}/docs/static/video:/docs/static/video"
         -w /docs
         -p 5001:3000
         -e ENABLE_DOCS_MCP=false

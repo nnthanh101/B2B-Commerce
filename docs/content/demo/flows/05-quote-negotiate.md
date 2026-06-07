@@ -19,6 +19,8 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 **Duration**: ~2 min
 
+![Cart showing bulk quote for negotiation](pathname:///img/demo/flows/05-quote-negotiate/generated-quote-negotiate-01-cart.png)
+
 ## Script (voice narration — partial, green-slice only)
 
 **[00:08]** "Quote Negotiation lets sales managers counter-offer and track all messages in one thread."

@@ -11,7 +11,8 @@ This file is your **HITL voice recording guide** for all 11 B2B-Commerce demo fl
 
 ---
 
-## Flow 01 — Cart to Quote
+<details>
+<summary>Flow 01 — Cart to Quote</summary>
 
 **Persona**: Maria (Buyer-Employee)
 
@@ -29,9 +30,12 @@ This file is your **HITL voice recording guide** for all 11 B2B-Commerce demo fl
 
 **[00:53]** "Budget quarter protected. Quote filed. Decision cycle: one session, not three days."
 
+</details>
+
 ---
 
-## Flow 02 — Approval Workflow
+<details>
+<summary>Flow 02 — Approval Workflow</summary>
 
 **Persona**: David (Admin)
 
@@ -49,9 +53,12 @@ This file is your **HITL voice recording guide** for all 11 B2B-Commerce demo fl
 
 **[00:51]** "No email chains. No ambiguity. Every decision on record."
 
+</details>
+
 ---
 
-## Flow 03 — Company Management
+<details>
+<summary>Flow 03 — Company Management</summary>
 
 **Persona**: David (Admin)
 
@@ -69,9 +76,12 @@ This file is your **HITL voice recording guide** for all 11 B2B-Commerce demo fl
 
 **[00:50]** "David can now see Sarah in the team roster with her role and spending limit visible."
 
+</details>
+
 ---
 
-## Flow 04 — Spending Limit Enforcement
+<details>
+<summary>Flow 04 — Spending Limit Enforcement</summary>
 
 **Persona**: Maria (Buyer-Employee)
 
@@ -89,9 +99,12 @@ This file is your **HITL voice recording guide** for all 11 B2B-Commerce demo fl
 
 **[00:48]** "No surprises. No rejections at approval. Policy enforced at the moment of decision."
 
+</details>
+
 ---
 
-## Flow 05 — Quote Negotiation
+<details>
+<summary>Flow 05 — Quote Negotiation</summary>
 
 **Persona**: Priya (Sales Manager)
 
@@ -109,9 +122,12 @@ This file is your **HITL voice recording guide** for all 11 B2B-Commerce demo fl
 
 **[00:38]** "Backend negotiation flow is green; storefront route and messaging UI are in the next phase."
 
+</details>
+
 ---
 
-## Flow 06 — Promotions
+<details>
+<summary>Flow 06 — Promotions</summary>
 
 **Persona**: Maria (Buyer-Employee)
 
@@ -129,9 +145,12 @@ This file is your **HITL voice recording guide** for all 11 B2B-Commerce demo fl
 
 **[00:48]** "Transparent pricing. Instant rewards. Buyers close faster."
 
+</details>
+
 ---
 
-## Flow 07 — Full Ecommerce
+<details>
+<summary>Flow 07 — Full Ecommerce</summary>
 
 **Persona**: Maria (Buyer-Employee)
 
@@ -149,9 +168,12 @@ This file is your **HITL voice recording guide** for all 11 B2B-Commerce demo fl
 
 **[00:47]** "Maria has order #QT-2026-1847. The B2B store is fully operational."
 
+</details>
+
 ---
 
-## Flow 08 — Order Editing
+<details>
+<summary>Flow 08 — Order Editing</summary>
 
 **Persona**: Priya (Sales Manager)
 
@@ -169,9 +191,12 @@ This file is your **HITL voice recording guide** for all 11 B2B-Commerce demo fl
 
 **[00:39]** "Backend order-edit API is complete; storefront /account/orders view is in next phase."
 
+</details>
+
 ---
 
-## Flow 09 — Bulk Add to Cart
+<details>
+<summary>Flow 09 — Bulk Add to Cart</summary>
 
 **Persona**: Maria (Buyer-Employee)
 
@@ -189,9 +214,12 @@ This file is your **HITL voice recording guide** for all 11 B2B-Commerce demo fl
 
 **[00:47]** "Bulk ordering is fast. Accuracy is guaranteed. Procurement simplified."
 
+</details>
+
 ---
 
-## Flow 10 — Quick Order Pad
+<details>
+<summary>Flow 10 — Quick Order Pad</summary>
 
 **Persona**: Maria (Buyer-Employee)
 
@@ -209,9 +237,12 @@ This file is your **HITL voice recording guide** for all 11 B2B-Commerce demo fl
 
 **[00:48]** "Repeat ordering. Zero friction. Procurement on autopilot."
 
+</details>
+
 ---
 
-## Flow 11 — Invite Employee
+<details>
+<summary>Flow 11 — Invite Employee</summary>
 
 **Persona**: David (Admin)
 
@@ -230,6 +261,8 @@ This file is your **HITL voice recording guide** for all 11 B2B-Commerce demo fl
 **[00:42]** "She clicks Accept Invite. Her account is created and linked to the company — Ready."
 
 **[00:52]** "Token-accept flow is complete and green. Email delivery (SES) is in progress."
+
+</details>
 
 ---
 

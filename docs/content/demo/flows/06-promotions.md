@@ -19,6 +19,8 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 **Duration**: ~2 min
 
+![Cart showing bulk discount auto-applied](pathname:///img/demo/flows/06-promotions/generated-promotions-01-cart.png)
+
 ## Script (voice narration)
 
 **[00:06]** "Promotions auto-apply bulk discounts — savings visible instantly at the cart."

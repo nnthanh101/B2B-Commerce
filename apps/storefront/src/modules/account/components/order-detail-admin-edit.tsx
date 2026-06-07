@@ -26,6 +26,7 @@ const handleSave = async (
   orderId: string,
   drafts: LineItemDraft[]
 ): Promise<HttpTypes.StoreOrder> => {
+  "use server"
   const headers = await getAuthHeaders()
 
   const { order } = await sdk.client.fetch<{ order: HttpTypes.StoreOrder }>(
