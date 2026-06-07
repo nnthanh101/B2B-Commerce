@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL
 const PUBLISHABLE_API_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
-const DEFAULT_REGION = process.env.NEXT_PUBLIC_DEFAULT_REGION || "us"
+const DEFAULT_REGION = process.env.NEXT_PUBLIC_DEFAULT_REGION || "nz" // OceanSoft home market; mirror of NEXT_PUBLIC_DEFAULT_REGION / backend DEFAULT_MARKET
 
 const regionMapCache = {
   regionMap: new Map<string, HttpTypes.StoreRegion>(),

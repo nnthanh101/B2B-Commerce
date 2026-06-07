@@ -16,7 +16,7 @@ last_compiled: "2026-06-07T10:00:00Z"
 
 # Entity: Observability Stack
 
-**Component path**: [`infra/observability/`](../../../infra/observability/)
+**Component path**: [`infra/observability/`](https://github.com/nnthanh101/B2B-Commerce/tree/main/infra/observability)
 
 **Responsibility**: Provides vendor-neutral metrics observability for the B2B-Commerce local stack. Prometheus scrapes four targets; Grafana renders the `commerce.json` dashboard via auto-provisioning. No AWS dependency — runs entirely in Docker on `ec_network`. Cloud promotion path: AWS Managed Prometheus (AMP) + Amazon Managed Grafana at v0.3.
 

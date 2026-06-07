@@ -18,7 +18,7 @@ last_compiled: "2026-06-07T10:00:00Z"
 
 # Entity: Quote Module
 
-**Module path**: [`apps/backend/src/modules/quote`](../../../apps/backend/src/modules/quote)
+**Module path**: [`apps/backend/src/modules/quote`](https://github.com/nnthanh101/B2B-Commerce/tree/main/apps/backend/src/modules/quote)
 
 **Responsibility**: Tracks the lifecycle of a price-negotiation request between a B2B buyer and the merchant. A quote links a Medusa draft order (the cart snapshot) to a negotiation thread of messages and a finite-state status machine.
 

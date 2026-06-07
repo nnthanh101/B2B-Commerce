@@ -24,7 +24,7 @@ last_compiled: "2026-06-07T10:00:00Z"
 
 # Entity: Terraform Workload Modules
 
-**Module path**: [`infra/terraform/aws/modules/`](../../../infra/terraform/aws/modules/)
+**Module path**: [`infra/terraform/aws/modules/`](https://github.com/nnthanh101/B2B-Commerce/tree/main/infra/terraform/aws/modules)
 
 **Responsibility**: Reusable Terraform modules that provision the AWS workload layer. All modules use the S3 remote backend created by the [bootstrap module](./terraform-bootstrap.md). At Phase 1, most are `null_resource` placeholders — real resources are deferred to v0.3 (Deploy phase).
 

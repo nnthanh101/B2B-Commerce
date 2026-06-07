@@ -18,7 +18,7 @@ last_compiled: "2026-06-07T10:00:00Z"
 
 # Entity: Terraform Bootstrap
 
-**Module path**: [`infra/terraform/aws/bootstrap/`](../../../infra/terraform/aws/bootstrap/)
+**Module path**: [`infra/terraform/aws/bootstrap/`](https://github.com/nnthanh101/B2B-Commerce/tree/main/infra/terraform/aws/bootstrap)
 
 **Responsibility**: Creates the S3 Terraform state bucket that all other root modules (`local`, `dev`, `staging`, `prod`) use as their remote backend. The bootstrap module itself uses a local backend — the only module in the repo permitted to do so. This design pattern avoids the self-referential deadlock (see [Concept: Local-First IaC](./local-first-iac.md)).
 

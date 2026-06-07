@@ -21,6 +21,21 @@
 import path from "node:path";
 
 /**
+ * SUPPORTED_MARKETS — Mirror of backend SSOT (from apps/backend/src/config/supported-markets.ts)
+ * Defines the 6-market model: nz, au, sg, vn, us, gb.
+ * Each market has an iso2 code, currency code, name, locale, and FX multiplier.
+ * Tests import this for region validation and seed-time market region creation.
+ */
+export const SUPPORTED_MARKETS = [
+  { iso2: "nz", currency: "nzd", name: "New Zealand", locale: "en-NZ", fx: 1.65 },
+  { iso2: "au", currency: "aud", name: "Australia", locale: "en-AU", fx: 1.50 },
+  { iso2: "sg", currency: "sgd", name: "Singapore", locale: "en-SG", fx: 1.35 },
+  { iso2: "vn", currency: "vnd", name: "Vietnam", locale: "vi-VN", fx: 25000 },
+  { iso2: "us", currency: "usd", name: "United States", locale: "en-US", fx: 1 },
+  { iso2: "gb", currency: "gbp", name: "United Kingdom", locale: "en-GB", fx: 0.80 },
+] as const;
+
+/**
  * Load .env.test if it exists (for local dev convenience).
  * In CI, rely on env var injection instead.
  */
@@ -86,12 +101,25 @@ export const ADMIN_PASSWORD =
 
 /**
  * Regional test variant (storefront URL path prefix)
- * CRITICAL: Must match a seeded region. Seed configures "nz" (Oceania/NZD) as primary + "gb","de","se","fr","es","it" (Europe/EUR).
+ * CRITICAL: Must match a seeded region from SUPPORTED_MARKETS (6-market model).
+ * Supported regions: nz, au, sg, vn, us, gb (from SUPPORTED_MARKETS SSOT).
  * Primary test region is "nz" because OceanSoft is based in Auckland, NZ.
- * The storefront middleware validates country_code against seeded regions; "nz" IS seeded.
+ * The storefront middleware validates country_code against seeded regions.
+ *
+ * Validation: Verify TEST_REGION_COUNTRY is in SUPPORTED_MARKETS.iso2 set.
  */
 export const TEST_REGION_COUNTRY =
   process.env.TEST_REGION_COUNTRY || "nz";
+
+// Validate TEST_REGION_COUNTRY is a supported market
+const supportedIso2Codes = SUPPORTED_MARKETS.map((m) => m.iso2);
+if (!supportedIso2Codes.includes(TEST_REGION_COUNTRY)) {
+  throw new Error(
+    `config.ts: TEST_REGION_COUNTRY="${TEST_REGION_COUNTRY}" is not in SUPPORTED_MARKETS. ` +
+    `Supported regions: ${supportedIso2Codes.join(", ")}. ` +
+    `Set TEST_REGION_COUNTRY to one of these values.`
+  );
+}
 
 /**
  * Feature flags

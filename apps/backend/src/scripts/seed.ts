@@ -40,6 +40,7 @@ import {
   createTaxRegionsWorkflow,
   linkSalesChannelsToApiKeyWorkflow,
   linkSalesChannelsToStockLocationWorkflow,
+  upsertVariantPricesWorkflow,
 } from "@medusajs/medusa/core-flows"
 import { createUserAccountWorkflow } from "@medusajs/core-flows"
 import {
@@ -152,8 +153,21 @@ export default async function seed({
   logger.info("Seeding region data...")
   const regionModule = container.resolve(Modules.REGION)
 
+  // Migration guard: delete legacy "Oceania" and "Europe" regions (from the
+  // old 2-region model) if present so their country assignments do not block
+  // creating the new per-market regions below.
+  for (const legacyName of ["Oceania", "Europe"]) {
+    const legacyRegions = await regionModule.listRegions({ name: legacyName })
+    if (legacyRegions.length > 0) {
+      await regionModule.deleteRegions(legacyRegions.map((r: any) => r.id))
+      logger.info(`Removed legacy region "${legacyName}" (migrating to per-market model).`)
+    }
+  }
+
   // Primary (NZD) region is used later for shipping prices and the demo-b2b cart.
   let defaultRegion: any
+
+  const taxModule = container.resolve(Modules.TAX)
 
   for (const market of SUPPORTED_MARKETS) {
     const existing = await regionModule.listRegions({ name: market.name })
@@ -179,8 +193,16 @@ export default async function seed({
       if (market.iso2 === DEFAULT_MARKET) {
         defaultRegion = result[0]
       }
+    }
 
-      // Tax region per country
+    // Tax region — idempotent: only create if absent (tax regions persist when
+    // their region is deleted, so we must check independently of region existence).
+    const existingTaxRegions = await taxModule.listTaxRegions({
+      country_code: market.iso2,
+    })
+    if (existingTaxRegions.length > 0) {
+      logger.info(`Tax region for ${market.iso2} already exists, skipping.`)
+    } else {
       await createTaxRegionsWorkflow(container).run({
         input: [{ country_code: market.iso2, provider_id: "tp_system" }],
       })
@@ -623,7 +645,115 @@ export default async function seed({
     })
     logger.info("Finished seeding product data.")
   } else {
-    logger.info("Products already exist, skipping creation.")
+    // ── Price refresh guard ───────────────────────────────────────────────────
+    // Products were created before the 6-market model; their variants may carry
+    // a stale currency set (e.g. eur + nzd + usd only). Walk every variant and
+    // replace its prices with the full SSOT 6-currency set derived from the
+    // existing USD price.
+    //
+    // upsertVariantPricesWorkflow semantics:
+    //   - variant_id in previousVariantIds → UPDATE existing price set
+    //   - variant_id NOT in previousVariantIds → CREATE new price set
+    // Since these variants already have price sets, pass all their IDs as
+    // previousVariantIds so the workflow updates rather than creates.
+    //
+    // Running this guard on an already-correct seed is safe:
+    // a second run detects 0 stale/missing currencies and skips those variants.
+    logger.info("Products exist — running price refresh guard for all 6 SSOT currencies...")
+
+    const EXPECTED_CURRENCIES: Set<string> = new Set(
+      SUPPORTED_MARKETS.map((m) => m.currency)
+    )
+
+    // Use the query service to fetch variant prices via the remote link
+    // (variant → price_set → prices). This is the canonical Medusa 2.x approach.
+    const query = container.resolve(ContainerRegistrationKeys.QUERY)
+    const allProducts = await productModule.listProducts(
+      {},
+      { relations: ["variants"] }
+    )
+
+    for (const product of allProducts) {
+      const variants: any[] = (product as any).variants ?? []
+      if (variants.length === 0) continue
+
+      const variantIds = variants.map((v: any) => v.id as string)
+
+      // Fetch variant → price data via the graph query
+      const { data: variantData } = await query.graph({
+        entity: "product_variant",
+        fields: ["id", "sku", "prices.*"],
+        filters: { id: variantIds },
+      })
+
+      // Build a map: variant_id → { baseUsd, currencies }
+      const variantPriceMap: Record<string, { baseUsd: number | null; currencies: Set<string> }> = {}
+      for (const v of variantData as any[]) {
+        const prices: any[] = v.prices ?? []
+        const usdPrice = prices.find((p: any) => p.currency_code === "usd")
+        variantPriceMap[v.id] = {
+          baseUsd: usdPrice ? usdPrice.amount : null,
+          currencies: new Set(prices.map((p: any) => p.currency_code as string)),
+        }
+      }
+
+      // Collect variants that need price refresh.
+      const variantPrices: {
+        variant_id: string
+        product_id: string
+        prices: { currency_code: string; amount: number }[]
+      }[] = []
+      const staleVariantIds: string[] = []
+
+      for (const variant of variants) {
+        const info = variantPriceMap[variant.id]
+        if (!info || info.baseUsd === null) {
+          logger.warn(`Variant ${variant.id} (${variant.sku ?? "?"}) has no USD price — skipping.`)
+          continue
+        }
+
+        const missingCurrencies = [...EXPECTED_CURRENCIES].filter(
+          (c) => !info.currencies.has(c)
+        )
+        const staleCurrencies = [...info.currencies].filter(
+          (c) => !EXPECTED_CURRENCIES.has(c)
+        )
+
+        if (missingCurrencies.length === 0 && staleCurrencies.length === 0) {
+          continue
+        }
+
+        logger.info(
+          `Variant ${variant.id} (${variant.sku ?? "?"}): ` +
+          `missing=[${missingCurrencies.join(",")}] stale=[${staleCurrencies.join(",")}] → refreshing`
+        )
+
+        variantPrices.push({
+          variant_id: variant.id,
+          product_id: product.id,
+          prices: pricesFor(info.baseUsd),
+        })
+        // Mark as existing so upsertVariantPricesWorkflow updates the price set.
+        staleVariantIds.push(variant.id)
+      }
+
+      if (variantPrices.length > 0) {
+        await upsertVariantPricesWorkflow(container).run({
+          input: {
+            variantPrices,
+            // Pass as previousVariantIds so the workflow UPDATES existing price sets
+            // instead of creating new ones.
+            previousVariantIds: staleVariantIds,
+          },
+        })
+        logger.info(
+          `Price refresh complete for "${product.title}" — ` +
+          `${variantPrices.length} variant(s) updated to SSOT 6-currency set.`
+        )
+      }
+    }
+
+    logger.info("Price refresh guard complete.")
   }
 
   // ── D6: Write publishable key into storefront env ─────────────────────────────

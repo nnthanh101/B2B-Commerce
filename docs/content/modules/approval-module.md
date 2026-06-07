@@ -22,7 +22,7 @@ last_compiled: "2026-06-07T10:00:00Z"
 
 # Entity: Approval Module
 
-**Module path**: [`apps/backend/src/modules/approval`](../../../apps/backend/src/modules/approval)
+**Module path**: [`apps/backend/src/modules/approval`](https://github.com/nnthanh101/B2B-Commerce/tree/main/apps/backend/src/modules/approval)
 
 **Responsibility**: Enforces company-level purchase approval gates. Before a B2B cart can be converted to an order, it may require sign-off from a company admin, a sales manager, or both — depending on the company's `ApprovalSettings`. The module tracks each approval request, its type, and its resolution.
 

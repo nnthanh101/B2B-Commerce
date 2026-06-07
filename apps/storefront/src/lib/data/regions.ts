@@ -59,7 +59,7 @@ export const getRegion = async (
 
     const region = countryCode
       ? regionMap.get(countryCode)
-      : regionMap.get("us")
+      : regionMap.get("nz") // OceanSoft home market; mirror of NEXT_PUBLIC_DEFAULT_REGION / backend DEFAULT_MARKET
 
     return region ?? null
   } catch (e: any) {

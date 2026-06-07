@@ -18,7 +18,7 @@ last_compiled: "2026-06-07T10:00:00Z"
 
 # Entity: Company Module
 
-**Module path**: [`apps/backend/src/modules/company`](../../../apps/backend/src/modules/company)
+**Module path**: [`apps/backend/src/modules/company`](https://github.com/nnthanh101/B2B-Commerce/tree/main/apps/backend/src/modules/company)
 
 **Responsibility**: Manages B2B company accounts and their employees, including per-employee spending limits and admin-role flags. This is the identity and authorization spine for all B2B flows — every quote, approval, and bulk order traces back to a Company + Employee pair.
 

@@ -1,0 +1,19 @@
+# act configuration for local CI validation.
+# Usage: act push            — runs quality + build + iac jobs locally
+# Usage: act push --dry-run  — validates workflow structure without execution
+#
+# Image: catthehacker/ubuntu:act-22.04 (medium; ships node + common tooling).
+# pnpm/action-setup + setup-node still install the PINNED versions from ci.yml;
+# this image provides the OS substrate only.
+#
+# Limitation: the 'test' job requires docker compose datastore services
+# (postgres + redis) that act cannot wire automatically. Quality + build + iac
+# jobs validate cleanly; test job will be skipped or fail on docker compose step.
+#
+# Secret file (HITL creates locally — NOT committed to repo):
+#   echo "GITHUB_TOKEN=ghp_..." > .secrets
+#   act push --secret-file .secrets
+--container-architecture linux/amd64
+--bind
+-P ubuntu-latest=catthehacker/ubuntu:act-22.04
+-P ubuntu-22.04=catthehacker/ubuntu:act-22.04

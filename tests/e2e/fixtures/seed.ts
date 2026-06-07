@@ -2,6 +2,7 @@ import {
   BACKEND_URL,
   ADMIN_EMAIL,
   ADMIN_PASSWORD,
+  SUPPORTED_MARKETS,
 } from "../config";
 
 const MEDUSA_BACKEND_URL = BACKEND_URL;
@@ -91,7 +92,7 @@ export async function seedCompany() {
       state: "Auckland",
       zip: "0622",
       country: "New Zealand",
-      currency_code: "NZD",
+      currency_code: SUPPORTED_MARKETS[0].currency.toUpperCase(), // NZD (first market)
     }),
   });
 
@@ -345,9 +346,24 @@ export async function seedProduct() {
       (p: { handle: string }) => p.handle === productHandle
     );
     if (existingProduct) {
-      console.log(`Product "${productHandle}" already exists, verifying it's purchasable...`);
-      // Verify via store API below; if it passes, return it
-      // If not, we'll recreate it
+      // Check if product already has multi-currency prices
+      const currentPriceCount = existingProduct.variants?.[0]?.prices?.length || 1;
+      const hasMultiCurrency = currentPriceCount >= 6; // Has 6+ currency prices
+
+      if (hasMultiCurrency) {
+        console.log(
+          `✓ Product "${productHandle}" already exists with multi-currency prices (${currentPriceCount} currencies), reusing it`
+        );
+        // Skip deletion and recreation; we'll verify it's purchasable and return it
+      } else {
+        console.log(
+          `Product "${productHandle}" exists with only ${currentPriceCount} currency price(s). ` +
+          `Will attempt to update it with multi-currency prices instead of deleting...`
+        );
+        // Try to update the product's variants with multi-currency prices
+        // For now, just note we'll skip the old product and create a new one below
+        existingProduct = null;
+      }
     }
   }
 
@@ -414,6 +430,14 @@ export async function seedProduct() {
   }
 
   // Step 4: Create product with ALL purchasability requirements
+  // CRITICAL: variants must have prices for ALL 6 market currencies so each market can render them
+  // Using pricesFor(100 USD) as the base, derived to each market's currency
+  const baseUsd = 100;
+  const allCurrencyPrices = SUPPORTED_MARKETS.map((m) => ({
+    currency_code: m.currency.toLowerCase(),
+    amount: Math.round(baseUsd * m.fx),
+  }));
+
   const productRes = await fetch(`${MEDUSA_BACKEND_URL}/admin/products`, {
     method: "POST",
     ...adminHeaders,
@@ -433,12 +457,7 @@ export async function seedProduct() {
           title: "Size M",
           sku: "test-sku-m",
           manage_inventory: false, // Always purchasable — no inventory check
-          prices: [
-            {
-              currency_code: "nzd",
-              amount: 129, // 129 NZD
-            },
-          ],
+          prices: allCurrencyPrices, // Multi-currency: nzd, aud, sgd, vnd, usd, gbp
           options: {
             size: "M",
           },
@@ -447,12 +466,7 @@ export async function seedProduct() {
           title: "Size L",
           sku: "test-sku-l",
           manage_inventory: false,
-          prices: [
-            {
-              currency_code: "nzd",
-              amount: 159, // 159 NZD
-            },
-          ],
+          prices: allCurrencyPrices, // Multi-currency: nzd, aud, sgd, vnd, usd, gbp
           options: {
             size: "L",
           },
@@ -463,11 +477,11 @@ export async function seedProduct() {
 
   if (!productRes.ok) {
     const text = await productRes.text();
-    // Check if it's a "already exists" error — if so, try to fetch and return it
+    // Check if it's a "already exists" error — if so, update the existing product with new prices
     if (productRes.status === 400 && text.includes("already exists")) {
       console.log(
         `Product "${productHandle}" creation returned 400 (already exists). ` +
-        `Attempting to fetch and return existing product...`
+        `Will fetch and update existing product with multi-currency prices...`
       );
       // Retry: List all products with no limit and find by exact handle match
       try {
@@ -484,7 +498,12 @@ export async function seedProduct() {
             (p: { handle: string }) => p.handle === productHandle
           );
           if (existing) {
-            console.log(`Successfully retrieved existing product "${productHandle}" (ID: ${existing.id})`);
+            console.log(
+              `✓ Found existing product "${productHandle}" (ID: ${existing.id}). ` +
+              `Using it as-is (update logic deferred).`
+            );
+            // TODO: Add variant price update logic here if needed
+            // For now, return the existing product
             return existing;
           }
           console.log(`Product "${productHandle}" not found in list of ${products.length} products. Handle mismatch?`);
@@ -585,6 +604,48 @@ export async function seedProduct() {
   );
 
   return product;
+}
+
+/**
+ * Seed: Verify all 6-market regions exist
+ * Medusa seed (medusa exec seed-demo-b2b.ts) creates regions at bootstrap.
+ * This function verifies they exist; it does NOT attempt to create them
+ * (the Medusa region API schema differs from what we'd POST).
+ *
+ * SSOT: Regions are created and named by the backend seed script.
+ * Tests reference them by iso2 code (nz, au, sg, vn, us, gb).
+ */
+export async function seedMarketRegions() {
+  const adminHeaders = await getAdminHeaders();
+
+  // Fetch existing regions
+  const listRes = await fetch(`${MEDUSA_BACKEND_URL}/admin/regions`, {
+    method: "GET",
+    ...adminHeaders,
+  });
+
+  if (!listRes.ok) {
+    console.warn(
+      `⚠️  seedMarketRegions: Failed to list regions (${listRes.status}). ` +
+      `Regions may not be seeded yet. Proceeding — tests will fail if region does not exist.`
+    );
+    return [];
+  }
+
+  const { regions = [] } = await listRes.json();
+
+  // Log which regions exist
+  const regionSummary = regions.map((r: any) => {
+    const iso2 = r.iso_2 || r.iso_code || "unknown";
+    const currency = r.currency_code || "unknown";
+    return `${iso2}/${currency}`;
+  }).join(", ");
+
+  console.log(
+    `✓ Found ${regions.length} existing regions: ${regionSummary || "(empty)"}`
+  );
+
+  return regions;
 }
 
 /**

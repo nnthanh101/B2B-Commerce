@@ -22,7 +22,7 @@ This section contains the demo artifacts for B2B-Commerce: narrated flows, perso
 | [Personas: Buyer](./personas/buyer.md) | Buyer-employee persona playbook |
 | [Personas: Admin](./personas/admin.md) | Admin / sales-manager persona playbook |
 | [Personas: Sales Manager](./personas/sales-manager.md) | Sales manager persona |
-| [Demo Flows](./flows/) | Individual flow playbooks (11 flows) |
+| [Demo Flows](./flows/index.md) | Individual flow playbooks (11 flows) |
 
 ## Quick Start
 

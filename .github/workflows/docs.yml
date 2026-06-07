@@ -21,6 +21,7 @@ on:
   push:
     branches:
       - main
+      - b2b
     paths:
       - "docs/content/**"
       - ".github/workflows/docs.yml"
@@ -63,8 +64,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: "npm"
-          cache-dependency-path: _engine/.claude/plugins/commerce/templates/docusaurus/package-lock.json
 
       - name: Install engine dependencies
         working-directory: _engine/.claude/plugins/commerce/templates/docusaurus

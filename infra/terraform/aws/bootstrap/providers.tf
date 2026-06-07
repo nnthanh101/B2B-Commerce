@@ -32,13 +32,13 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Application      = var.project
-      Environment      = var.environment
-      Service          = "backend"
-      ManagedBy        = "terraform"
-      Owner            = "team-commerce@oceansoft.io"
-      CostCenter       = "CC-COMMERCE-001"
-      Compliance       = "n/a"
+      Application        = var.project
+      Environment        = var.environment
+      Service            = "backend"
+      ManagedBy          = "terraform"
+      Owner              = "team-commerce@oceansoft.io"
+      CostCenter         = "CC-COMMERCE-001"
+      Compliance         = "n/a"
       DataClassification = "internal"
     }
   }
