@@ -42,6 +42,11 @@ import {
   linkSalesChannelsToStockLocationWorkflow,
 } from "@medusajs/medusa/core-flows"
 import { createUserAccountWorkflow } from "@medusajs/core-flows"
+import {
+  SUPPORTED_MARKETS,
+  DEFAULT_MARKET,
+  pricesFor,
+} from "../config/supported-markets"
 
 // SEED_IMAGE_BASE_URL controls where product images are fetched from at seed time.
 // Default: local B2B-Commerce /static directory (offline-safe, no S3 dependency).
@@ -51,6 +56,7 @@ import { createUserAccountWorkflow } from "@medusajs/core-flows"
 const IMG =
   process.env.SEED_IMAGE_BASE_URL?.replace(/\/$/, "") ||
   "http://localhost:9000/static"
+const WAREHOUSE_COUNTRY = process.env.WAREHOUSE_COUNTRY || "NZ"
 
 export default async function seed({
   container,
@@ -62,12 +68,6 @@ export default async function seed({
   const fulfillmentModuleService = container.resolve(
     ModuleRegistrationName.FULFILLMENT
   )
-
-  // Oceania (primary demo region: NZ/NZD) — NZ lives in a separate NZD region
-  // so it is deliberately excluded from the "Europe" country list below.
-  const nzCountries = ["nz"]
-  const euCountries = ["gb", "de", "se", "fr", "es", "it"]
-  const countries = [...nzCountries, ...euCountries]
 
   // ── Sales channel ────────────────────────────────────────────────────────────
   logger.info("Seeding store data...")
@@ -135,20 +135,10 @@ export default async function seed({
         stores: [
           {
             name: "Default Store",
-            supported_currencies: [
-              {
-                currency_code: "nzd",
-                is_default: true,
-              },
-              {
-                currency_code: "eur",
-                is_default: false,
-              },
-              {
-                currency_code: "usd",
-                is_default: false,
-              },
-            ],
+            supported_currencies: SUPPORTED_MARKETS.map((m) => ({
+              currency_code: m.currency,
+              is_default: m.iso2 === DEFAULT_MARKET,
+            })),
             default_sales_channel_id: defaultSalesChannel.id,
           },
         ],
@@ -158,68 +148,46 @@ export default async function seed({
     logger.info("Store already exists, skipping creation.")
   }
 
-  // ── Regions ───────────────────────────────────────────────────────────────────
+  // ── Regions — one per market (SSOT: SUPPORTED_MARKETS) ───────────────────────
   logger.info("Seeding region data...")
   const regionModule = container.resolve(Modules.REGION)
 
-  // Primary demo region: Oceania (NZD) — OceanSoft HQ is Auckland, NZ.
-  const existingOceaniaRegions = await regionModule.listRegions({ name: "Oceania" })
-  let region: any
-  if (existingOceaniaRegions.length > 0) {
-    logger.info("Oceania region already exists, skipping creation.")
-    region = existingOceaniaRegions[0]
-  } else {
-    const { result: oceaniaResult } = await createRegionsWorkflow(container).run({
-      input: {
-        regions: [
-          {
-            name: "Oceania",
-            currency_code: "nzd",
-            countries: nzCountries,
-            payment_providers: ["pp_system_default"],
-          },
-        ],
-      },
-    })
-    region = oceaniaResult[0]
-    logger.info("Oceania (NZD) region created.")
+  // Primary (NZD) region is used later for shipping prices and the demo-b2b cart.
+  let defaultRegion: any
 
-    logger.info("Seeding NZ tax region...")
-    await createTaxRegionsWorkflow(container).run({
-      input: nzCountries.map((country_code) => ({
-        country_code,
-        provider_id: "tp_system",
-      })),
-    })
+  for (const market of SUPPORTED_MARKETS) {
+    const existing = await regionModule.listRegions({ name: market.name })
+    if (existing.length > 0) {
+      logger.info(`${market.name} region already exists, skipping creation.`)
+      if (market.iso2 === DEFAULT_MARKET) {
+        defaultRegion = existing[0]
+      }
+    } else {
+      const { result } = await createRegionsWorkflow(container).run({
+        input: {
+          regions: [
+            {
+              name: market.name,
+              currency_code: market.currency,
+              countries: [market.iso2],
+              payment_providers: ["pp_system_default"],
+            },
+          ],
+        },
+      })
+      logger.info(`${market.name} (${market.currency.toUpperCase()}) region created.`)
+      if (market.iso2 === DEFAULT_MARKET) {
+        defaultRegion = result[0]
+      }
+
+      // Tax region per country
+      await createTaxRegionsWorkflow(container).run({
+        input: [{ country_code: market.iso2, provider_id: "tp_system" }],
+      })
+      logger.info(`Tax region seeded for ${market.iso2}.`)
+    }
   }
 
-  // Secondary region: Europe (EUR)
-  const existingEuropeRegions = await regionModule.listRegions({ name: "Europe" })
-  if (existingEuropeRegions.length === 0) {
-    await createRegionsWorkflow(container).run({
-      input: {
-        regions: [
-          {
-            name: "Europe",
-            currency_code: "eur",
-            countries: euCountries,
-            payment_providers: ["pp_system_default"],
-          },
-        ],
-      },
-    })
-    logger.info("Europe (EUR) region created.")
-
-    logger.info("Seeding EU tax regions...")
-    await createTaxRegionsWorkflow(container).run({
-      input: euCountries.map((country_code) => ({
-        country_code,
-        provider_id: "tp_system",
-      })),
-    })
-  } else {
-    logger.info("Europe region already exists, skipping creation.")
-  }
   logger.info("Finished seeding regions.")
 
   // ── Stock location ────────────────────────────────────────────────────────────
@@ -242,7 +210,7 @@ export default async function seed({
               name: "European Warehouse",
               address: {
                 city: "Auckland",
-                country_code: "NZ",
+                country_code: WAREHOUSE_COUNTRY,
                 address_1: "",
               },
             },
@@ -281,9 +249,9 @@ export default async function seed({
         type: "shipping",
         service_zones: [
           {
-            name: "Europe",
-            geo_zones: countries.map((country_code) => ({
-              country_code,
+            name: "Global",
+            geo_zones: SUPPORTED_MARKETS.map((m) => ({
+              country_code: m.iso2,
               type: "country" as const,
             })),
           },
@@ -299,12 +267,10 @@ export default async function seed({
       },
     })
 
-    const shippingOptionPrices = [
-      { currency_code: "nzd", amount: 15 },
-      { currency_code: "usd", amount: 10 },
-      { currency_code: "eur", amount: 10 },
-      { region_id: region.id, amount: 15 },
-    ]
+    // Shipping prices: one per supported currency (via SSOT pricesFor)
+    // Standard shipping base = $10 USD; Express base = $18 USD.
+    const standardShippingPrices = pricesFor(10)
+    const expressShippingPrices = pricesFor(18)
 
     await createShippingOptionsWorkflow(container).run({
       input: [
@@ -319,7 +285,7 @@ export default async function seed({
             description: "Ship in 2-3 days.",
             code: "standard",
           },
-          prices: shippingOptionPrices,
+          prices: standardShippingPrices,
           rules: [
             { attribute: "enabled_in_store", value: "true", operator: "eq" },
             { attribute: "is_return", value: "false", operator: "eq" },
@@ -336,7 +302,7 @@ export default async function seed({
             description: "Ship in 24 hours.",
             code: "express",
           },
-          prices: shippingOptionPrices,
+          prices: expressShippingPrices,
           rules: [
             { attribute: "enabled_in_store", value: "true", operator: "eq" },
             { attribute: "is_return", value: "false", operator: "eq" },
@@ -418,22 +384,14 @@ export default async function seed({
                 sku: "256-BLUE",
                 options: { Storage: "256 GB", Color: "Blue" },
                 manage_inventory: false,
-                prices: [
-                  { amount: 1999, currency_code: "nzd" },
-                  { amount: 1299, currency_code: "eur" },
-                  { amount: 1299, currency_code: "usd" },
-                ],
+                prices: pricesFor(1299),
               },
               {
                 title: "512 GB / Red",
                 sku: "512-RED",
                 options: { Storage: "512 GB", Color: "Red" },
                 manage_inventory: false,
-                prices: [
-                  { amount: 1949, currency_code: "nzd" },
-                  { amount: 1259, currency_code: "eur" },
-                  { amount: 1259, currency_code: "usd" },
-                ],
+                prices: pricesFor(1259),
               },
             ],
             sales_channels: sc,
@@ -456,22 +414,14 @@ export default async function seed({
                 sku: "WEBCAM-BLACK",
                 options: { Color: "Black" },
                 manage_inventory: false,
-                prices: [
-                  { amount: 99, currency_code: "nzd" },
-                  { amount: 59, currency_code: "eur" },
-                  { amount: 59, currency_code: "usd" },
-                ],
+                prices: pricesFor(59),
               },
               {
                 title: "Webcam White",
                 sku: "WEBCAM-WHITE",
                 options: { Color: "White" },
                 manage_inventory: false,
-                prices: [
-                  { amount: 109, currency_code: "nzd" },
-                  { amount: 65, currency_code: "eur" },
-                  { amount: 65, currency_code: "usd" },
-                ],
+                prices: pricesFor(65),
               },
             ],
             sales_channels: sc,
@@ -499,22 +449,14 @@ export default async function seed({
                 sku: "PHONE-256-PURPLE",
                 options: { Memory: "256 GB", Color: "Purple" },
                 manage_inventory: false,
-                prices: [
-                  { amount: 1599, currency_code: "nzd" },
-                  { amount: 999, currency_code: "eur" },
-                  { amount: 999, currency_code: "usd" },
-                ],
+                prices: pricesFor(999),
               },
               {
                 title: "256 GB Red",
                 sku: "PHONE-256-RED",
                 options: { Memory: "256 GB", Color: "Red" },
                 manage_inventory: false,
-                prices: [
-                  { amount: 1549, currency_code: "nzd" },
-                  { amount: 959, currency_code: "eur" },
-                  { amount: 959, currency_code: "usd" },
-                ],
+                prices: pricesFor(959),
               },
             ],
             sales_channels: sc,
@@ -539,22 +481,14 @@ export default async function seed({
                 sku: "ACME-MONITOR-WHITE",
                 options: { Color: "White" },
                 manage_inventory: false,
-                prices: [
-                  { amount: 999, currency_code: "nzd" },
-                  { amount: 599, currency_code: "eur" },
-                  { amount: 599, currency_code: "usd" },
-                ],
+                prices: pricesFor(599),
               },
               {
                 title: "Monitor Black",
                 sku: "ACME-MONITOR-BLACK",
                 options: { Color: "Black" },
                 manage_inventory: false,
-                prices: [
-                  { amount: 999, currency_code: "nzd" },
-                  { amount: 599, currency_code: "eur" },
-                  { amount: 599, currency_code: "usd" },
-                ],
+                prices: pricesFor(599),
               },
             ],
             sales_channels: sc,
@@ -579,22 +513,14 @@ export default async function seed({
                 sku: "HEADPHONE-BLACK",
                 options: { Color: "Black" },
                 manage_inventory: false,
-                prices: [
-                  { amount: 249, currency_code: "nzd" },
-                  { amount: 149, currency_code: "eur" },
-                  { amount: 149, currency_code: "usd" },
-                ],
+                prices: pricesFor(149),
               },
               {
                 title: "Headphone White",
                 sku: "HEADPHONE-WHITE",
                 options: { Color: "White" },
                 manage_inventory: false,
-                prices: [
-                  { amount: 249, currency_code: "nzd" },
-                  { amount: 149, currency_code: "eur" },
-                  { amount: 149, currency_code: "usd" },
-                ],
+                prices: pricesFor(149),
               },
             ],
             sales_channels: sc,
@@ -618,22 +544,14 @@ export default async function seed({
                 sku: "KEYBOARD-BLACK",
                 options: { Color: "Black" },
                 manage_inventory: false,
-                prices: [
-                  { amount: 159, currency_code: "nzd" },
-                  { amount: 99, currency_code: "eur" },
-                  { amount: 99, currency_code: "usd" },
-                ],
+                prices: pricesFor(99),
               },
               {
                 title: "Keyboard White",
                 sku: "KEYBOARD-WHITE",
                 options: { Color: "White" },
                 manage_inventory: false,
-                prices: [
-                  { amount: 159, currency_code: "nzd" },
-                  { amount: 99, currency_code: "eur" },
-                  { amount: 99, currency_code: "usd" },
-                ],
+                prices: pricesFor(99),
               },
             ],
             sales_channels: sc,
@@ -657,22 +575,14 @@ export default async function seed({
                 sku: "MOUSE-BLACK",
                 options: { Color: "Black" },
                 manage_inventory: false,
-                prices: [
-                  { amount: 129, currency_code: "nzd" },
-                  { amount: 79, currency_code: "eur" },
-                  { amount: 79, currency_code: "usd" },
-                ],
+                prices: pricesFor(79),
               },
               {
                 title: "Mouse White",
                 sku: "MOUSE-WHITE",
                 options: { Color: "White" },
                 manage_inventory: false,
-                prices: [
-                  { amount: 129, currency_code: "nzd" },
-                  { amount: 79, currency_code: "eur" },
-                  { amount: 79, currency_code: "usd" },
-                ],
+                prices: pricesFor(79),
               },
             ],
             sales_channels: sc,
@@ -696,22 +606,14 @@ export default async function seed({
                 sku: "SPEAKER-BLACK",
                 options: { Color: "Black" },
                 manage_inventory: false,
-                prices: [
-                  { amount: 129, currency_code: "nzd" },
-                  { amount: 79, currency_code: "eur" },
-                  { amount: 79, currency_code: "usd" },
-                ],
+                prices: pricesFor(79),
               },
               {
                 title: "Speaker White",
                 sku: "SPEAKER-WHITE",
                 options: { Color: "White" },
                 manage_inventory: false,
-                prices: [
-                  { amount: 89, currency_code: "nzd" },
-                  { amount: 55, currency_code: "eur" },
-                  { amount: 55, currency_code: "usd" },
-                ],
+                prices: pricesFor(55),
               },
             ],
             sales_channels: sc,

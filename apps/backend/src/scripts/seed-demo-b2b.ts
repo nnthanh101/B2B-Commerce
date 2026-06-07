@@ -36,6 +36,7 @@ import {
   ContainerRegistrationKeys,
   Modules,
 } from "@medusajs/framework/utils"
+import { SUPPORTED_MARKETS } from "../config/supported-markets"
 import {
   createOrdersWorkflow,
   createOrderWorkflow,
@@ -64,6 +65,21 @@ const DEMO_COMPANY_NAME = "Demo Corp"
 const DEMO_COMPANY_EMAIL = "contact@democorp.local"
 const DEMO_BUYER_EMAIL = "demo-buyer@democorp.local"
 const DEMO_BUYER_PASSWORD = "Test1234!"
+const DEMO_COUNTRY = process.env.DEMO_COMPANY_COUNTRY || "nz"
+const DEMO_CURRENCY = process.env.DEMO_COMPANY_CURRENCY || "nzd"
+
+// Validate DEMO_COUNTRY is a known market iso2 — fail fast with a clear message.
+const validIso2s = SUPPORTED_MARKETS.map((m) => m.iso2) as readonly string[]
+if (!validIso2s.includes(DEMO_COUNTRY)) {
+  throw new Error(
+    `DEMO_COMPANY_COUNTRY="${DEMO_COUNTRY}" is not a supported market. ` +
+    `Valid values: ${validIso2s.join(", ")}`
+  )
+}
+
+// Derive the region name and currency from SUPPORTED_MARKETS so the region
+// lookup below matches the name created by seed.ts.
+const demoMarket = SUPPORTED_MARKETS.find((m) => m.iso2 === DEMO_COUNTRY)!
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 
@@ -110,9 +126,9 @@ export default async function seedDemoB2B({
           city: "Auckland",
           state: "Auckland",
           zip: "0622",
-          country: "nz",
+          country: DEMO_COUNTRY,
           logo_url: null,
-          currency_code: "nzd",
+          currency_code: DEMO_CURRENCY,
           spending_limit_reset_frequency:
             ModuleCompanySpendingLimitResetFrequency.MONTHLY,
         },
@@ -428,24 +444,22 @@ export default async function seedDemoB2B({
   const regionModule = container.resolve(Modules.REGION)
   const regions = await regionModule.listRegions()
 
-  // CRITICAL: Find the Oceania (NZD) region.
-  // listRegions() does NOT populate the countries relationship, so we cannot
-  // filter by iso_2. Instead: look up by name "Oceania" (created by seed.ts)
-  // then fall back to country-filter approach and finally first region.
-  const oceaniaRegions = await regionModule.listRegions({ name: "Oceania" })
-  let region = oceaniaRegions.length > 0 ? oceaniaRegions[0] : null
+  // Find the region for the demo market by the exact name created by seed.ts
+  // (e.g. "New Zealand" for iso2="nz"). Falls back to country-filter then first region.
+  const marketRegions = await regionModule.listRegions({ name: demoMarket.name })
+  let region = marketRegions.length > 0 ? marketRegions[0] : null
 
   if (!region) {
     // Secondary fallback: country relationship check (may work if populated)
     region = regions.find((r: any) =>
-      r.countries?.some((c: any) => c.iso_2 === "nz")
+      r.countries?.some((c: any) => c.iso_2 === DEMO_COUNTRY)
     ) ?? null
   }
 
   if (!region) {
     logger.warn(
-      "WARNING: No Oceania (nz) region found. Using first region. " +
-      "Demo quotes/orders will NOT be in NZD."
+      `WARNING: No ${demoMarket.name} (${DEMO_COUNTRY}) region found. Using first region. ` +
+      `Demo quotes/orders may NOT be in ${DEMO_CURRENCY.toUpperCase()}.`
     )
     region = regions[0]
   }

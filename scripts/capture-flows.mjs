@@ -19,22 +19,24 @@ import fs from "node:fs";
 const REPO_ROOT = "/Volumes/Working/projects/B2B-Commerce";
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:9000";
 const STOREFRONT_URL = process.env.STOREFRONT_URL || "http://localhost:8000";
+const REGION = process.env.CAPTURE_REGION || process.env.TEST_REGION_COUNTRY || "nz";
+const EXPECTED_CURRENCY = process.env.CAPTURE_CURRENCY || "NZ$";
 const DEMO_BUYER_EMAIL = "demo-buyer@democorp.local";
 const DEMO_BUYER_PASSWORD = "Test1234!";
 const FLOWS_DIR = path.join(REPO_ROOT, "tmp/B2B-Commerce/demo/flows");
 
 // Flows: [num, slug, persona, path, description]
 const FLOWS = [
-  ["01", "cart-to-quote", "buyer-employee", "/nz/cart", "Maria converts cart to quote"],
+  ["01", "cart-to-quote", "buyer-employee", `/${REGION}/cart`, "Maria converts cart to quote"],
   ["02", "approval", "admin", "/app/approvals", "David approves/rejects quote"],
   ["03", "company-mgmt", "admin", "/app/companies", "David manages company members"],
-  ["04", "spending-limit", "buyer-employee", "/nz/cart", "Maria checks spending limit"],
+  ["04", "spending-limit", "buyer-employee", `/${REGION}/cart`, "Maria checks spending limit"],
   ["05", "quote-negotiate", "sales-manager", "/app/quotes", "Sofia negotiates quote price"],
-  ["06", "promotions", "buyer-employee", "/nz", "Maria sees auto-applied discounts"],
-  ["07", "full-ecommerce", "buyer-employee", "/nz", "Maria browses and checks out"],
+  ["06", "promotions", "buyer-employee", `/${REGION}`, "Maria sees auto-applied discounts"],
+  ["07", "full-ecommerce", "buyer-employee", `/${REGION}`, "Maria browses and checks out"],
   ["08", "order-edit", "admin", "/app/orders", "David edits order post-placement"],
-  ["09", "bulk-add", "buyer-employee", "/nz/cart", "Maria bulk-adds items"],
-  ["10", "quick-order-pad", "buyer-employee", "/nz/quickorder", "Maria uses quick-order pad"],
+  ["09", "bulk-add", "buyer-employee", `/${REGION}/cart`, "Maria bulk-adds items"],
+  ["10", "quick-order-pad", "buyer-employee", `/${REGION}/quickorder`, "Maria uses quick-order pad"],
   ["11", "invite-employee", "admin", "/app/employees", "David invites employee via token"],
 ];
 
@@ -103,7 +105,7 @@ async function captureFlow(flow) {
   try {
     // Determine if admin or buyer flow
     const isAdmin = persona === "admin" || urlPath.includes("/app/");
-    const isStorefront = urlPath.includes("/nz") || urlPath.includes("/gb");
+    const isStorefront = urlPath.includes(`/${REGION}`);
 
     let token = "";
     if (isAdmin) {
@@ -148,8 +150,8 @@ async function captureFlow(flow) {
       });
       pricesFound = priceTexts;
 
-      // Check if any price contains EUR (bad) or lacks NZD (warning)
-      currencyIssue = priceTexts.some(p => p.includes("€") || p.includes("EUR"));
+      // Check if any price is missing the expected currency symbol (foreign currency = bad)
+      currencyIssue = priceTexts.length > 0 && priceTexts.every(p => !p.includes(EXPECTED_CURRENCY));
     }
 
     // Capture screenshot
@@ -172,7 +174,7 @@ async function captureFlow(flow) {
       content_checks: {
         prices_found: pricesFound.length,
         error_markers_found: errorMarkersFound,
-        currency_check: hasEUR ? "EUR_FOUND" : "NZD",
+        currency_check: hasEUR ? "FOREIGN_CURRENCY" : EXPECTED_CURRENCY,
       },
       error_markers_found: errorMarkersFound,
       verdict,

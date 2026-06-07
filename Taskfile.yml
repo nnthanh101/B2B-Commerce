@@ -233,18 +233,19 @@ tasks:
   #   PRIVATE engine  → .claude/plugins/commerce/templates/docusaurus/
   #                      (config, sidebars, package.json, components, scripts)
   #   PUBLIC content  → docs/content/   (MIT-licensed compiled markdown)
-  #   Build output    → docs/build/     (gitignored; created at build time)
+  #   Build output    → docs/site/      (gitignored; created at build time)
   #
   # All npm commands run INSIDE a node:22 container; npm is blocked on the host.
-  # Both volumes are mounted so the container sees:
+  # Container mount geometry (EBUSY-safe: out-dir is a subdir of the mount root):
   #   /docs          ← private template (Docusaurus root + package.json)
   #   /docs/content  ← public content (docs/content/ bind-mounted over it)
-  #   /docs/build    ← output bind-mounted to docs/build/
+  #   /site_out      ← host docs/ bind-mounted here; engine writes /site_out/site
+  #                    → host receives output at docs/site/ (never mount docs/site
+  #                      directly — that would make out-dir == mount root = EBUSY)
   #
-  # CI DEFERRED: docs:build requires the private .claude framework in the runner.
-  # GitHub Actions cannot pull the private template from a public runner without
-  # credentials; wire CI only after the private template is available as an
-  # authenticated registry package or submodule in the runner image.
+  # CI: .github/workflows/docs.yml — PAT sparse-checkout of private engine,
+  # public content copy, npm ci + build, upload-pages-artifact → deploy-pages.
+  # ADLC_FRAMEWORK_PAT secret required (fine-grained read-only, adlc-framework).
   # ---------------------------------------------------------------------------
 
   docs:install:
@@ -259,17 +260,18 @@ tasks:
         npm install
 
   docs:build:
-    desc: "Build Docusaurus static site (private engine + public content) → docs/build/"
+    desc: "Build Docusaurus static site (private engine + public content) → docs/site/"
     vars:
       DOCS_TMPL: "{{.ROOT_DIR}}/.claude/plugins/commerce/templates/docusaurus"
       DOCS_CONTENT: "{{.ROOT_DIR}}/docs/content"
-      DOCS_OUT: "{{.ROOT_DIR}}/docs/build"
+      # Mount host docs/ → /site_out; engine writes /site_out/site → host docs/site/
+      # (registry exemption: upstream node toolchain; no nnthanh101/* node image available)
+      DOCS_PARENT: "{{.ROOT_DIR}}/docs"
     cmds:
-      - mkdir -p "{{.DOCS_OUT}}"
       - docker run --rm
         -v "{{.DOCS_TMPL}}:/docs"
         -v "{{.DOCS_CONTENT}}:/docs/content"
-        -v "{{.DOCS_OUT}}:/docs/build"
+        -v "{{.DOCS_PARENT}}:/site_out"
         -w /docs
         -e ENABLE_DOCS_MCP=false
         -e ENABLE_DOCS_FASTER=false

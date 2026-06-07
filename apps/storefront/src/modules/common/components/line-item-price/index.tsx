@@ -42,7 +42,7 @@ const LineItemPrice = ({
             >
               {convertToLocale({
                 amount: originalPrice,
-                currency_code: currencyCode ?? "eur",
+                currency_code: currencyCode,
               })}
             </span>
 
@@ -51,7 +51,7 @@ const LineItemPrice = ({
                 -
                 {convertToLocale({
                   amount: adjustmentsSum,
-                  currency_code: currencyCode ?? "eur",
+                  currency_code: currencyCode,
                 })}
               </span>
             )}
@@ -60,7 +60,7 @@ const LineItemPrice = ({
         <span className="text-base-regular" data-testid="product-price">
           {convertToLocale({
             amount: currentPrice,
-            currency_code: currencyCode ?? "eur",
+            currency_code: currencyCode,
           })}
         </span>
       </span>

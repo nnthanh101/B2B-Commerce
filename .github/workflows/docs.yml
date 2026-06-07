@@ -1,0 +1,103 @@
+# docs.yml — Build private-engine Docusaurus and deploy to GitHub Pages
+#
+# SETUP REQUIRED (one-time, HITL):
+#   1. Create a fine-grained PAT on adlc-framework repo:
+#      • Repository access: adlc-framework only
+#      • Permission: Contents = Read-only (no write, no actions)
+#      • Expiry: ≤ 90 days; set a calendar reminder to rotate
+#   2. Add the PAT as a repo secret named ADLC_FRAMEWORK_PAT
+#      (Settings → Secrets and variables → Actions → New repository secret)
+#      OR for local `act` use: --secret-file .secrets  (see .secrets.example)
+#   3. Enable Pages: Settings → Pages → Source = GitHub Actions
+#
+# LOCAL TESTING WITH act:
+#   act push -W .github/workflows/docs.yml --secret-file .secrets
+#   The BUILD job runs locally.
+#   The DEPLOY job is GitHub-only (OIDC + Pages environment not emulated by act).
+
+name: Docs — Build and Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/content/**"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Prevent concurrent deploys; allow an in-progress build to complete.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Docusaurus site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout public repo (default token)
+        uses: actions/checkout@v4
+
+      # Sparse-checkout the private engine from adlc-framework.
+      # ADLC_FRAMEWORK_PAT must be a fine-grained PAT scoped to adlc-framework
+      # with Contents: Read-only.  Set this repo secret (fine-grained PAT,
+      # Contents:Read-only on adlc-framework) OR for local `act` use
+      # --secret-file .secrets
+      - name: Checkout private Docusaurus engine (sparse)
+        uses: actions/checkout@v4
+        with:
+          repository: 1xOps/adlc-framework
+          token: ${{ secrets.ADLC_FRAMEWORK_PAT }}
+          sparse-checkout: |
+            .claude/plugins/commerce/templates/docusaurus
+          sparse-checkout-cone-mode: false
+          path: _engine
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: _engine/.claude/plugins/commerce/templates/docusaurus/package-lock.json
+
+      - name: Install engine dependencies
+        working-directory: _engine/.claude/plugins/commerce/templates/docusaurus
+        run: npm ci
+
+      - name: Copy public content into engine content path
+        run: |
+          cp -r docs/content/. \
+            _engine/.claude/plugins/commerce/templates/docusaurus/content/
+
+      - name: Build Docusaurus site
+        # The engine npm run build uses --out-dir /site_out/site (Docker bind-mount path).
+        # In CI there is no bind-mount, so we call docusaurus build directly with an
+        # absolute workspace path as the out-dir.
+        working-directory: _engine/.claude/plugins/commerce/templates/docusaurus
+        run: npx docusaurus build --out-dir ${{ github.workspace }}/docs/site
+        env:
+          NODE_ENV: production
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    # OIDC deployment — no PAT needed for this job.
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

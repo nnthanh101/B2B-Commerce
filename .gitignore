@@ -78,5 +78,8 @@ tags_test.tftest.hcl
 
 # Docusaurus docs/ (build artifacts only — source is tracked)
 docs/node_modules/
-docs/build/
+docs/site/
 docs/.docusaurus/
+
+# act secret file — NEVER commit real tokens; copy from .secrets.example
+.secrets
