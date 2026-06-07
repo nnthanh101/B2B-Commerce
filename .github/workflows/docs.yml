@@ -60,10 +60,22 @@ jobs:
           repository: 1xOps/adlc-framework
           token: ${{ secrets.ADLC_FRAMEWORK_PAT }}
           # cone-mode: false required — cone mode silently excludes dotfile dirs (.claude/) at repo root.
+          # Two-line form: /** covers nested files; trailing slash covers files directly in the dir root.
           sparse-checkout: |
-            .claude/plugins/commerce/templates/docusaurus
+            .claude/plugins/commerce/templates/docusaurus/**
+            .claude/plugins/commerce/templates/docusaurus/
           sparse-checkout-cone-mode: false
           path: _engine
+
+      # ACT-only fallback: adlc-framework remote is behind local commits.
+      # _engine_src/ is pre-populated from local adlc-framework (gitignored; act --bind exposes it).
+      # Remove this step once adlc-framework is pushed to GitHub and sparse-checkout materialises files.
+      - name: Populate engine from local workspace copy (act only)
+        if: ${{ env.ACT == 'true' }}
+        run: |
+          mkdir -p _engine/.claude/plugins/commerce/templates
+          cp -r _engine_src/.claude/plugins/commerce/templates/docusaurus \
+            _engine/.claude/plugins/commerce/templates/docusaurus
 
       - name: Set up Node 22
         uses: actions/setup-node@v4
@@ -92,6 +104,7 @@ jobs:
           NODE_ENV: production
 
       - name: Upload Pages artifact
+        if: ${{ !env.ACT }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs/site

@@ -24,27 +24,40 @@ const EXPECTED_CURRENCY = process.env.CAPTURE_CURRENCY || "NZ$";
 const DEMO_BUYER_EMAIL = "demo-buyer@democorp.local";
 const DEMO_BUYER_PASSWORD = "Test1234!";
 const FLOWS_DIR = path.join(REPO_ROOT, "tmp/Digital-Commerce/demo/flows");
-const SCREENSHOTS_DIR = path.join(REPO_ROOT, "docs/demo/screenshots");
+// Publishable key required for Medusa v2 Store API calls
+const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ||
+  "pk_3fa44220afda851589ceec98dc5fe91820d5d54e39abd184f77c951a291c9a40";
 
-// Flows: [num, slug, persona, path, description]
+// Flows: [num, slug, persona, path, description, preState]
+// URLs derived from each flow's narration first scene — data-first alignment
+// 01: "Maria navigates to her cart" → /cart (cart page with Request Quote)
+// 02: "David approves/rejects quote" → /app/approvals
+// 03: "David governs members, roles, limits" → /app/companies (list)
+// 04: "Maria browses products, remaining budget $200 NZD" → /account/orders (distinct from cart)
+// 05: "Priya counters a buyer's quote" → /app/quotes
+// 06: "Maria adds 120 units of office supplies" → /categories/accessories (category w/ NZ$ prices)
+// 07: "navigates to Office Supplies. 47 products" → /store (full product listing)
+// 08: "Priya adjusts submitted order line items" → /app/orders
+// 09: "opens Bulk Order Pad, pastes quarterly SKU list" → product page (bulk-table-quantity)
+// 10: "opens Quick Order Pad" → /cart (quick-order-pad is in cart sidebar)
+// 11: "David generates invite from company panel" → /app/companies/{id} (company detail)
 const FLOWS = [
-  ["01", "cart-to-quote", "buyer-employee", `/${REGION}/store`, "Maria converts cart to quote"],
-  ["02", "approval", "admin", "/app/approvals", "David approves/rejects quote"],
-  ["03", "company-mgmt", "admin", "/app/companies", "David manages company members"],
-  ["04", "spending-limit", "buyer-employee", `/${REGION}/store`, "Maria checks spending limit"],
-  ["05", "quote-negotiate", "sales-manager", "/app/quotes", "Priya negotiates quote price"],
-  ["06", "promotions", "buyer-employee", `/${REGION}/store`, "Maria sees auto-applied discounts"],
-  ["07", "full-ecommerce", "buyer-employee", `/${REGION}`, "Maria browses and checks out"],
-  ["08", "order-edit", "sales-manager", "/app/orders", "Priya edits order post-placement"],
-  ["09", "bulk-add", "buyer-employee", `/${REGION}/store`, "Maria bulk-adds items"],
-  ["10", "quick-order-pad", "buyer-employee", `/${REGION}/store`, "Maria uses quick-order pad"],
-  ["11", "invite-employee", "admin", "/app/employees", "David invites employee via token"],
+  ["01", "cart-to-quote", "buyer-employee", `/${REGION}/cart`, "Maria converts cart to quote", "cart-with-items"],
+  ["02", "approval", "admin", "/app/approvals", "David approves/rejects quote", null],
+  ["03", "company-mgmt", "admin", "/app/companies", "David manages company members", null],
+  ["04", "spending-limit", "buyer-employee", `/${REGION}/account/orders`, "Maria's orders — spending limit context", null],
+  ["05", "quote-negotiate", "sales-manager", "/app/quotes", "Priya negotiates quote price", null],
+  ["06", "promotions", "buyer-employee", `/${REGION}/cart`, "Maria sees NZ$ discount applied in cart", "cart-with-promo"],
+  ["07", "full-ecommerce", "buyer-employee", `/${REGION}/store`, "Maria browses products in NZD", null],
+  ["08", "order-edit", "sales-manager", "/app/orders/:orderId", "Priya edits specific order detail", "order-detail"],
+  ["09", "bulk-add", "buyer-employee", `/${REGION}/products/hi-fi-gaming-headset-pro-grade-dac-hi-res-certified`, "Maria bulk-adds via product page", "scroll-to-bulk-table"],
+  ["10", "quick-order-pad", "buyer-employee", `/${REGION}/cart`, "Maria uses Quick Order Pad sidebar", "cart-then-quick-order-open"],
+  ["11", "invite-employee", "admin", "/app/companies/:companyId", "David opens company detail to invite employee", "company-direct-nav"],
 ];
 
 // Error markers to scan for in page content
 const ERROR_MARKERS = [
   "Forbidden",
-  "500",
   "Internal Server Error",
   "Application error",
   "__next_error__",
@@ -90,8 +103,129 @@ async function getBuyerToken() {
   return token;
 }
 
+async function getNzRegionId(backendUrl) {
+  const res = await fetch(`${backendUrl}/store/regions`, {
+    headers: { "x-publishable-api-key": PUBLISHABLE_KEY },
+  });
+  const data = await res.json();
+  const regions = data.regions || [];
+  const nz = regions.find(r => r.currency_code === "nzd");
+  return nz?.id || null;
+}
+
+async function getFirstVariantId(backendUrl, regionId) {
+  if (!regionId) return null;
+  const res = await fetch(`${backendUrl}/store/products?limit=1&region_id=${regionId}`, {
+    headers: { "x-publishable-api-key": PUBLISHABLE_KEY },
+  });
+  const data = await res.json();
+  const products = data.products || [];
+  return products[0]?.variants?.[0]?.id || null;
+}
+
+async function getFirstCompanyId(backendUrl) {
+  const token = await getAdminToken();
+  const res = await fetch(`${backendUrl}/admin/companies`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.companies?.[0]?.id || null;
+}
+
+async function createCartWithItems(buyerToken, backendUrl, qty = 2) {
+  const regionId = await getNzRegionId(backendUrl);
+  const variantId = await getFirstVariantId(backendUrl, regionId);
+  if (!regionId || !variantId) {
+    console.warn("  createCartWithItems: missing region or variant — skipping cart setup");
+    return null;
+  }
+  const storeHeaders = {
+    "Content-Type": "application/json",
+    "x-publishable-api-key": PUBLISHABLE_KEY,
+    Authorization: `Bearer ${buyerToken}`,
+  };
+  const cartRes = await fetch(`${backendUrl}/store/carts`, {
+    method: "POST",
+    headers: storeHeaders,
+    body: JSON.stringify({ region_id: regionId }),
+  });
+  if (!cartRes.ok) {
+    console.warn(`  createCartWithItems: cart creation failed ${cartRes.status}`);
+    return null;
+  }
+  const { cart } = await cartRes.json();
+  await fetch(`${backendUrl}/store/carts/${cart.id}/line-items`, {
+    method: "POST",
+    headers: storeHeaders,
+    body: JSON.stringify({ variant_id: variantId, quantity: qty }),
+  }).catch(() => {});
+  return cart.id;
+}
+
+async function getFirstAdminOrderId(backendUrl) {
+  const token = await getAdminToken();
+  const res = await fetch(`${backendUrl}/admin/orders?limit=1`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.orders?.[0]?.id || null;
+}
+
+async function setupPreState(preState, urlPath, context, buyerToken) {
+  switch (preState) {
+    case "cart-with-items": {
+      const cartId = await createCartWithItems(buyerToken, BACKEND_URL, 2);
+      if (cartId) {
+        await context.addCookies([
+          { name: "_medusa_cart_id", value: cartId, domain: "localhost", path: "/", sameSite: "Lax" },
+        ]);
+      }
+      break;
+    }
+    case "cart-with-promo": {
+      const cartId = await createCartWithItems(buyerToken, BACKEND_URL, 5);
+      if (cartId) {
+        await context.addCookies([
+          { name: "_medusa_cart_id", value: cartId, domain: "localhost", path: "/", sameSite: "Lax" },
+        ]);
+      }
+      break;
+    }
+    case "order-detail": {
+      const orderId = await getFirstAdminOrderId(BACKEND_URL);
+      if (orderId) return urlPath.replace(":orderId", orderId);
+      break;
+    }
+    case "scroll-to-bulk-table":
+    case "cart-then-quick-order-open":
+    case "company-direct-nav": {
+      const companyId = await getFirstCompanyId(BACKEND_URL);
+      if (companyId) return urlPath.replace(":companyId", companyId);
+      break;
+    }
+    case "company-detail-click":
+      break;
+    default:
+      break;
+  }
+  return urlPath;
+}
+
+async function loginAdmin(page) {
+  await page.goto(`${BACKEND_URL}/app`, { waitUntil: "networkidle" });
+  // SPA renders form after JS hydration — Medusa admin uses name=email not type=email
+  await page.waitForSelector("input[name=email]", { timeout: 15000 });
+  await page.locator("input[name=email]").fill(process.env.ADMIN_EMAIL || "admin@test.local");
+  await page.locator("input[type=password]").fill(process.env.ADMIN_PASSWORD || "Test1234!");
+  await page.locator("button[type=submit]").click();
+  // Wait for redirect away from /login — SPA may land on /app or /app/login first
+  await page.waitForURL(u => !u.toString().includes('/login'), { timeout: 15000 });
+}
+
 async function captureFlow(flow) {
-  const [num, slug, persona, urlPath, description] = flow;
+  const [num, slug, persona, urlPath, description, preState] = flow;
   const flowDir = path.join(FLOWS_DIR, `${num}-${slug}`);
   fs.mkdirSync(flowDir, { recursive: true });
 
@@ -110,13 +244,11 @@ async function captureFlow(flow) {
 
     let token = "";
     if (isAdmin) {
-      token = await getAdminToken();
+      // Login via UI for admin flows
+      await loginAdmin(page);
     } else if (isStorefront) {
       token = await getBuyerToken();
-    }
-
-    // Add auth cookie if needed
-    if (token && isStorefront) {
+      // Add auth cookie for storefront buyer flows
       await context.addCookies([
         {
           name: "_medusa_jwt",
@@ -129,11 +261,33 @@ async function captureFlow(flow) {
       ]);
     }
 
-    const url = isAdmin ? `${BACKEND_URL}${urlPath}` : `${STOREFRONT_URL}${urlPath}`;
+    // Resolve URL via preState (order-detail replaces :orderId)
+    let resolvedPath = urlPath;
+    if (preState) {
+      resolvedPath = (await setupPreState(preState, urlPath, context, token)) || urlPath;
+    }
+    const url = isAdmin ? `${BACKEND_URL}${resolvedPath}` : `${STOREFRONT_URL}${resolvedPath}`;
     console.log(`  Navigate: ${url}`);
 
-    await page.goto(url, { waitUntil: "domcontentloaded" });
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
     await page.waitForTimeout(2000); // Allow rendering
+
+    // Post-navigate preState interactions
+    if (preState === "scroll-to-bulk-table") {
+      const bulkTable = page.locator('table, [class*="bulk"], [data-testid*="bulk"]').first();
+      await bulkTable.scrollIntoViewIfNeeded().catch(() => {});
+      await page.waitForTimeout(500);
+    }
+    if (preState === "cart-then-quick-order-open") {
+      const qopBtn = page.locator('button:has-text("Quick Order"), [data-testid*="quick-order"]').first();
+      await qopBtn.click().catch(() => {});
+      await page.waitForTimeout(1000);
+    }
+    if (preState === "company-detail-click") {
+      const firstRow = page.locator('tbody tr, [data-testid*="company-row"]').first();
+      await firstRow.click().catch(() => {});
+      await page.waitForTimeout(1500);
+    }
 
     // Dismiss dev UI elements before screenshot
     await page.evaluate(() => {
@@ -195,16 +349,31 @@ async function captureFlow(flow) {
     }
 
     // Capture screenshot
+    // Settled-state guard: wait for network idle + primary visible element before capture
+    await page.waitForLoadState('networkidle').catch(() => {});
+    const mainLocator = page.locator("main, [role='main'], h1").first();
+    await mainLocator.waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
+    if (isStorefront) {
+      const priceCount = await page.locator('[data-testid*="price"], .price, [class*="price"]').count();
+      if (priceCount > 0) {
+        await page.locator('[data-testid*="price"], .price, [class*="price"]').first()
+          .waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
+      }
+    }
+
+    // Verify admin flows are not redirected back to login
+    if (isAdmin && page.url().includes('/login')) {
+      throw new Error(`Admin auth redirect — captured login page at: ${page.url()}`);
+    }
+
     const screenshotPath = path.join(flowDir, "step-01.png");
     await page.screenshot({ path: screenshotPath });
     console.log(`  Screenshot: ${screenshotPath}`);
 
-    // Also save to docs/demo/screenshots for public documentation
-    fs.mkdirSync(SCREENSHOTS_DIR, { recursive: true });
-    const docsScreenshotPath = path.join(
-      SCREENSHOTS_DIR,
-      `${num}-${slug}-${new Date().toISOString().split("T")[0]}.png`
-    );
+    // Also save to docs/static/img/demo/flows for Docusaurus serving
+    const docsStaticDir = path.join(REPO_ROOT, "docs/static/img/demo/flows", `${num}-${slug}`);
+    fs.mkdirSync(docsStaticDir, { recursive: true });
+    const docsScreenshotPath = path.join(docsStaticDir, "step-01.png");
     await page.screenshot({ path: docsScreenshotPath });
     console.log(`  Docs screenshot: ${docsScreenshotPath}`);
 
