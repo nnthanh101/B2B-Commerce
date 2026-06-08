@@ -20,6 +20,8 @@ coverage
 dist
 build
 tmp
+_engine
+.pnpm-store
 
 # -----------------------------------------------------------------------
 # Terraform provider binaries — the root cause of the "no space left on

@@ -23,6 +23,8 @@ frames:
   beat6: docs/static/img/demo/flows/02-approval/step-06b-approved-audit.png
 ---
 
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
 # CEO Reel — Cart to Quote to Approval: 3 Days to Minutes, Governed Spend
 
 **Reel arc**: Setup (deadline) → Trigger (one click) → Quote created → Handoff → Govern + Approve → Approved
@@ -32,13 +34,13 @@ frames:
 **Audience**: Non-technical executive — must feel time and money saved
 **Real on-screen values**: NZ$4,647.00 cart / 3 items / NZ$1,582.00 quote / Approval #2469 / Demo Corp
 
-<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/ceo-cart-quote-approval.mp4"></video>
+<video controls preload="metadata" style={{maxWidth:'800px'}} src={useBaseUrl('/video/demo/flows/ceo-cart-quote-approval.mp4')}></video>
 
-![Loaded cart NZ$4,647 under quarter-close deadline with Request Quote CTA](pathname:///img/demo/flows/01-cart-to-quote/step-01.png)
+<img src={useBaseUrl('/img/demo/flows/01-cart-to-quote/step-01.png')} alt="Loaded cart NZ$4,647 under quarter-close deadline with Request Quote CTA" style={{maxWidth:'800px'}} />
 
-![Quote filed and live — Pending Merchant, NZ$1,582.00](pathname:///img/demo/flows/01-cart-to-quote/step-05.png)
+<img src={useBaseUrl('/img/demo/flows/01-cart-to-quote/step-05.png')} alt="Quote filed and live — Pending Merchant, NZ$1,582.00" style={{maxWidth:'800px'}} />
 
-![Approval #2469 flipped to Approved — Demo Corp, on the record](pathname:///img/demo/flows/02-approval/step-06b-approved-audit.png)
+<img src={useBaseUrl('/img/demo/flows/02-approval/step-06b-approved-audit.png')} alt="Approval #2469 flipped to Approved — Demo Corp, on the record" style={{maxWidth:'800px'}} />
 
 ## Why this matters — CEO lens
 

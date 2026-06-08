@@ -35,7 +35,10 @@
 services:
 
   keycloak:
-    image: quay.io/keycloak/keycloak:26.2
+    image: nnthanh101/keycloak:26.2-b2b
+    build:
+      context: ./infra/keycloak
+      dockerfile: Dockerfile
     container_name: ec_keycloak
     restart: unless-stopped
     command:
@@ -73,7 +76,7 @@ services:
     networks:
       - ec_network
     depends_on:
-      ec_postgres:
+      postgres:
         condition: service_started
     healthcheck:
       # Keycloak 26.x health endpoint is on the management port 9000 (container-internal)

@@ -21,19 +21,21 @@ frames:
   beat5: docs/static/img/demo/flows/buyer-self-service/step-05.png
 ---
 
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
 # Buyer — Governed Self-Service
 
 **Headline (why it matters):** consumer-grade buying for the employee, governance for the business — both at once. Browse, price in NZD, add, and checkout, with company policy applied automatically.
 
 **Honest end-state** (orchestrator-verified): the cart is a within-limit Webcam at **NZ$97** (under Maria's NZ$200 limit), so checkout is **open** — no over-limit block. At checkout the order is placed "on behalf of Demo Corp" and, because the company requires approval, even this small order routes through approval. The reel ends at this truthful **governed checkout** state — it does NOT claim a self-served order confirmation, because company policy genuinely requires approval here.
 
-<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/buyer-self-service.mp4"></video>
+<video controls preload="metadata" style={{maxWidth:'800px'}} src={useBaseUrl('/video/demo/flows/buyer-self-service.mp4')}></video>
 
-![Clean B2B catalog, every price in NZD](pathname:///img/demo/flows/buyer-self-service/step-01.png)
+<img src={useBaseUrl('/img/demo/flows/buyer-self-service/step-01.png')} alt="Clean B2B catalog, every price in NZD" style={{maxWidth:'800px'}} />
 
-![NZ$97 webcam added — one item, within the NZ$200 limit, no block](pathname:///img/demo/flows/buyer-self-service/step-03.png)
+<img src={useBaseUrl('/img/demo/flows/buyer-self-service/step-03.png')} alt="NZ$97 webcam added — one item, within the NZ$200 limit, no block" style={{maxWidth:'800px'}} />
 
-![Governed checkout: order placed on behalf of Demo Corp, routed through approval](pathname:///img/demo/flows/buyer-self-service/step-05.png)
+<img src={useBaseUrl('/img/demo/flows/buyer-self-service/step-05.png')} alt="Governed checkout: order placed on behalf of Demo Corp, routed through approval" style={{maxWidth:'800px'}} />
 
 ## Why this matters — Buyer lens
 

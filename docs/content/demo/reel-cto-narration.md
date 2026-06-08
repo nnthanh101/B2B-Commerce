@@ -32,6 +32,8 @@ removed:
     reason: "traffic-context narration merged into beat3 (deep panel narration)"
 ---
 
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
 # CTO Reel — Operate / Observability: Instrumented from Minute One
 
 **Reel arc (hook-first)**: Hero dashboard cold-open → Prometheus targets 4/4 UP → Dashboard deep-dive + closing proof
@@ -42,13 +44,13 @@ removed:
 **Hero-first principle**: Rich Grafana dashboard at t≤3s (CTO-AC-1); no black placeholder intro (CTO-AC-4)
 **No 4xUP grid**: panelId=8 removed entirely from reel (CTO-AC-2)
 
-<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/cto-operate-observability.mp4"></video>
+<video controls preload="metadata" style={{maxWidth:'800px'}} src={useBaseUrl('/video/demo/flows/cto-operate-observability.mp4')}></video>
 
-![Grafana hero — Backend Request Latency p50/p95/p99 and Request Rate by Status](pathname:///img/demo/flows/observability/grafana-latency-rate-panels.png)
+<img src={useBaseUrl('/img/demo/flows/observability/grafana-latency-rate-panels.png')} alt="Grafana hero — Backend Request Latency p50/p95/p99 and Request Rate by Status" style={{maxWidth:'800px'}} />
 
-![Prometheus Target Health — b2b-commerce, node, postgres, redis all UP (4/4)](pathname:///img/demo/flows/observability/prometheus-targets-up.png)
+<img src={useBaseUrl('/img/demo/flows/observability/prometheus-targets-up.png')} alt="Prometheus Target Health — b2b-commerce, node, postgres, redis all UP (4/4)" style={{maxWidth:'800px'}} />
 
-![Saturation panels — Postgres connections, Node CPU, Redis memory all green](pathname:///img/demo/flows/observability/grafana-saturation-panels.png)
+<img src={useBaseUrl('/img/demo/flows/observability/grafana-saturation-panels.png')} alt="Saturation panels — Postgres connections, Node CPU, Redis memory all green" style={{maxWidth:'800px'}} />
 
 ## Why this matters — CTO lens
 

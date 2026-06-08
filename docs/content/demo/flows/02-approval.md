@@ -9,6 +9,8 @@ source_refs:
 last_compiled: "2026-06-07T00:00:00Z"
 ---
 
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
 # Flow 02: Approval Workflow
 
 **Persona**: David (Admin)
@@ -19,11 +21,9 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 **Duration**: ~2 min
 
-![Approvals dashboard — #BZK0 Demo Corp Pending, 1 item](pathname:///img/demo/flows/02-approval/step-01.png)
+<img src={useBaseUrl('/img/demo/flows/02-approval/step-01.png')} alt="Approvals dashboard — #BZK0 Demo Corp Pending, 1 item" style={{maxWidth:'800px'}} />
 
-![Approvals list with pending badge](pathname:///img/demo/flows/02-approval/generated-approval-01-approvals-page.png)
-
-<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/02-approval.mp4"></video>
+*Demo video for this flow is being re-captured.*
 
 ## Script (voice narration)
 

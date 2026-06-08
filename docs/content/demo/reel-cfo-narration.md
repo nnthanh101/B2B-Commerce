@@ -23,6 +23,8 @@ frames:
   beat6: docs/static/img/demo/flows/cfo-governed-spend/step-06.png
 ---
 
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
 # CFO — Governed Spend
 
 **Headline (why a CFO cares):** spend is governed *before* money moves — every limit enforced at the cart, every approval on the record. No rogue POs, no clawbacks, a clean audit trail.
@@ -31,13 +33,13 @@ frames:
 
 **Numbers are truthful to the live render** (orchestrator-verified): Maria's per-employee limit is **NZ$200**, the cart is **NZ$520** (2× Wireless Mouse), approval **#2469**, Demo Corp (NZD). No NZ$2,000 ceiling is shown because the live admin renders the per-employee limit — narrate NZ$200, never a fabricated figure.
 
-<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/cfo-governed-spend.mp4"></video>
+<video controls preload="metadata" style={{maxWidth:'800px'}} src={useBaseUrl('/video/demo/flows/cfo-governed-spend.mp4')}></video>
 
-![Cart NZ$520 exceeds Maria's NZ$200 limit — over-limit warning at the cart](pathname:///img/demo/flows/cfo-governed-spend/step-01.png)
+<img src={useBaseUrl('/img/demo/flows/cfo-governed-spend/step-01.png')} alt="Cart NZ$520 exceeds Maria's NZ$200 limit — over-limit warning at the cart" style={{maxWidth:'800px'}} />
 
-![Checkout blocked at the cart; Maria routed to request approval](pathname:///img/demo/flows/cfo-governed-spend/step-03.png)
+<img src={useBaseUrl('/img/demo/flows/cfo-governed-spend/step-03.png')} alt="Checkout blocked at the cart; Maria routed to request approval" style={{maxWidth:'800px'}} />
 
-![Approval #2469 marked Approved — governed spend on the record](pathname:///img/demo/flows/cfo-governed-spend/step-06.png)
+<img src={useBaseUrl('/img/demo/flows/cfo-governed-spend/step-06.png')} alt="Approval #2469 marked Approved — governed spend on the record" style={{maxWidth:'800px'}} />
 
 ## Why this matters — CFO lens
 

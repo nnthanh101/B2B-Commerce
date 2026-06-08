@@ -21,19 +21,21 @@ frames:
   beat5: docs/static/img/demo/flows/coo-procurement-velocity/step-05.png
 ---
 
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
 # COO — Procurement Velocity
 
 **Headline (why a COO cares):** procurement that took an afternoon now takes a minute — bulk SKU×quantity entry, paste-a-list repeat orders, CSV export — without losing spend governance.
 
 **Numbers are truthful to the live render** (orchestrator-verified): bulk entry on the product grid (Headset NZ$246), cart resolves 3 items to **NZ$539** (Headset 246 + Keyboard 163 + Mouse 130), quick-order paste pad + CSV export present, and because NZ$539 is over Maria's limit the truthful CTA is **Request Quote**. No promotions are seeded, so no discount claims are made.
 
-<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/coo-procurement-velocity.mp4"></video>
+<video controls preload="metadata" style={{maxWidth:'800px'}} src={useBaseUrl('/video/demo/flows/coo-procurement-velocity.mp4')}></video>
 
-![Bulk SKU×quantity entry straight from the product grid](pathname:///img/demo/flows/coo-procurement-velocity/step-01.png)
+<img src={useBaseUrl('/img/demo/flows/coo-procurement-velocity/step-01.png')} alt="Bulk SKU×quantity entry straight from the product grid" style={{maxWidth:'800px'}} />
 
-![Quick-order paste pad and CSV export of the cart](pathname:///img/demo/flows/coo-procurement-velocity/step-03.png)
+<img src={useBaseUrl('/img/demo/flows/coo-procurement-velocity/step-03.png')} alt="Quick-order paste pad and CSV export of the cart" style={{maxWidth:'800px'}} />
 
-![Cart consolidated to 3 items NZ$539, over-limit routes to Request Quote](pathname:///img/demo/flows/coo-procurement-velocity/step-05.png)
+<img src={useBaseUrl('/img/demo/flows/coo-procurement-velocity/step-05.png')} alt="Cart consolidated to 3 items NZ$539, over-limit routes to Request Quote" style={{maxWidth:'800px'}} />
 
 ## Why this matters — COO lens
 

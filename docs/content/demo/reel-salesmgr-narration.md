@@ -21,19 +21,21 @@ frames:
   beat5: docs/static/img/demo/flows/salesmgr-quote-negotiate/step-05.png
 ---
 
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
 # Sales Manager — Quote Negotiation
 
 **Headline (why a VP Sales cares):** close the deal in two messages, not two weeks — counter-offer, message thread, and accept all in one platform with a full audit trail.
 
 **Numbers are truthful to the live render** (orchestrator-verified): the quote was countered from **NZ$1,582.00 → NZ$1,423.80** (a 10% volume discount on the smartphone line), with a real **2-message thread** (Demo Buyer's volume request + Priya Sharma's counter), and an in-platform Accept/Reject resolution. The negotiation data was seeded via real Medusa v2 quote workflows.
 
-<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/salesmgr-quote-negotiate.mp4"></video>
+<video controls preload="metadata" style={{maxWidth:'800px'}} src={useBaseUrl('/video/demo/flows/salesmgr-quote-negotiate.mp4')}></video>
 
-![Priya's queue flags the countered quote awaiting the buyer](pathname:///img/demo/flows/salesmgr-quote-negotiate/step-01.png)
+<img src={useBaseUrl('/img/demo/flows/salesmgr-quote-negotiate/step-01.png')} alt="Priya's queue flags the countered quote awaiting the buyer" style={{maxWidth:'800px'}} />
 
-![Counter applied on the line: NZ$1,582.00 struck through, NZ$1,423.80 below](pathname:///img/demo/flows/salesmgr-quote-negotiate/step-03.png)
+<img src={useBaseUrl('/img/demo/flows/salesmgr-quote-negotiate/step-03.png')} alt="Counter applied on the line: NZ$1,582.00 struck through, NZ$1,423.80 below" style={{maxWidth:'800px'}} />
 
-![Deal closes in-platform — Accept/Reject with the full message thread on record](pathname:///img/demo/flows/salesmgr-quote-negotiate/step-05.png)
+<img src={useBaseUrl('/img/demo/flows/salesmgr-quote-negotiate/step-05.png')} alt="Deal closes in-platform — Accept/Reject with the full message thread on record" style={{maxWidth:'800px'}} />
 
 ## Why this matters — Sales Manager lens
 

@@ -110,10 +110,17 @@ jobs:
       # copied content the build actually compiles. Additive only; does not touch the
       # proven sparse-checkout / PAT / copy / build / upload / deploy steps.
       - name: MDX pre-flight (fast-fail)
+        # Run the PUBLIC repo's copy of the script (ships in this repo, so it does NOT
+        # depend on the private engine REPO having mdx-preflight.mjs). working-directory
+        # stays the engine dir so `@mdx-js/mdx` resolves from the engine's installed
+        # node_modules (npm ci above). CONTENT_DIR points at the copied content.
         working-directory: _engine/.claude/plugins/commerce/templates/docusaurus
-        run: node scripts/mdx-preflight.mjs
+        run: node ${{ github.workspace }}/scripts/mdx-preflight.mjs
         env:
           CONTENT_DIR: ${{ github.workspace }}/_engine/.claude/plugins/commerce/templates/docusaurus/content
+          # @mdx-js/mdx lives in the engine's node_modules (npm ci above), not the public
+          # repo. Anchor the public script's require.resolve at the engine package.json.
+          MDX_RESOLVE_BASE: ${{ github.workspace }}/_engine/.claude/plugins/commerce/templates/docusaurus/package.json
 
       - name: Build Docusaurus site
         # The engine npm run build uses --out-dir /site_out/site (Docker bind-mount path).
