@@ -56,32 +56,30 @@ const CEO_BEATS = [
   },
 ];
 
-// CTO reel beats
+// CTO reel beats — HERO-FIRST order (CTO-AC-1/AC-4: dashboard at t<=3s, intro over hero not black)
+// panelId=8 grafana-upstatus-grid beat REMOVED (CTO-AC-2: no 4xUP grid anywhere in reel)
 const CTO_BEATS = [
   {
+    // beat1: intro hook narration plays OVER the hero dashboard (not over black)
+    // CTO-AC-1: first frame = rich Grafana latency+rate dashboard at t<=3s
+    // CTO-AC-4: pre-screenshot black segment collapsed to 0s (hook plays over hero)
     id: "beat1",
-    frame: null,
-    narration: "Olivia is the CTO at OceanSoft. When someone asks 'can we run this in production?', she does not answer by pointing at a green checkout button. She trusts a live dashboard fed by real traffic — latency percentiles, error rate, and an all-green scrape grid.",
+    frame: path.join(REPO_ROOT, "docs/static/img/demo/flows/observability/grafana-latency-rate-panels.png"),
+    narration: "Olivia is the CTO at OceanSoft. She trusts a live dashboard — latency percentiles, error rate, real traffic. This is what production-ready looks like.",
   },
   {
+    // beat2: Prometheus targets — 4/4 UP (after hero, not cold-open)
+    // CTO-AC-6: appears AFTER the hero
     id: "beat2",
-    frame: null,
-    narration: "Before opening the dashboard, the team drives real commerce traffic through the system — cart-to-quote-to-approval requests that hit the Medusa backend metrics endpoint. The dashboard will show truth, not an empty grid.",
-  },
-  {
-    id: "beat3",
     frame: path.join(REPO_ROOT, "docs/static/img/demo/flows/observability/prometheus-targets-up.png"),
     narration: "Prometheus is scraping four targets — the Medusa backend, Node exporter, Postgres exporter, and Redis exporter. Every component reports in. This is instrumented from minute one — not bolted on after the first incident.",
   },
   {
-    id: "beat4",
+    // beat3: Grafana dashboard revisited — deep panel narration
+    // CTO-AC-5: panels populated (p50/p95/p99 + 2xx rate > 0)
+    id: "beat3",
     frame: path.join(REPO_ROOT, "docs/static/img/demo/flows/observability/grafana-latency-rate-panels.png"),
-    narration: "The Grafana commerce dashboard reacts to the traffic. Latency percentiles — p50, p95, and p99 — show real request timing. The request-rate panel breaks out 2-x-x success from 4-x-x client errors. The slow tail is visible; averages do not hide it.",
-  },
-  {
-    id: "beat5",
-    frame: path.join(REPO_ROOT, "docs/static/img/demo/flows/observability/grafana-upstatus-grid.png"),
-    narration: "One panel answers 'is it healthy?' for the entire platform — four green tiles, one glance. If any target turned red, the team would know within seconds. Not from a customer call — from the dashboard. Instrumented from minute one. The answer to 'can we run this in production?' is yes — and here is the proof.",
+    narration: "The Grafana commerce dashboard reacts to the traffic. Latency percentiles — p50, p95, and p99 — show real request timing. The request-rate panel breaks out 2xx success from 4xx client errors. The slow tail is visible; averages do not hide it. Mean-time-to-detect begins here. The answer to 'can we run this in production?' is yes — and here is the proof.",
   },
 ];
 
@@ -118,7 +116,7 @@ async function renderSubtitleFrame(browser, framePath, subtitle, outPath) {
   await page.setContent(`<!DOCTYPE html><html><head><style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{width:1280px;height:720px;overflow:hidden;position:relative}
-    .frame{width:1280px;height:720px;background:url("data:image/png;base64,${b64}") center/cover no-repeat}
+    .frame{width:1280px;height:720px;background:url("data:image/png;base64,${b64}") top/cover no-repeat}
     .sub{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);
       background:rgba(0,0,0,0.75);color:#fff;font:bold 20px/1.4 system-ui,sans-serif;
       padding:10px 28px;border-radius:6px;text-align:center;max-width:1100px;white-space:pre-wrap}

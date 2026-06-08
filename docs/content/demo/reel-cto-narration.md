@@ -1,6 +1,6 @@
 ---
 title: "CTO Reel Narration — Operate / Observability"
-description: Outcome-driven narration script for the CTO reel (Olivia, 5 beats). Traffic-first, evidence-bound to real populated Grafana panels.
+description: Outcome-driven narration script for the CTO reel (Olivia, 3 beats, hook-first). Hero dashboard cold-open at t<=3s; intro over hero not black; no 4xUP grid.
 sidebar_position: 11
 tags: [demo, narration, cto-reel, observability, grafana, prometheus]
 source_refs:
@@ -12,82 +12,74 @@ source_refs:
     last_compiled: "2026-06-08"
 last_compiled: "2026-06-08T00:00:00Z"
 reel: cto
+beats: 3
+beat_order: hero-first
 frames:
-  beat1: null
-  beat2: null
-  beat3: docs/static/img/demo/flows/observability/prometheus-targets-up.png
-  beat4: docs/static/img/demo/flows/observability/grafana-latency-rate-panels.png
-  beat5: docs/static/img/demo/flows/observability/grafana-upstatus-grid.png
+  beat1: docs/static/img/demo/flows/observability/grafana-latency-rate-panels.png
+  beat2: docs/static/img/demo/flows/observability/prometheus-targets-up.png
+  beat3: docs/static/img/demo/flows/observability/grafana-latency-rate-panels.png
 promql_verified:
-  rate: "sum(rate(medusa_http_requests_total[5m])) = 1.77 req/s"
-  p95: "histogram_quantile(0.95,...) = 207ms"
+  rate: "sum(rate(medusa_http_requests_total[5m])) >= 0.5 req/s (guard)"
+  p95: "histogram_quantile(0.95,...) — real value from live traffic"
   targets_up: "up{} = 4/4"
+role_bar: "Olivia · CTO / Platform"
+removed:
+  - beat: "old-beat5"
+    reason: "panelId=8 grafana-upstatus-grid (4xUP junior tiles) — HITL rejected; dropped CTO-AC-2"
+  - beat: "old-beat1-black"
+    reason: "black placeholder intro collapsed into hero frame (CTO-AC-4: <=8s over hero)"
+  - beat: "old-beat2-black"
+    reason: "traffic-context narration merged into beat3 (deep panel narration)"
 ---
 
 # CTO Reel — Operate / Observability: Instrumented from Minute One
 
-**Reel arc**: Production-readiness question → Generate real traffic → Prometheus targets UP → Grafana panels populated → Up-Status grid all green
+**Reel arc (hook-first)**: Hero dashboard cold-open → Prometheus targets 4/4 UP → Dashboard deep-dive + closing proof
 
 **Persona protagonist**: Olivia (CTO / platform owner, OceanSoft NZ) — owns "healthy in prod?"
 **Audience**: Engineer / technical executive — must trust production instrumentation
-**Traffic-first principle**: Real cart-to-quote-to-approval traffic generated BEFORE dashboard capture (anti-empty-dashboard)
+**Traffic-first principle**: `generate-traffic.mjs` run BEFORE capture; rate >= 0.5 req/s guard enforced
+**Hero-first principle**: Rich Grafana dashboard at t<=3s (CTO-AC-1); no black placeholder intro (CTO-AC-4)
+**No 4xUP grid**: panelId=8 removed entirely from reel (CTO-AC-2)
 
 ---
 
-## Beat 1 — Setup: The Production-Readiness Question
+## Beat 1 — Hero: The Production-Readiness Answer (cold-open)
 
-**Frame**: N/A — context card / narration only
-**On screen**: Stack-up context, all services running
+**Frame**: `docs/static/img/demo/flows/observability/grafana-latency-rate-panels.png`
+**On screen**: "Digital Commerce — Backend" Grafana dashboard kiosk=tv — panels 1+2: Backend Request Latency p50/p95/p99 and Backend Request Rate by Status (2xx populated). Olivia role-bar top.
+**Timing**: First visible frame at t<=3s; intro hook narration plays OVER this frame
 
 **Narration**:
-> Olivia is the CTO at OceanSoft. When someone asks "can we run this in production?", she does not answer by pointing at a green checkout button. She trusts a live dashboard fed by real traffic — latency percentiles, error rate, and an all-green scrape grid. Most demos skip this part. This one does not.
+> Olivia is the CTO at OceanSoft. She trusts a live dashboard — latency percentiles, error rate, real traffic. This is what production-ready looks like.
 
 ---
 
-## Beat 2 — Generate Real Traffic (Anti-Empty-Dashboard)
-
-**Frame**: N/A — action beat; narration only or brief terminal context
-**On screen**: Real commerce requests hitting the backend (cart, products, quotes, approvals)
-
-**Narration**:
-> Before opening the dashboard, the team drives real commerce traffic through the system — the same cart-to-quote-to-approval actions that Maria and David ran. Those requests hit the Medusa backend's metrics endpoint, populating real request counts and real latencies. The dashboard will show truth, not an empty grid.
-
----
-
-## Beat 3 — Prometheus Targets: All 4 UP
+## Beat 2 — Prometheus Targets: All 4 UP
 
 **Frame**: `docs/static/img/demo/flows/observability/prometheus-targets-up.png`
-**On screen**: Prometheus Target Health page — b2b-commerce (ec_backend:9000/admin/metrics), node, postgres, redis — all UP (green)
+**On screen**: Prometheus Target Health page — b2b-commerce (ec_backend:9000/admin/metrics), node, postgres, redis — all UP (green). Olivia role-bar top.
 
 **Narration**:
 > Prometheus is scraping four targets — the Medusa backend, Node exporter, Postgres exporter, and Redis exporter. Every component reports in. This is instrumented from minute one — not bolted on after the first incident.
 
 ---
 
-## Beat 4 — Grafana: Latency and Error Rate React to Traffic
+## Beat 3 — Grafana Deep-Dive + Closing Proof
 
 **Frame**: `docs/static/img/demo/flows/observability/grafana-latency-rate-panels.png`
-**On screen**: "Digital Commerce — Backend" dashboard — Backend Request Latency p50/p95/p99 (p50=31.8ms, p95=105ms, p99=191ms) and Backend Request Rate by Status (2xx populated, ~1.99 req/s max)
+**On screen**: Same hero dashboard — latency p50/p95/p99 (real values) and Request Rate by Status (2xx line > 0). Olivia role-bar top.
 
 **Narration**:
-> The Grafana commerce dashboard reacts to the traffic just generated. Latency percentiles — p50, p95, and p99 — show real request timing. The request-rate panel breaks out 2xx success from 4xx client errors. The slow tail is visible; averages do not hide it. Mean-time-to-detect begins here.
-
----
-
-## Beat 5 — Up-Status Grid: Healthy in One Glance
-
-**Frame**: `docs/static/img/demo/flows/observability/grafana-upstatus-grid.png`
-**On screen**: Up-Status Grid — All Scrape Targets: 4 green tiles — Medusa Backend (ec_backend:9000), Postgres Exporter, Redis Exporter, Node Exporter — all "UP"
-
-**Narration**:
-> One panel answers "is it healthy?" for the entire platform — four green tiles, one glance. If any target turned red, the team would know within seconds. Not from a customer call — from the dashboard. Instrumented from minute one, mean-time-to-detect is seconds. The answer to "can we run this in production?" is yes — and here is the proof.
+> The Grafana commerce dashboard reacts to the traffic. Latency percentiles — p50, p95, and p99 — show real request timing. The request-rate panel breaks out 2xx success from 4xx client errors. The slow tail is visible; averages do not hide it. Mean-time-to-detect begins here. The answer to "can we run this in production?" is yes — and here is the proof.
 
 ---
 
 ## Narration Notes
 
-- **Traffic-first ordering**: Beat 2 (traffic generation) MUST precede beat 3 (Prometheus) and beat 4 (Grafana) in the reel. Never open on an empty panel.
-- **Real values on screen**: p50=31.8ms, p95=105ms mean (278ms max), p99=191ms mean (665ms max). These are from real commerce requests, not synthetic load.
-- **4/4 targets**: b2b-commerce, node, postgres, redis — all UP. Verified via PromQL `up{}` returning `"1"` for all four before capture.
-- **Up-Status panel**: Panel id 8, inside row id 104 (collapsed by default in commerce.json). Captured via Grafana d-solo URL to bypass collapsed-row UI issue.
-- **No login wall**: Grafana anonymous Viewer is enabled (GF_AUTH_ANONYMOUS_ENABLED=true). No login required for read/screenshot.
+- **Hero-first**: Beat 1 = Grafana dashboard at t<=3s (not black); intro hook is <=8s layered over the hero.
+- **Real values on screen**: p50/p95/p99 from live traffic (exact ms values depend on current load; not hard-coded in narration).
+- **4/4 targets**: b2b-commerce, node, postgres, redis — all UP. Verified via PromQL `up{}` before capture; rate >= 0.5 guard enforced.
+- **No Up-Status grid**: panelId=8 / grafana-upstatus-grid.png removed. The rich dashboard is the health proof.
+- **No login wall**: Grafana anonymous Viewer enabled (GF_AUTH_ANONYMOUS_ENABLED=true). kiosk=tv URL for clean framing.
+- **Olivia role-bar**: `injectRoleBar("Olivia · CTO / Platform", "O")` on every CTO frame before screenshot.
