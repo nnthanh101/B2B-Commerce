@@ -150,4 +150,6 @@ Source: `apps/backend/src/modules/quote/migrations/` (compiled 2026-06-07)
 - [Entity: Company Module](./company-module.md) — company employees initiate quotes
 - [Entity: Approval Module](./approval-module.md) — high-value quotes trigger approval workflows
 - [Architecture Overview](../architecture/overview.md)
-- ADR-012: [`docs/content/architecture/adrs/ADR-012-quote-engine-architecture.md`](../architecture/adrs/ADR-012-quote-engine-architecture.md)
+- [ADR-012: Quote Engine Architecture](../architecture/adrs/ADR-012-quote-engine-architecture.md) — full decision record for quote state machine
+- [ADR-011: Stripe Connect Marketplace](../architecture/adrs/ADR-011-stripe-connect-marketplace.md) — payment settlement decision for quote-to-order conversion
+- [ADR-013: ANZ Marketplace Supplier Vetting](../architecture/adrs/ADR-013-anz-marketplace-supplier-vetting.md) — regulatory context for quote workflows in ANZ market

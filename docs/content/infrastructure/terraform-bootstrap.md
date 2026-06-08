@@ -138,4 +138,7 @@ terraform apply -var="environment=sandbox"
 - [Concept: Local-First IaC](./local-first-iac.md) — the pattern this module implements
 - [Entity: Terraform Workload Modules](./terraform-modules.md) — the modules that consume this bucket
 - [ADR-015](../architecture/adrs/ADR-015-local-first-terraform-iac.md) — D3 amendment: bootstrap owns genesis
+- [ADR-001: Single AWS Account](../architecture/adrs/ADR-001-single-aws-account.md) — the account target for this state bucket
+- [ADR-002: RDS Single-AZ](../architecture/adrs/ADR-002-rds-single-az.md) — data layer decisions for Phase 2 deployment
+- [v0.3 Deploy + Release Reference](../architecture/v0.3-deploy-release-reference.md) — the production deploy pattern this bootstrap enables
 - [Index: Infrastructure](./index.md)

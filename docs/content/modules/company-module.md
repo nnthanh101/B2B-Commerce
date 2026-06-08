@@ -128,3 +128,8 @@ Source: `apps/backend/src/modules/company/migrations/` (compiled 2026-06-07)
 - [Entity: Quote Module](./quote-module.md) — quotes are initiated by employees of a company
 - [Concept: Local-First IaC](../infrastructure/local-first-iac.md) — how the company module is deployed
 - [Architecture Overview](../architecture/overview.md)
+- [ADR-003: Anthropic Direct API](../architecture/adrs/ADR-003-anthropic-direct-api.md) — AI API decision relevant to module assistant features
+- [ADR-005: Postgres Full-Text Search](../architecture/adrs/ADR-005-postgres-full-text-search.md) — full-text search used in company and employee lookup
+- [Process QA: Discovery Brief](../process-qa/discovery-brief.md) — business context for company module requirements
+- [Process QA: Readiness Scorecard](../process-qa/readiness-scorecard.md) — GTM readiness gates including company module
+- [Process QA: Release Self-QA Framework](../process-qa/release-self-qa-framework.md) — QA process and gates

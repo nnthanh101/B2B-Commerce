@@ -148,8 +148,10 @@ test.describe("Per-Market Currency Rendering", () => {
     expect(priceText).not.toMatch(/^\s*$/);
 
     // VISUAL-3: Assert zero error markers in viewport
+    // NOTE: /500/i is intentionally excluded from VN check — "₫2,500,000" contains "500"
+    // as a substring of a valid price. Use Forbidden + "Something went wrong" only.
     await expect(
-      page.getByText(/Forbidden|500|Something went wrong/i)
+      page.getByText(/Forbidden|Something went wrong/i)
     ).not.toBeVisible();
 
     // Assert ₫ symbol (Vietnamese Dong) is present

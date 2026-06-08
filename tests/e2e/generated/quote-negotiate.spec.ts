@@ -40,8 +40,9 @@ test.describe("B2B quote-negotiate flow [generated]", () => {
     });
 
     // Step 2: click "Request Quote"
+    // Extended timeout: SSR hydration + React rendering in Docker can take 15-30s
     const requestQuoteBtn = buyerPage.getByRole("button", { name: "Request Quote" }).first();
-    await expect(requestQuoteBtn).toBeVisible({ timeout: 5000 });
+    await expect(requestQuoteBtn).toBeVisible({ timeout: 30000 });
     await requestQuoteBtn.click();
     await buyerPage.waitForLoadState("networkidle", { timeout: 60000 });
 

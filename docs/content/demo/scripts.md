@@ -3,6 +3,12 @@ title: "Demo Scripts — Narration Cue Sheet"
 description: Consolidated voice narration cues for all 11 B2B demo flows. Use this guide to record your voiceover and sync with auto-generated MP4s.
 sidebar_position: 1
 tags: [demo, scripts, narration, voice-recording]
+source_refs:
+  - path: "docs/demo/flows/"
+    last_compiled: "2026-06-07"
+  - path: "scripts/batch-demo-video.sh"
+    last_compiled: "2026-06-07"
+last_compiled: "2026-06-07T00:00:00Z"
 ---
 
 # Demo Scripts — Narration Cue Sheet

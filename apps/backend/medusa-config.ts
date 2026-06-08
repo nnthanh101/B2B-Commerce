@@ -44,7 +44,7 @@ module.exports = defineConfig({
     vite: (config) => ({
       server: {
         host: "0.0.0.0",
-        allowedHosts: ["localhost", ".localhost", "127.0.0.1"],
+        allowedHosts: ["localhost", ".localhost", "127.0.0.1", "host.docker.internal"],
         hmr: {
           port: 5173,
           clientPort: 5173,

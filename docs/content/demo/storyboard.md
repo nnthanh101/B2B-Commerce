@@ -26,3 +26,8 @@ import { Note } from '@site/src/components/Note';
 - **Act 3 (Terminal)**: `capture-terminal-gif.sh` (native screencapture)
 
 **Source**: `docs/demo/storyboard.md` — full 19-scene breakdown available via `/commerce:docs-ingest`.
+
+## Cross-References
+
+- [ADR-017: Demo Video Pipeline](../architecture/adrs/ADR-017-demo-video-pipeline.md) — architectural decision for the 3-tier capture pipeline used in recording
+- [Demo Narration Script](./narration.md) — timestamped voice-over for all flows

@@ -10,10 +10,10 @@
 #
 # OPTIONS:
 #   --flows-dir   <dir>    Narration .md files dir  (default: docs/content/demo/flows)
-#   --stills-root <dir>    Per-flow stills parent   (default: tmp/Digital-Commerce/demo/flows)
-#   --out-dir     <dir>    Reel output dir          (default: tmp/Digital-Commerce/demo/flows)
+#   --stills-root <dir>    Per-flow stills parent   (default: tmp/B2B-Commerce/demo/flows)
+#   --out-dir     <dir>    Reel output dir          (default: tmp/B2B-Commerce/demo/flows)
 #   --persona-map <file>   Flow-owner map           (default: docs/content/demo/persona-flow-map.md)
-#   --verdict     <file>   Green verdict JSON       (default: tmp/Digital-Commerce/test-results/flow-green-verdict-2026-06-06.json)
+#   --verdict     <file>   Green verdict JSON       (default: tmp/B2B-Commerce/test-results/flow-green-verdict-2026-06-06.json)
 #   --voice       <name>   macOS TTS voice          (default: Daniel)
 #   --dry-run              Validate wiring; skip actual build + ffprobe
 #   --help                 Print this help and exit
@@ -56,10 +56,10 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TODAY="$(date +%Y-%m-%d)"
 
 FLOWS_DIR="${REPO_ROOT}/docs/content/demo/flows"
-STILLS_ROOT="${REPO_ROOT}/tmp/Digital-Commerce/demo/flows"
+STILLS_ROOT="${REPO_ROOT}/tmp/B2B-Commerce/demo/flows"
 OUT_DIR="${REPO_ROOT}/docs/static/video/demo/flows"
 PERSONA_MAP="${REPO_ROOT}/docs/content/demo/persona-flow-map.md"
-VERDICT_FILE="${REPO_ROOT}/tmp/Digital-Commerce/test-results/flow-green-verdict-${TODAY}.json"
+VERDICT_FILE="${REPO_ROOT}/tmp/B2B-Commerce/test-results/flow-green-verdict-${TODAY}.json"
 VOICE="Daniel"
 DRY_RUN=0
 
@@ -318,7 +318,7 @@ for flow_md in "${FLOW_FILES[@]}"; do
   fi
 
   # ---- 10d. Define output paths ----
-  flow_build_dir="${REPO_ROOT}/tmp/Digital-Commerce/demo/video-build/${slug}"
+  flow_build_dir="${REPO_ROOT}/tmp/B2B-Commerce/demo/video-build/${slug}"
   reel_mp4="${OUT_DIR}/${slug}.mp4"
   reel_m4a="${OUT_DIR}/${slug}.m4a"
 

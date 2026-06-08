@@ -44,3 +44,12 @@ last_compiled: "2026-06-07T00:00:00Z"
 **[00:44]** "The quote status displays live: Pending Approval. Maria knows exactly where her request stands."
 
 **[00:53]** "Budget quarter protected. Quote filed. Decision cycle: one session, not three days."
+
+## Cross-References
+
+- [Persona: Maria (Buyer-Employee)](../personas/buyer.md) — full persona playbook
+- [Demo Narration Script](../narration.md) — timestamped voice-over for all flows
+- [Demo Scripts — Narration Cue Sheet](../scripts.md) — consolidated cue sheet for recording
+- [Entity: Quote Module](../../modules/quote-module.md) — backend module that powers the quote request in this flow
+- [Entity: Company Module](../../modules/company-module.md) — company context (spending limits, employee roles) that governs this flow
+- [Entity: Approval Module](../../modules/approval-module.md) — approval gate triggered when this quote is submitted

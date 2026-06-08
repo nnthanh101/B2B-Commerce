@@ -42,3 +42,7 @@ last_compiled: "2026-06-07T00:00:00Z"
 **[00:41]** "Sarah accepts the invite, sets a password, and joins the company instantly — no support ticket needed."
 
 **[00:50]** "David can now see Sarah in the team roster with her role and spending limit visible."
+
+## Cross-References
+
+- [Persona: David (Admin)](../personas/admin.md) — full persona playbook

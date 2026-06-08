@@ -38,3 +38,7 @@ last_compiled: "2026-06-07T00:00:00Z"
 **[00:43]** "David's audit log shows: Approved by David, 14-Jun-2026 10:34am, comment recorded."
 
 **[00:51]** "No email chains. No ambiguity. Every decision on record."
+
+## Cross-References
+
+- [Persona: David (Admin)](../personas/admin.md) — full persona playbook

@@ -161,3 +161,6 @@ Source: `apps/backend/src/modules/approval/migrations/` (compiled 2026-06-07)
 - [Entity: Quote Module](./quote-module.md) — approval gates also guard quote-to-order conversion
 - [Architecture Overview](../architecture/overview.md)
 - [Index: Modules](./index.md)
+- [ADR-004: Next.js Server Actions](../architecture/adrs/ADR-004-next-js-server-action.md) — storefront action pattern used in approval UI
+- [ADR-006: Tag-Only GitHub Actions](../architecture/adrs/ADR-006-tag-only-github-actions.md) — CI/CD pipeline that deploys approval module changes
+- [Process QA: Dev Workflow Hooks](../process-qa/dev-workflow-hooks.md) — hook constraints for approval module development

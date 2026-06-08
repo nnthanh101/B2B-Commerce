@@ -34,16 +34,16 @@ tasks:
       - bash scripts/preflight-build-context.sh
 
   up:
-    desc: "Start all platform services (builds images if needed)"
+    desc: "Start all platform services + observability stack (builds images if needed)"
     deps:
       - preflight:context
     cmds:
-      - docker compose up --build -d
+      - docker compose -f docker-compose.yml -f docker-compose.observability.yml up --build -d
 
   down:
-    desc: "Stop and remove all platform containers"
+    desc: "Stop and remove all platform containers (commerce + observability)"
     cmds:
-      - docker compose down
+      - docker compose -f docker-compose.yml -f docker-compose.observability.yml down
 
   logs:
     desc: "Stream live logs from all services"
@@ -351,3 +351,18 @@ tasks:
         -w /docs
         node:22
         bash scripts/validate-wiki.sh
+
+  docs:screenshot:
+    desc: "Capture rendered homepage PNG via headless Playwright (visual-content gate). Requires 'task docs:dev' on :5001."
+    vars:
+      SHOT_DIR: "{{.ROOT_DIR}}/tmp/B2B-Commerce/screenshots"
+      SHOT_URL: '{{.SHOT_URL | default "http://host.docker.internal:5001/B2B-Commerce/"}}'
+    cmds:
+      - mkdir -p "{{.SHOT_DIR}}"
+      - docker run --rm
+        --add-host=host.docker.internal:host-gateway
+        -v "{{.SHOT_DIR}}:/out"
+        mcr.microsoft.com/playwright:v1.60.0-jammy
+        npx playwright screenshot --full-page --wait-for-timeout 3000
+        "{{.SHOT_URL}}"
+        /out/docs-verify-2026-06-08-home.png

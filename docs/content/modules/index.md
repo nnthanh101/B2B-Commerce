@@ -41,4 +41,7 @@ container.resolve("approval")  // ApprovalModuleService
 
 - [Concept: Local-First IaC](../infrastructure/local-first-iac.md) — how these modules are deployed
 - [Entity: Observability Stack](../infrastructure/observability-stack.md) — how module metrics are captured
+- [Entity: Terraform Bootstrap](../infrastructure/terraform-bootstrap.md) — S3 state genesis module
+- [Entity: Terraform Workload Modules](../infrastructure/terraform-modules.md) — 7 workload modules (tags, foundation, network, compute, data, observability)
 - [Architecture Overview](../architecture/overview.md)
+- [ADR-010: Medusa OOTB Extended](../architecture/adrs/ADR-010-medusa-ootb-extended.md) — why B2B modules extend Medusa OOTB rather than replace it

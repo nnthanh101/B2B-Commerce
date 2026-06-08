@@ -3,16 +3,21 @@
 # ADR-007 AMENDMENT 2026-06-05: hybrid-cloud SSOT, execute NOW
 #
 # Usage:
-#   docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d
-#   OR standalone (observability-only, app containers must already be running):
-#   docker compose -f docker-compose.observability.yml up -d
+#   task up    (includes this file via -f overlay — observability cold-boots with commerce)
+#   task obs:up (standalone start — app containers must already be running)
+#   task obs:down (stop observability only, leaves main platform running)
 #
 # Registry exemption (ADR-007 §8): prom/*, grafana/*, prometheuscommunity/*, oliver006/*
 #   are semver-pinned observability images with no nnthanh101/* equivalent.
 #   Pinned tags prevent supply-chain drift. Review at each quarterly version reconciliation.
 #
-# Network: joins ec_network (external) — created by docker-compose.yml.
+# Network: joins ec_network (external) — created by docker-compose.yml with `name: ec_network`.
 #   All targets use Docker container names (ec_backend, ec_postgres, ec_redis) for cross-project DNS.
+#   The `name: ec_network` in docker-compose.yml ensures both stacks share one named network.
+#
+# SRE contract: observability is a CRITICAL SRE task but MUST NOT block the commerce stack.
+#   - ec and storefront have NO depends_on pointing here.
+#   - prometheus and grafana have healthchecks (self-healing), not dependency gates.
 #
 # Secrets hygiene (ADR-007 §9): GF_SECURITY_ADMIN_PASSWORD set via env var only.
 #   Set in shell or .env (gitignored). Default "admin" is blocked here — must be overridden.
@@ -39,6 +44,12 @@ services:
       - prometheus_data:/prometheus
     networks:
       - ec_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     labels:
       application: b2b-commerce
       service: observability
@@ -71,6 +82,12 @@ services:
       - ec_network
     depends_on:
       - prometheus
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
     labels:
       application: b2b-commerce
       service: observability
@@ -78,8 +95,7 @@ services:
       managed-by: adlc
 
   # ─── Postgres exporter ────────────────────────────────────────────────────────
-  # CROSS-PROJECT DNS: uses container name ec_postgres:5432 (not service name postgres)
-  # which is only visible within the same compose project.
+  # CROSS-PROJECT DNS: uses container name ec_postgres:5432 (resolved via named ec_network)
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.16.0
     container_name: ec_postgres_exporter
