@@ -101,7 +101,7 @@ services:
     container_name: ec_postgres_exporter
     restart: unless-stopped
     environment:
-      - DATA_SOURCE_NAME=postgresql://postgres:postgres@ec_postgres:5432/ec-store?sslmode=disable
+      - DATA_SOURCE_NAME=postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@ec_postgres:5432/ec-store?sslmode=disable
     ports:
       - "9187:9187"
     networks:
