@@ -61,6 +61,19 @@ test.describe("B2B cart-to-quote flow [generated]", () => {
     const headingText = await itemsHeading.first().textContent();
     console.log(`[cart-to-quote] HARD ASSERT: Items visible — "${headingText}"`);
 
+    // C3 positive assertions: cart must show ≥1 item count, NZ$ total, and NOT be empty
+    // Fails on empty-cart frame (regression guard for stale publishable key)
+    const headingNumber = parseInt((headingText ?? "").replace(/\D/g, ""), 10) || 0;
+    expect(headingNumber).toBeGreaterThanOrEqual(1);
+    console.log(`[cart-to-quote] C3 ASSERT: item count=${headingNumber} ≥ 1`);
+
+    const nzdTotal = buyerPage.locator('text=/NZ\\$/').first();
+    await expect(nzdTotal).toBeVisible({ timeout: 15000 });
+    console.log("[cart-to-quote] C3 ASSERT: NZ$ total visible");
+
+    await expect(buyerPage.getByText(/you don't have anything in your cart/i)).not.toBeVisible();
+    console.log("[cart-to-quote] C3 ASSERT: empty-cart message not present");
+
     await buyerPage.screenshot({
       path: path.join(SCREENSHOTS_DIR, "generated-ctq-02-cart-with-items.png"),
     });

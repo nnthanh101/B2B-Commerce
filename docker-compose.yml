@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_DB: ec-store
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
       - "5432:5432"
     volumes:
@@ -36,7 +36,7 @@ services:
       - "5173:5173"
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/ec-store
+      - DATABASE_URL=postgres://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/ec-store
       - REDIS_URL=redis://redis:6379
     env_file:
       - apps/backend/.env

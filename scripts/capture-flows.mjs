@@ -36,10 +36,34 @@ const TMP_FLOWS_DIR = path.join(REPO_ROOT, "tmp/B2B-Commerce/demo/flows");
 // Mirror:  docs/site/img/demo/flows  (current built output — served immediately)
 const DOCS_FLOWS_DIR = path.join(REPO_ROOT, "docs/static/img/demo/flows");
 const DOCS_SITE_FLOWS_DIR = path.join(REPO_ROOT, "docs/site/img/demo/flows");
-// Publishable key required for Medusa v2 Store API calls
-// Key verified 2026-06-08 via GET /admin/api-keys
-const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ||
-  "pk_fe8d13be691ba4e65637282f91492969a9c34f8f3086478583549415e6f58620";
+// Publishable key resolved at runtime from GET /admin/api-keys.
+// No hardcoded pk_ default — a stale key silently produces empty-cart frames.
+// Populated lazily on first use by resolvePublishableKey().
+let _resolvedPublishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "";
+
+async function resolvePublishableKey() {
+  if (_resolvedPublishableKey) return _resolvedPublishableKey;
+  const adminToken = await getAdminToken();
+  const res = await fetch(`${BACKEND_URL}/admin/api-keys?limit=20`, {
+    headers: { Authorization: `Bearer ${adminToken}` },
+  });
+  if (!res.ok) {
+    throw new Error(`resolvePublishableKey: GET /admin/api-keys failed ${res.status}`);
+  }
+  const data = await res.json();
+  const key = (data.api_keys || []).find(
+    (k) => k.type === "publishable" && !k.revoked_at
+  );
+  if (!key || !key.token) {
+    throw new Error(
+      `resolvePublishableKey: no active publishable key returned by /admin/api-keys — ` +
+      `has db:reset been run without re-seeding? (got ${JSON.stringify(data.api_keys?.map(k => k.type))})`
+    );
+  }
+  _resolvedPublishableKey = key.token;
+  console.log(`  resolvePublishableKey: fetched live key ${key.redacted}`);
+  return _resolvedPublishableKey;
+}
 
 // Error markers to scan for in page content
 // NOTE: patterns are plain string matches (no regex) so currency digit sequences like
@@ -126,23 +150,45 @@ async function getBuyerToken() {
 }
 
 async function getNzRegionId() {
+  const pubKey = await resolvePublishableKey();
   const res = await fetch(`${BACKEND_URL}/store/regions`, {
-    headers: { "x-publishable-api-key": PUBLISHABLE_KEY },
+    headers: { "x-publishable-api-key": pubKey },
   });
+  if (!res.ok) {
+    throw new Error(
+      `getNzRegionId: GET /store/regions failed ${res.status} — publishable key rejected?`
+    );
+  }
   const data = await res.json();
   const regions = data.regions || [];
   const nz = regions.find(r => r.currency_code === "nzd");
-  return nz?.id || null;
+  if (!nz) {
+    throw new Error(
+      `getNzRegionId: no NZD region found (got ${regions.map(r => r.currency_code).join(", ")})`
+    );
+  }
+  return nz.id;
 }
 
 async function getFirstVariantId(regionId) {
-  if (!regionId) return null;
+  const pubKey = await resolvePublishableKey();
   const res = await fetch(`${BACKEND_URL}/store/products?limit=1&region_id=${regionId}`, {
-    headers: { "x-publishable-api-key": PUBLISHABLE_KEY },
+    headers: { "x-publishable-api-key": pubKey },
   });
+  if (!res.ok) {
+    throw new Error(
+      `getFirstVariantId: GET /store/products failed ${res.status} — publishable key rejected?`
+    );
+  }
   const data = await res.json();
   const products = data.products || [];
-  return products[0]?.variants?.[0]?.id || null;
+  const variantId = products[0]?.variants?.[0]?.id;
+  if (!variantId) {
+    throw new Error(
+      `getFirstVariantId: no variant found for region ${regionId} — is seed data loaded?`
+    );
+  }
+  return variantId;
 }
 
 async function getFirstCompanyId() {
@@ -156,15 +202,12 @@ async function getFirstCompanyId() {
 }
 
 async function createCartWithItems(buyerToken, qty = 2) {
+  const pubKey = await resolvePublishableKey();
   const regionId = await getNzRegionId();
   const variantId = await getFirstVariantId(regionId);
-  if (!regionId || !variantId) {
-    console.warn("  createCartWithItems: missing region or variant — skipping cart setup");
-    return null;
-  }
   const storeHeaders = {
     "Content-Type": "application/json",
-    "x-publishable-api-key": PUBLISHABLE_KEY,
+    "x-publishable-api-key": pubKey,
     Authorization: `Bearer ${buyerToken}`,
   };
   const cartRes = await fetch(`${BACKEND_URL}/store/carts`, {
@@ -173,15 +216,23 @@ async function createCartWithItems(buyerToken, qty = 2) {
     body: JSON.stringify({ region_id: regionId }),
   });
   if (!cartRes.ok) {
-    console.warn(`  createCartWithItems: cart creation failed ${cartRes.status}`);
-    return null;
+    const body = await cartRes.text().catch(() => "");
+    throw new Error(
+      `createCartWithItems: cart creation failed ${cartRes.status} — publishable key rejected? ${body.slice(0, 200)}`
+    );
   }
   const { cart } = await cartRes.json();
-  await fetch(`${BACKEND_URL}/store/carts/${cart.id}/line-items`, {
+  const lineRes = await fetch(`${BACKEND_URL}/store/carts/${cart.id}/line-items`, {
     method: "POST",
     headers: storeHeaders,
     body: JSON.stringify({ variant_id: variantId, quantity: qty }),
-  }).catch(() => {});
+  });
+  if (!lineRes.ok) {
+    const body = await lineRes.text().catch(() => "");
+    throw new Error(
+      `createCartWithItems: adding line item failed ${lineRes.status} — variant ${variantId} invalid? ${body.slice(0, 200)}`
+    );
+  }
   return cart.id;
 }
 
@@ -452,31 +503,30 @@ async function runFlow01(page, context, buyerToken, tmpDir, docsDir) {
   await page.goto(`${STOREFRONT_URL}/${REGION}/store`, { waitUntil: "domcontentloaded", timeout: 45000 });
   await page.waitForTimeout(1500);
 
-  // Create cart in the authenticated API context
-  const cartId = await createCartWithItems(buyerToken, 3).catch(() => null);
-  if (cartId) {
-    // Set cart_id cookie in same domain context after auth session established
-    await page.evaluate((cid) => {
-      document.cookie = `_medusa_cart_id=${cid}; path=/; domain=localhost`;
-    }, cartId);
-    // Also set via context cookies for reliability
-    await context.addCookies([
-      { name: "_medusa_cart_id", value: cartId, domain: "localhost", path: "/", sameSite: "Lax" },
-    ]);
-    // Transfer cart to customer account (links cart to authenticated session)
-    const transferRes = await fetch(`${BACKEND_URL}/store/carts/${cartId}/customer`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-publishable-api-key": PUBLISHABLE_KEY,
-        Authorization: `Bearer ${buyerToken}`,
-      },
-    }).catch(() => null);
-    if (transferRes?.ok) {
-      console.log("    Cart transferred to customer account successfully");
-    } else {
-      console.log("    Cart transfer endpoint not available — cart_id cookie set directly");
-    }
+  // Create cart in the authenticated API context — throws loudly on key/region/variant failure
+  const cartId = await createCartWithItems(buyerToken, 3);
+  // Set cart_id cookie in same domain context after auth session established
+  await page.evaluate((cid) => {
+    document.cookie = `_medusa_cart_id=${cid}; path=/; domain=localhost`;
+  }, cartId);
+  // Also set via context cookies for reliability
+  await context.addCookies([
+    { name: "_medusa_cart_id", value: cartId, domain: "localhost", path: "/", sameSite: "Lax" },
+  ]);
+  // Transfer cart to customer account (links cart to authenticated session)
+  const pubKey = await resolvePublishableKey();
+  const transferRes = await fetch(`${BACKEND_URL}/store/carts/${cartId}/customer`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-publishable-api-key": pubKey,
+      Authorization: `Bearer ${buyerToken}`,
+    },
+  }).catch(() => null);
+  if (transferRes?.ok) {
+    console.log("    Cart transferred to customer account successfully");
+  } else {
+    console.log("    Cart transfer endpoint not available — cart_id cookie set directly");
   }
 
   // Step 1: Cart page landing — auth session + cart should render with items
@@ -657,12 +707,10 @@ async function runFlow04(page, context, buyerToken, tmpDir, docsDir) {
   await page.goto(`${STOREFRONT_URL}/${REGION}/store`, { waitUntil: "domcontentloaded", timeout: 45000 });
   await page.waitForTimeout(1000);
 
-  const cartId = await createCartWithItems(buyerToken, 2).catch(() => null);
-  if (cartId) {
-    await context.addCookies([
-      { name: "_medusa_cart_id", value: cartId, domain: "localhost", path: "/", sameSite: "Lax" },
-    ]);
-  }
+  const cartId = await createCartWithItems(buyerToken, 2);
+  await context.addCookies([
+    { name: "_medusa_cart_id", value: cartId, domain: "localhost", path: "/", sameSite: "Lax" },
+  ]);
 
   // Step 1: Cart page landing
   await page.goto(`${STOREFRONT_URL}/${REGION}/cart`, { waitUntil: "domcontentloaded", timeout: 60000 });
@@ -712,12 +760,10 @@ async function runFlow05(page, context, buyerToken, tmpDir, docsDir) {
   const frames = [];
   const isStorefront = true;
 
-  const cartId = await createCartWithItems(buyerToken, 5).catch(() => null);
-  if (cartId) {
-    await context.addCookies([
-      { name: "_medusa_cart_id", value: cartId, domain: "localhost", path: "/", sameSite: "Lax" },
-    ]);
-  }
+  const cartId = await createCartWithItems(buyerToken, 5);
+  await context.addCookies([
+    { name: "_medusa_cart_id", value: cartId, domain: "localhost", path: "/", sameSite: "Lax" },
+  ]);
 
   // Step 1: Cart page (buyer side of negotiation)
   await page.goto(`${STOREFRONT_URL}/${REGION}/cart`, { waitUntil: "domcontentloaded", timeout: 60000 });
@@ -771,12 +817,10 @@ async function runFlow06(page, context, buyerToken, tmpDir, docsDir) {
   await page.waitForTimeout(1000);
 
   // 5 items triggers bulk discount threshold
-  const cartId = await createCartWithItems(buyerToken, 5).catch(() => null);
-  if (cartId) {
-    await context.addCookies([
-      { name: "_medusa_cart_id", value: cartId, domain: "localhost", path: "/", sameSite: "Lax" },
-    ]);
-  }
+  const cartId = await createCartWithItems(buyerToken, 5);
+  await context.addCookies([
+    { name: "_medusa_cart_id", value: cartId, domain: "localhost", path: "/", sameSite: "Lax" },
+  ]);
 
   // Step 1: Cart landing with promo items
   await page.goto(`${STOREFRONT_URL}/${REGION}/cart`, { waitUntil: "domcontentloaded", timeout: 60000 });
@@ -850,12 +894,10 @@ async function runFlow07(page, context, buyerToken, tmpDir, docsDir) {
   frames.push(await captureStep(page, 3, tmpDir, docsDir, isStorefront, "product-detail-nzd"));
 
   // Step 4: Add to cart via API (authenticated) to ensure cart is linked
-  const cartId = await createCartWithItems(buyerToken, 1).catch(() => null);
-  if (cartId) {
-    await context.addCookies([
-      { name: "_medusa_cart_id", value: cartId, domain: "localhost", path: "/", sameSite: "Lax" },
-    ]);
-  }
+  const cartId = await createCartWithItems(buyerToken, 1);
+  await context.addCookies([
+    { name: "_medusa_cart_id", value: cartId, domain: "localhost", path: "/", sameSite: "Lax" },
+  ]);
   // Also try the UI Add to Cart button as secondary
   const addBtn = page.locator('button:has-text("Add to cart"), button:has-text("Add to Cart")').first();
   await addBtn.click().catch(() => {});
@@ -968,12 +1010,10 @@ async function runFlow09(page, context, buyerToken, tmpDir, docsDir) {
   frames.push(await captureStep(page, 3, tmpDir, docsDir, isStorefront, "bulk-quantity-input"));
 
   // Step 4: Cart page (post-add context)
-  const cartId = await createCartWithItems(buyerToken, 3).catch(() => null);
-  if (cartId) {
-    await context.addCookies([
-      { name: "_medusa_cart_id", value: cartId, domain: "localhost", path: "/", sameSite: "Lax" },
-    ]);
-  }
+  const cartId = await createCartWithItems(buyerToken, 3);
+  await context.addCookies([
+    { name: "_medusa_cart_id", value: cartId, domain: "localhost", path: "/", sameSite: "Lax" },
+  ]);
   await page.goto(`${STOREFRONT_URL}/${REGION}/cart`, { waitUntil: "domcontentloaded", timeout: 60000 });
   await waitForContent(page, isStorefront);
   frames.push(await captureStep(page, 4, tmpDir, docsDir, isStorefront, "cart-after-bulk-add"));
@@ -1013,12 +1053,10 @@ async function runFlow10(page, context, buyerToken, tmpDir, docsDir) {
   await page.goto(`${STOREFRONT_URL}/${REGION}/store`, { waitUntil: "domcontentloaded", timeout: 45000 });
   await page.waitForTimeout(1000);
 
-  const cartId = await createCartWithItems(buyerToken, 2).catch(() => null);
-  if (cartId) {
-    await context.addCookies([
-      { name: "_medusa_cart_id", value: cartId, domain: "localhost", path: "/", sameSite: "Lax" },
-    ]);
-  }
+  const cartId = await createCartWithItems(buyerToken, 2);
+  await context.addCookies([
+    { name: "_medusa_cart_id", value: cartId, domain: "localhost", path: "/", sameSite: "Lax" },
+  ]);
 
   // Step 1: Cart landing
   await page.goto(`${STOREFRONT_URL}/${REGION}/cart`, { waitUntil: "domcontentloaded", timeout: 60000 });

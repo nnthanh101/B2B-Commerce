@@ -59,6 +59,7 @@ jobs:
         with:
           repository: 1xOps/adlc-framework
           token: ${{ secrets.ADLC_FRAMEWORK_PAT }}
+          ref: command-center
           # cone-mode: false required — cone mode silently excludes dotfile dirs (.claude/) at repo root.
           # Two-line form: /** covers nested files; trailing slash covers files directly in the dir root.
           sparse-checkout: |
@@ -67,15 +68,23 @@ jobs:
           sparse-checkout-cone-mode: false
           path: _engine
 
-      # ACT-only fallback: adlc-framework remote is behind local commits.
-      # _engine_src/ is pre-populated from local adlc-framework (gitignored; act --bind exposes it).
-      # Remove this step once adlc-framework is pushed to GitHub and sparse-checkout materialises files.
+      # ACT-only fallback (legacy). With `ref: command-center` the sparse-checkout above now
+      # provides the engine for act too, so this is a transparent no-op. Kept only to avoid a
+      # hard failure on older local setups; emits a notice either way (no silent green-washing).
       - name: Populate engine from local workspace copy (act only)
         if: ${{ env.ACT == 'true' }}
         run: |
-          mkdir -p _engine/.claude/plugins/commerce/templates
-          cp -r _engine_src/.claude/plugins/commerce/templates/docusaurus \
-            _engine/.claude/plugins/commerce/templates/docusaurus
+          DST=_engine/.claude/plugins/commerce/templates/docusaurus
+          SRC=_engine_src/.claude/plugins/commerce/templates/docusaurus
+          if [ -d "$DST" ]; then
+            echo "::notice::engine present from sparse-checkout (ref: command-center) — no fallback needed"
+          elif [ -d "$SRC" ]; then
+            mkdir -p _engine/.claude/plugins/commerce/templates
+            cp -r "$SRC" "$DST"
+            echo "::warning::engine missing from sparse-checkout; used local _engine_src (--bind). CI would FAIL here — check ref/branch."
+          else
+            echo "::error::engine absent from BOTH sparse-checkout and _engine_src — build will fail (this is the real CI state, not masked)."
+          fi
 
       - name: Set up Node 22
         uses: actions/setup-node@v4
