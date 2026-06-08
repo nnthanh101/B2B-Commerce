@@ -26,32 +26,32 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
 const CEO_BEATS = [
   {
     id: "beat1",
-    frame: path.join(REPO_ROOT, "docs/site/img/demo/flows/01-cart-to-quote/step-01.png"),
-    narration: "Maria is a procurement specialist at a New Zealand manufacturer. Quarter-close is four days away, and her cart holds NZ$4,746 in equipment. Under the legacy process, a single quote means three emails, three sign-offs, and a three-to-five day wait — a window that slips the budget every time.",
+    frame: path.join(REPO_ROOT, "docs/static/img/demo/flows/01-cart-to-quote/step-01.png"),
+    narration: "Maria is a procurement specialist at a New Zealand manufacturer. Quarter-close is four days away, and her cart holds NZ$4,647 in equipment across three items. Under the legacy process, a single quote means three emails, three sign-offs, and a three-to-five day wait — a window that slips the budget every time.",
   },
   {
     id: "beat2",
-    frame: path.join(REPO_ROOT, "docs/site/img/demo/flows/01-cart-to-quote/step-04.png"),
+    frame: path.join(REPO_ROOT, "docs/static/img/demo/flows/01-cart-to-quote/step-04.png"),
     narration: "One click converts the cart into a formal quote request. No email chain — a modal confirms the cart becomes a live quote. Maria clicks Submit.",
   },
   {
     id: "beat3",
-    frame: path.join(REPO_ROOT, "docs/site/img/demo/flows/01-cart-to-quote/step-05.png"),
+    frame: path.join(REPO_ROOT, "docs/static/img/demo/flows/01-cart-to-quote/step-05.png"),
     narration: "The quote is filed in under ninety seconds. Maria's account shows it live, marked Pending Merchant — awaiting sign-off. Her manager is notified instantly. No chasing, no back-and-forth.",
   },
   {
     id: "beat4",
-    frame: path.join(REPO_ROOT, "docs/site/img/demo/flows/02-approval/step-01.png"),
+    frame: path.join(REPO_ROOT, "docs/static/img/demo/flows/02-approval/step-01.png"),
     narration: "On the admin side, David — Demo Corp's procurement director — sees approval number 2469 land in his queue the moment Maria submits. No forwarded email, no CC chain. The quote routes straight to the right person.",
   },
   {
     id: "beat5",
-    frame: path.join(REPO_ROOT, "docs/site/img/demo/flows/02-approval/step-05b-govern-approve.png"),
+    frame: path.join(REPO_ROOT, "docs/static/img/demo/flows/02-approval/step-05b-govern-approve.png"),
     narration: "David reviews the approval. The spend is on record, the company is identified, and the policy context is clear. He approves — spend stays governed, NZD throughout, decision traceable.",
   },
   {
     id: "beat6",
-    frame: path.join(REPO_ROOT, "docs/site/img/demo/flows/02-approval/step-06b-approved-audit.png"),
+    frame: path.join(REPO_ROOT, "docs/static/img/demo/flows/02-approval/step-06b-approved-audit.png"),
     narration: "Status flipped to Approved. What used to take three to five days took minutes. Maria's budget is protected, the quarter-close window holds, and every decision is on the record. Days became minutes — and the audit trail is built in.",
   },
 ];
@@ -70,17 +70,17 @@ const CTO_BEATS = [
   },
   {
     id: "beat3",
-    frame: path.join(REPO_ROOT, "docs/site/img/demo/flows/observability/prometheus-targets-up.png"),
+    frame: path.join(REPO_ROOT, "docs/static/img/demo/flows/observability/prometheus-targets-up.png"),
     narration: "Prometheus is scraping four targets — the Medusa backend, Node exporter, Postgres exporter, and Redis exporter. Every component reports in. This is instrumented from minute one — not bolted on after the first incident.",
   },
   {
     id: "beat4",
-    frame: path.join(REPO_ROOT, "docs/site/img/demo/flows/observability/grafana-latency-rate-panels.png"),
+    frame: path.join(REPO_ROOT, "docs/static/img/demo/flows/observability/grafana-latency-rate-panels.png"),
     narration: "The Grafana commerce dashboard reacts to the traffic. Latency percentiles — p50, p95, and p99 — show real request timing. The request-rate panel breaks out 2-x-x success from 4-x-x client errors. The slow tail is visible; averages do not hide it.",
   },
   {
     id: "beat5",
-    frame: path.join(REPO_ROOT, "docs/site/img/demo/flows/observability/grafana-upstatus-grid.png"),
+    frame: path.join(REPO_ROOT, "docs/static/img/demo/flows/observability/grafana-upstatus-grid.png"),
     narration: "One panel answers 'is it healthy?' for the entire platform — four green tiles, one glance. If any target turned red, the team would know within seconds. Not from a customer call — from the dashboard. Instrumented from minute one. The answer to 'can we run this in production?' is yes — and here is the proof.",
   },
 ];

@@ -15,12 +15,12 @@ source_refs:
 last_compiled: "2026-06-08T00:00:00Z"
 reel: ceo
 frames:
-  beat1: docs/site/img/demo/flows/01-cart-to-quote/step-01.png
-  beat2: docs/site/img/demo/flows/01-cart-to-quote/step-04.png
-  beat3: docs/site/img/demo/flows/01-cart-to-quote/step-05.png
-  beat4: docs/site/img/demo/flows/02-approval/step-01.png
-  beat5: docs/site/img/demo/flows/02-approval/step-05b-govern-approve.png
-  beat6: docs/site/img/demo/flows/02-approval/step-06b-approved-audit.png
+  beat1: docs/static/img/demo/flows/01-cart-to-quote/step-01.png
+  beat2: docs/static/img/demo/flows/01-cart-to-quote/step-04.png
+  beat3: docs/static/img/demo/flows/01-cart-to-quote/step-05.png
+  beat4: docs/static/img/demo/flows/02-approval/step-01.png
+  beat5: docs/static/img/demo/flows/02-approval/step-05b-govern-approve.png
+  beat6: docs/static/img/demo/flows/02-approval/step-06b-approved-audit.png
 ---
 
 # CEO Reel — Cart to Quote to Approval: 3 Days to Minutes, Governed Spend
@@ -30,23 +30,23 @@ frames:
 **Persona protagonist**: Maria (procurement specialist, Demo Corp NZ) — value-trigger
 **Persona resolution**: David (procurement director, Demo Corp NZ) — governance owner
 **Audience**: Non-technical executive — must feel time and money saved
-**Real on-screen values**: NZ$4,746.00 cart / 3 items / NZ$1,582.00 quote / Approval #2469 / Demo Corp
+**Real on-screen values**: NZ$4,647.00 cart / 3 items / NZ$1,582.00 quote / Approval #2469 / Demo Corp
 
 ---
 
 ## Beat 1 — Setup: Loaded Cart Under Deadline
 
-**Frame**: `docs/site/img/demo/flows/01-cart-to-quote/step-01.png`
-**On screen**: NZ$4,746.00 cart, 3 items (6.5-inch Ultra HD Smartphone x3), spending-limit warning, Request Quote CTA
+**Frame**: `docs/static/img/demo/flows/01-cart-to-quote/step-01.png`
+**On screen**: NZ$4,647.00 cart, 3 items (6.5-inch Ultra HD Smartphone x3), spending-limit warning, Request Quote CTA
 
 **Narration**:
-> Maria is a procurement specialist at a New Zealand manufacturer. Quarter-close is four days away, and today her cart holds three units at NZ$4,746. Under the legacy process, a single quote means three emails, three sign-offs, and a three-to-five day wait — a window that slips the budget every time.
+> Maria is a procurement specialist at a New Zealand manufacturer. Quarter-close is four days away, and today her cart holds three units at NZ$4,647. Under the legacy process, a single quote means three emails, three sign-offs, and a three-to-five day wait — a window that slips the budget every time.
 
 ---
 
 ## Beat 2 — Trigger: Request Quote
 
-**Frame**: `docs/site/img/demo/flows/01-cart-to-quote/step-04.png`
+**Frame**: `docs/static/img/demo/flows/01-cart-to-quote/step-04.png`
 **On screen**: "Submit request for quote" modal, Cancel and Submit buttons
 
 **Narration**:
@@ -56,7 +56,7 @@ frames:
 
 ## Beat 3 — Quote Created: Pending Merchant
 
-**Frame**: `docs/site/img/demo/flows/01-cart-to-quote/step-05.png`
+**Frame**: `docs/static/img/demo/flows/01-cart-to-quote/step-05.png`
 **On screen**: Buyer Quotes list, quote #9 through #5, status "Pending Merchant", NZ$1,582.00 total
 
 **Narration**:
@@ -66,7 +66,7 @@ frames:
 
 ## Beat 4 — Handoff: David's Approvals Queue
 
-**Frame**: `docs/site/img/demo/flows/02-approval/step-01.png`
+**Frame**: `docs/static/img/demo/flows/02-approval/step-01.png`
 **On screen**: Admin Approvals list, #2469, Demo Corp, Pending, 1 item, 1 of 1 results
 
 **Narration**:
@@ -76,7 +76,7 @@ frames:
 
 ## Beat 5 — Govern and Approve
 
-**Frame**: `docs/site/img/demo/flows/02-approval/step-05b-govern-approve.png`
+**Frame**: `docs/static/img/demo/flows/02-approval/step-05b-govern-approve.png`
 **On screen**: Admin Approvals list, #2469, Demo Corp, Pending status, approve action available
 
 **Narration**:
@@ -86,7 +86,7 @@ frames:
 
 ## Beat 6 — Resolution: Approved
 
-**Frame**: `docs/site/img/demo/flows/02-approval/step-06b-approved-audit.png`
+**Frame**: `docs/static/img/demo/flows/02-approval/step-06b-approved-audit.png`
 **On screen**: Admin Approvals list, #2469, Demo Corp, green "Approved" status badge
 
 **Narration**:
@@ -99,4 +99,4 @@ frames:
 - **Currency**: NZD throughout. All figures on screen are NZ$ — narrate "NZD" or "New Zealand dollars" on first mention only.
 - **Beat 6 audit trail**: The current build shows status flip to Approved on the approvals list. No comment-field or timestamped-approver panel is present in this release. Narration references "decision on the record" as the outcome (correct) without fabricating a visible audit panel.
 - **Beat 3 label**: The on-screen label is "Pending Merchant" (not "Pending Approval"). Narrate as "awaiting sign-off" to stay outcome-focused while remaining feature-accurate.
-- **PO contract values**: PO used $850/12 items as illustrative placeholders. On-frame real values are NZ$4,746/3 items for beat 1 and NZ$1,582 for beat 3. Per INVEST.Negotiable, on-frame values are narrated (feature-accuracy AC-4).
+- **PO contract values**: PO used $850/12 items as illustrative placeholders. On-frame real values are NZ$4,647/3 items for beat 1 and NZ$1,582 for beat 3. Per INVEST.Negotiable, on-frame values are narrated (feature-accuracy AC-4).

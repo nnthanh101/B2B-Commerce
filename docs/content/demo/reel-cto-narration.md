@@ -15,12 +15,12 @@ reel: cto
 frames:
   beat1: null
   beat2: null
-  beat3: docs/site/img/demo/flows/observability/prometheus-targets-up.png
-  beat4: docs/site/img/demo/flows/observability/grafana-latency-rate-panels.png
-  beat5: docs/site/img/demo/flows/observability/grafana-upstatus-grid.png
+  beat3: docs/static/img/demo/flows/observability/prometheus-targets-up.png
+  beat4: docs/static/img/demo/flows/observability/grafana-latency-rate-panels.png
+  beat5: docs/static/img/demo/flows/observability/grafana-upstatus-grid.png
 promql_verified:
-  rate: "sum(rate(medusa_http_requests_total[5m])) = 2.49 req/s"
-  p95: "histogram_quantile(0.95,...) = 248ms"
+  rate: "sum(rate(medusa_http_requests_total[5m])) = 1.77 req/s"
+  p95: "histogram_quantile(0.95,...) = 207ms"
   targets_up: "up{} = 4/4"
 ---
 
@@ -56,7 +56,7 @@ promql_verified:
 
 ## Beat 3 — Prometheus Targets: All 4 UP
 
-**Frame**: `docs/site/img/demo/flows/observability/prometheus-targets-up.png`
+**Frame**: `docs/static/img/demo/flows/observability/prometheus-targets-up.png`
 **On screen**: Prometheus Target Health page — b2b-commerce (ec_backend:9000/admin/metrics), node, postgres, redis — all UP (green)
 
 **Narration**:
@@ -66,7 +66,7 @@ promql_verified:
 
 ## Beat 4 — Grafana: Latency and Error Rate React to Traffic
 
-**Frame**: `docs/site/img/demo/flows/observability/grafana-latency-rate-panels.png`
+**Frame**: `docs/static/img/demo/flows/observability/grafana-latency-rate-panels.png`
 **On screen**: "Digital Commerce — Backend" dashboard — Backend Request Latency p50/p95/p99 (p50=31.8ms, p95=105ms, p99=191ms) and Backend Request Rate by Status (2xx populated, ~1.99 req/s max)
 
 **Narration**:
@@ -76,7 +76,7 @@ promql_verified:
 
 ## Beat 5 — Up-Status Grid: Healthy in One Glance
 
-**Frame**: `docs/site/img/demo/flows/observability/grafana-upstatus-grid.png`
+**Frame**: `docs/static/img/demo/flows/observability/grafana-upstatus-grid.png`
 **On screen**: Up-Status Grid — All Scrape Targets: 4 green tiles — Medusa Backend (ec_backend:9000), Postgres Exporter, Redis Exporter, Node Exporter — all "UP"
 
 **Narration**:

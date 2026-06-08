@@ -303,6 +303,8 @@ async function main() {
   // ── Step 4: Launch browser ─────────────────────────────────────────────────
   console.log("\n[4/7] Launching browser...");
   const browser = await chromium.launch({ headless: true });
+  // Set global default timeout to 90s for slow Next.js SSR pages
+  browser.setDefaultTimeout && browser.setDefaultTimeout(90000);
 
   // The storefront uses HttpOnly, SameSite=strict cookies:
   //   _medusa_jwt      — buyer auth token

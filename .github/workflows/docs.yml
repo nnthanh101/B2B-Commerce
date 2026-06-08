@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout public repo (default token)
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       # Sparse-checkout the private engine from adlc-framework.
       # ADLC_FRAMEWORK_PAT must be a fine-grained PAT scoped to adlc-framework
@@ -55,7 +55,7 @@ jobs:
       # Contents:Read-only on adlc-framework) OR for local `act` use
       # --secret-file .secrets
       - name: Checkout private Docusaurus engine (sparse)
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           repository: 1xOps/adlc-framework
           token: ${{ secrets.ADLC_FRAMEWORK_PAT }}
@@ -87,7 +87,7 @@ jobs:
           fi
 
       - name: Set up Node 22
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: "22"
 
