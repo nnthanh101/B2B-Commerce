@@ -64,7 +64,7 @@ const REPO_ROOT = path.resolve(__dirname, "../..");
 
 export const TEST_RESULTS_DIR =
   process.env.PLAYWRIGHT_TEST_RESULTS ||
-  path.join(REPO_ROOT, "tmp/B2B-Commerce/test-results");
+  path.join(REPO_ROOT, "tmp/Digital-Commerce/test-results");
 
 export const SCREENSHOTS_DIR =
   process.env.PLAYWRIGHT_SCREENSHOTS ||

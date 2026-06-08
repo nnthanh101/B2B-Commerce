@@ -67,6 +67,18 @@ const DEMO_BUYER_EMAIL = "demo-buyer@democorp.local"
 const DEMO_BUYER_PASSWORD = "Test1234!"
 const DEMO_COUNTRY = process.env.DEMO_COMPANY_COUNTRY || "nz"
 const DEMO_CURRENCY = process.env.DEMO_COMPANY_CURRENCY || "nzd"
+// DFA-02: Employee spending limit — admin displays value 1:1 (no /100); 200 shows as NZ$200.
+// cart.total for 2 items at NZ$130 each = 260 (major units), so 260 > 200 → banner fires.
+// *orders expansion does NOT include order.total (undefined), so spent = 0 always.
+const DEMO_EMPLOYEE_SPENDING_LIMIT = parseInt(
+  process.env.DEMO_EMPLOYEE_SPENDING_LIMIT || "200",
+  10
+)
+// DFA-05: Company spending limit narrated as NZ$2,000 = 200000 minor units.
+const DEMO_COMPANY_SPENDING_LIMIT = parseInt(
+  process.env.DEMO_COMPANY_SPENDING_LIMIT || "200000",
+  10
+)
 
 // Validate DEMO_COUNTRY is a known market iso2 — fail fast with a clear message.
 const validIso2s = SUPPORTED_MARKETS.map((m) => m.iso2) as readonly string[]
@@ -115,6 +127,20 @@ export default async function seedDemoB2B({
   if (existingCompanies.length > 0) {
     company = existingCompanies[0]
     logger.info(`  Company already exists (${company.id}) — skipping creation`)
+    // DFA-05 durability guard: if the existing company has a stale currency_code
+    // (e.g. EUR from a pre-NZD seed), correct it in-place so future reseeds
+    // self-heal without requiring a db:reset.
+    if (company.currency_code !== DEMO_CURRENCY) {
+      const prevCurrency = company.currency_code
+      await companyModule.updateCompanies({
+        id: company.id,
+        currency_code: DEMO_CURRENCY,
+      } as any)
+      company.currency_code = DEMO_CURRENCY
+      logger.info(
+        `  Company currency corrected to ${DEMO_CURRENCY} (was: ${prevCurrency})`
+      )
+    }
   } else {
     const { result: companies } = await createCompaniesWorkflow(container).run({
       input: [
@@ -320,14 +346,52 @@ export default async function seedDemoB2B({
   if (existingEmployees.length > 0) {
     employee = existingEmployees[0]
     logger.info(`  Employee already exists (${employee.id}) — skipping creation`)
+    // DFA-02 durability guard: correct spending_limit if stale (e.g. 500000 from pre-DFA seed)
+    if (employee.spending_limit !== DEMO_EMPLOYEE_SPENDING_LIMIT) {
+      await (companyModule as any).updateEmployees({
+        id: employee.id,
+        spending_limit: DEMO_EMPLOYEE_SPENDING_LIMIT,
+      })
+      employee.spending_limit = DEMO_EMPLOYEE_SPENDING_LIMIT
+      logger.info(
+        `  Employee spending_limit corrected to ${DEMO_EMPLOYEE_SPENDING_LIMIT} (displays as NZ$${DEMO_EMPLOYEE_SPENDING_LIMIT.toLocaleString()})`
+      )
+    }
+    // DFA-02b durability: ensure employee↔customer remote link exists.
+    // createEmployeesWorkflow (new-employee path) creates the link automatically,
+    // but existing employees skip that workflow — the link may be missing or stale.
+    const { data: empWithCustomer } = await query.graph({
+      entity: "employee",
+      fields: ["id", "customer.*"],
+      filters: { id: employee.id },
+    })
+    const linkedCustomerId = (empWithCustomer[0] as any)?.customer?.id
+    if (linkedCustomerId !== customer.id) {
+      if (linkedCustomerId) {
+        await link.dismiss({
+          [COMPANY_MODULE]: { employee_id: employee.id },
+          [Modules.CUSTOMER]: { customer_id: linkedCustomerId },
+        })
+        logger.info(`  Stale employee↔customer link dismissed (was: ${linkedCustomerId})`)
+      }
+      await link.create({
+        [COMPANY_MODULE]: { employee_id: employee.id },
+        [Modules.CUSTOMER]: { customer_id: customer.id },
+      })
+      logger.info(`  Employee↔customer link created: ${employee.id} → ${customer.id}`)
+    } else {
+      logger.info(`  Employee↔customer link already correct`)
+    }
   } else {
     const { result: emp } = await createEmployeesWorkflow(container).run({
       input: {
         // customer_id is NOT a column on Employee — it is stored as a remote link.
         // Pass only the ORM-mapped fields; customerId drives the link step below.
+        // DFA-02: spending_limit is set below the seeded cart total (2x Mouse NZ$260 = NZ$520)
+        // so the over-limit banner fires in summary.tsx on first cart view.
         employeeData: {
           company_id: company.id,
-          spending_limit: 500000,
+          spending_limit: DEMO_EMPLOYEE_SPENDING_LIMIT,
           is_admin: true,
         } as any,
         customerId: customer.id,
@@ -425,8 +489,10 @@ export default async function seedDemoB2B({
       const { result: adminEmp } = await createEmployeesWorkflow(container).run({
         input: {
           // customer_id is NOT a column on Employee — stored as a remote link only.
+          // DFA-05: admin employee spending_limit = company governance ceiling (NZ$2,000).
           employeeData: {
             company_id: company.id,
+            spending_limit: DEMO_COMPANY_SPENDING_LIMIT,
             is_admin: true,
           } as any,
           customerId: adminCustomer.id,
@@ -511,6 +577,81 @@ export default async function seedDemoB2B({
       [Modules.CART]: { cart_id: cart.id },
     })
     logger.info(`  Cart created and linked: ${cart.id}`)
+  }
+
+  // ── Step 5b: Add NZD line items to approval cart (idempotent) ────────────
+  //
+  // DFA-01: The approval in Step 6 attaches to this cart. If the cart has no
+  // line items, admin /app/approvals shows "0 items". We add 1-2 NZD-priced
+  // items now so the approval row displays a real item count and NZD subtotal.
+  //
+  // Idempotency: only add when cart has zero items. Re-running seed:demo when
+  // items already exist is a no-op.
+
+  logger.info("Step 5b: Adding NZD line items to approval cart...")
+
+  try {
+    const productModule = container.resolve(Modules.PRODUCT)
+
+    // Fetch current cart items to check idempotency
+    const cartWithItems = await cartModule.retrieveCart(cart.id, {
+      relations: ["items"],
+    })
+    const currentItems: any[] = (cartWithItems as any).items ?? []
+
+    if (currentItems.length > 0) {
+      logger.info(
+        `  Cart already has ${currentItems.length} item(s) — skipping line-item seed`
+      )
+    } else {
+      // Prefer Wireless Mouse (NZ$260) — 2 units so cart total NZ$520 > employee limit NZ$200
+      const [mouseVariant] = await productModule.listProductVariants({
+        sku: "MOUSE-WHITE",
+      })
+      const [mouseBlackVariant] = await productModule.listProductVariants({
+        sku: "MOUSE-BLACK",
+      })
+      const mouseVar = mouseVariant || mouseBlackVariant
+
+      // Fallback to keyboard if no mouse SKU found
+      const [keyboardVariant] = await productModule.listProductVariants({
+        sku: "KEYBOARD-BLACK",
+      })
+
+      const primaryVariant = mouseVar || keyboardVariant
+      if (!primaryVariant) {
+        logger.warn(
+          `  No known SKU found (MOUSE-WHITE, MOUSE-BLACK, KEYBOARD-BLACK) — ` +
+          `run the base seed.ts first. Approval cart will have 0 items.`
+        )
+      } else {
+        const isMouseVariant =
+          primaryVariant.sku === "MOUSE-WHITE" ||
+          primaryVariant.sku === "MOUSE-BLACK"
+        const unitPrice = isMouseVariant ? 260 : 159
+        const itemTitle = isMouseVariant
+          ? "Wireless Mouse"
+          : "Wireless Keyboard | Touch ID | Numeric Keypad (Black)"
+
+        await cartModule.addLineItems(cart.id, [
+          {
+            variant_id: primaryVariant.id,
+            quantity: 2,
+            unit_price: unitPrice,
+            title: itemTitle,
+          },
+        ])
+        logger.info(
+          `  Added 2x ${itemTitle} @ NZ$${unitPrice} to approval cart ` +
+          `(total NZ$${unitPrice * 2} > employee limit NZ$${DEMO_EMPLOYEE_SPENDING_LIMIT / 100})`
+        )
+      }
+    }
+  } catch (err: any) {
+    logger.warn(
+      `  Step 5b FAILED (line items) — approval cart will have 0 items. ` +
+      `Error: ${err.message}`
+    )
   }
 
   // ── Step 6: Approval (idempotent) ────────────────────────────────────────

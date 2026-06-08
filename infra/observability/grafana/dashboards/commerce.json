@@ -685,8 +685,8 @@
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "expr": "up{job=\"medusa\"}",
-              "legendFormat": "Medusa Backend (ec:9000)",
+              "expr": "up{job=\"b2b-commerce\"}",
+              "legendFormat": "Medusa Backend (ec_backend:9000)",
               "refId": "A",
               "instant": true
             },

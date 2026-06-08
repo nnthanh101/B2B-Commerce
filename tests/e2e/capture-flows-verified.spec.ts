@@ -28,7 +28,7 @@ import {
 } from "./config";
 import { mkdir } from "node:fs/promises";
 
-const DEMO_DIR = path.resolve(__dirname, "../../tmp/B2B-Commerce/demo/flows");
+const DEMO_DIR = path.resolve(__dirname, "../../tmp/Digital-Commerce/demo/flows");
 const TODAY = new Date().toISOString().split("T")[0];
 
 /**

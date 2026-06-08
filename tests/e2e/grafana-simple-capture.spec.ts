@@ -7,7 +7,7 @@ import * as fs from 'fs';
  * Run: node node_modules/@playwright/test/cli.js test tests/e2e/grafana-simple-capture.spec.ts --project=chromium
  */
 
-const GRAFANA_URL = 'http://host.docker.internal:3000' || process.env.GRAFANA_URL || 'http://localhost:3000';
+const GRAFANA_URL = process.env.GRAFANA_URL || 'http://localhost:3000';
 const DASHBOARD_SLUG = 'commerce-backend';
 const DEMO_DIR = path.resolve(__dirname, '../../tmp/Digital-Commerce/demo');
 const REPORT_DIR = path.resolve(__dirname, '../../tmp/Digital-Commerce/test-results');

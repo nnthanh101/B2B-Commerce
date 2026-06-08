@@ -45,13 +45,13 @@ const FLOWS = [
   ["01", "cart-to-quote", "buyer-employee", `/${REGION}/cart`, "Maria converts cart to quote", "cart-with-items"],
   ["02", "approval", "admin", "/app/approvals", "David approves/rejects quote", null],
   ["03", "company-mgmt", "admin", "/app/companies", "David manages company members", null],
-  ["04", "spending-limit", "buyer-employee", `/${REGION}/account/orders`, "Maria's orders — spending limit context", null],
+  ["04", "spending-limit", "buyer-employee", `/${REGION}/cart`, "Maria's orders — spending limit context", "cart-with-items"],
   ["05", "quote-negotiate", "sales-manager", "/app/quotes", "Priya negotiates quote price", null],
   ["06", "promotions", "buyer-employee", `/${REGION}/cart`, "Maria sees NZ$ discount applied in cart", "cart-with-promo"],
   ["07", "full-ecommerce", "buyer-employee", `/${REGION}/store`, "Maria browses products in NZD", null],
   ["08", "order-edit", "sales-manager", "/app/orders/:orderId", "Priya edits specific order detail", "order-detail"],
   ["09", "bulk-add", "buyer-employee", `/${REGION}/products/hi-fi-gaming-headset-pro-grade-dac-hi-res-certified`, "Maria bulk-adds via product page", "scroll-to-bulk-table"],
-  ["10", "quick-order-pad", "buyer-employee", `/${REGION}/cart`, "Maria uses Quick Order Pad from cart (Quick Order visible at bottom)", "cart-with-items"],
+  ["10", "quick-order-pad", "buyer-employee", `/${REGION}/cart`, "Maria uses Quick Order Pad from cart (Quick Order visible at bottom)", "cart-with-items-then-qop"],
   ["11", "invite-employee", "admin", "/app/companies/:companyId", "David opens company detail to invite employee", "company-direct-nav"],
 ];
 
@@ -165,12 +165,22 @@ async function createCartWithItems(buyerToken, backendUrl, qty = 2) {
 
 async function getFirstAdminOrderId(backendUrl) {
   const token = await getAdminToken();
-  const res = await fetch(`${backendUrl}/admin/orders?limit=1`, {
+  // Sort newest-first so the demo NZD order (seeded last) appears before legacy EUR orders.
+  // Request currency_code explicitly to ensure the field is in the response.
+  const res = await fetch(`${backendUrl}/admin/orders?limit=50&order=-created_at`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) return null;
   const data = await res.json();
-  return data.orders?.[0]?.id || null;
+  const orders = data.orders || [];
+  // Case-insensitive match — Medusa v2 may return 'NZD' or 'nzd'
+  const isNzd = (o) => o.currency_code?.toLowerCase() === 'nzd';
+  // Prefer the demo-seeded order, fall back to any NZD order, then any order
+  const nzdOrder =
+    orders.find(o => isNzd(o) && o.metadata?.demo_completed_order === true) ||
+    orders.find(isNzd) ||
+    orders[0];
+  return nzdOrder?.id || null;
 }
 
 async function setupPreState(preState, urlPath, context, buyerToken) {
@@ -186,6 +196,15 @@ async function setupPreState(preState, urlPath, context, buyerToken) {
     }
     case "cart-with-promo": {
       const cartId = await createCartWithItems(buyerToken, BACKEND_URL, 5);
+      if (cartId) {
+        await context.addCookies([
+          { name: "_medusa_cart_id", value: cartId, domain: "localhost", path: "/", sameSite: "Lax" },
+        ]);
+      }
+      break;
+    }
+    case "cart-with-items-then-qop": {
+      const cartId = await createCartWithItems(buyerToken, BACKEND_URL, 2);
       if (cartId) {
         await context.addCookies([
           { name: "_medusa_cart_id", value: cartId, domain: "localhost", path: "/", sameSite: "Lax" },
@@ -277,6 +296,11 @@ async function captureFlow(flow) {
       const bulkTable = page.locator('table, [class*="bulk"], [data-testid*="bulk"]').first();
       await bulkTable.scrollIntoViewIfNeeded().catch(() => {});
       await page.waitForTimeout(500);
+    }
+    if (preState === "cart-with-items-then-qop") {
+      const qopBtn = page.locator('button:has-text("Quick Order"), [data-testid*="quick-order"]').first();
+      await qopBtn.click().catch(() => {});
+      await page.waitForTimeout(1000);
     }
     if (preState === "cart-then-quick-order-open") {
       const qopBtn = page.locator('button:has-text("Quick Order"), [data-testid*="quick-order"]').first();

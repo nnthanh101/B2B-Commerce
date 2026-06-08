@@ -128,7 +128,7 @@ export const test = base.extend<{
     // Enable video recording for buyer context (1280x720 resolution)
     const context = await browser.newContext({
       recordVideo: {
-        dir: "./tmp/B2B-Commerce/test-results/videos",
+        dir: "./tmp/Digital-Commerce/test-results/videos",
         size: { width: 1280, height: 720 },
       },
       viewport: { width: 1280, height: 720 },
@@ -345,6 +345,7 @@ export const test = base.extend<{
         headers: {
           "Content-Type": "application/json",
           "x-publishable-api-key": publishableKey,
+          "Authorization": `Bearer ${T_final}`,
         },
         data: {
           region_id: regionId,
@@ -354,12 +355,15 @@ export const test = base.extend<{
         const errText = await createCartRes.text();
         throw new Error(`POST /store/carts failed: ${createCartRes.status()} ${errText}`);
       }
-      const cartData = (await createCartRes.json()) as { cart?: { id: string } };
+      const cartData = (await createCartRes.json()) as { cart?: { id: string; customer_id?: string } };
       cartId = cartData.cart?.id ?? "";
       if (!cartId) {
         throw new Error("No cart ID returned from POST /store/carts");
       }
-      console.log(`[auth] ✓ Cart created: ${cartId}`);
+      if (!cartData.cart?.customer_id) {
+        console.warn(`[auth] WARN: Cart ${cartId} has no customer_id — CartMismatchBanner may appear. Check Authorization header was processed.`);
+      }
+      console.log(`[auth] ✓ Cart created: ${cartId}${cartData.cart?.customer_id ? ' (customer_id: ' + cartData.cart.customer_id + ')' : ' (ANONYMOUS — no customer_id)'}`);
 
       // Add line item
       const addLineRes = await context.request.post(
@@ -368,6 +372,7 @@ export const test = base.extend<{
           headers: {
             "Content-Type": "application/json",
             "x-publishable-api-key": publishableKey,
+            "Authorization": `Bearer ${T_final}`,
           },
           data: { variant_id: firstVariant.id, quantity: 1 },
         }

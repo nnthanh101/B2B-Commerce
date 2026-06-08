@@ -1,13 +1,36 @@
 # Prometheus scrape configuration — B2B-Commerce local observability stack
 #
 # CA conditions honoured:
-#   compose-override-network-join       — all targets use Docker DNS service names (NOT localhost)
+#   compose-override-network-join       — all targets use Docker container names (NOT service names)
 #   FOCUS-labels-day-1                  — environment + application global labels
 #
 # AMENDMENT 2026-06-05 (ADR-007):
 #   - Scrape target updated: ec:9000 on ec_network (was backend:9000 on ec_network_b2b)
 #   - Basic auth REMOVED: dev mode metrics endpoint is open (NODE_ENV != production)
 #   - Metric names aligned to producer: medusa_http_requests_total / medusa_http_request_duration_seconds
+#
+# AMENDMENT 2026-06-08 (cross-project DNS fix):
+#   - All targets now use container_name (ec_backend, ec_postgres, ec_redis), not service names.
+#   - Docker Compose multi-project DNS: service names only resolve within the same compose project.
+#     Container names are globally visible across projects on the same Docker network.
+#   - job_name renamed: medusa → b2b-commerce (user preference)
+#
+# ─── Grafana Cloud Free Tier (optional remote_write) ─────────────────────────────
+# Uncomment and fill in your Grafana Cloud credentials to ship metrics to the cloud.
+# Grafana Cloud Free: 10K series, 14-day retention.
+# Get your credentials at: https://grafana.com/auth/sign-up/create-user
+#
+# remote_write:
+#   - url: https://prometheus-prod-XX-prod-XX-XX.grafana.net/api/prom/push
+#     basic_auth:
+#       username: "<grafana-cloud-user-id>"
+#       password: "${GRAFANA_CLOUD_API_KEY}"  # Set via env var — never hardcode
+#     tls_config:
+#       insecure_skip_verify: false
+#     write_relabel_configs:
+#       - source_labels: [__name__]
+#         regex: "(medusa_|pg_|redis_|node_cpu|node_memory).*"
+#         action: keep  # Only forward b2b-commerce metrics — saves series quota
 
 global:
   scrape_interval: 15s
@@ -26,14 +49,16 @@ scrape_configs:
 
   # 1. Medusa backend /admin/metrics  (prom-client HTTP histogram + default metrics)
   #    Dev: open endpoint (no auth required when NODE_ENV != production)
-  #    Target: ec service on ec_network (Docker DNS name from docker-compose.yml)
-  - job_name: medusa
+  #    CROSS-PROJECT DNS: use container_name (ec_backend), not service name (ec).
+  #    Service names only resolve within the same docker-compose project.
+  #    Container names are globally visible across projects on the same Docker network.
+  - job_name: b2b-commerce
     scrape_interval: 15s
     metrics_path: /admin/metrics
     scheme: http
     static_configs:
       - targets:
-          - ec:9000
+          - ec_backend:9000
         labels:
           service: backend
           application: b2b-commerce
