@@ -1,6 +1,7 @@
 services:
   postgres:
-    image: postgres:15-alpine
+    # PostgreSQL 17 (LTS, 2026-2030). UPGRADE from PG15: CONFIRM=1 task db:reset (drops volume + reseeds).
+    image: postgres:17-alpine
     container_name: ec_postgres
     restart: unless-stopped
     environment:
@@ -15,7 +16,7 @@ services:
       - ec_network
 
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     container_name: ec_redis
     restart: unless-stopped
     ports:

@@ -10,10 +10,15 @@
 #   - Metric names aligned to producer: medusa_http_requests_total / medusa_http_request_duration_seconds
 #
 # AMENDMENT 2026-06-08 (cross-project DNS fix):
-#   - All targets now use container_name (ec_backend, ec_postgres, ec_redis), not service names.
-#   - Docker Compose multi-project DNS: service names only resolve within the same compose project.
-#     Container names are globally visible across projects on the same Docker network.
 #   - job_name renamed: medusa → b2b-commerce (user preference)
+#   - Backend target: host.docker.internal:9000 (macOS Docker Desktop).
+#     Root cause: main compose creates digital-commerce_ec_network (project-scoped),
+#     observability compose joins ec_network (external) — two separate networks, so
+#     container-name DNS (ec_backend) fails across the boundary.
+#     Fix: host.docker.internal resolves to the Docker host, port 9000 is published.
+#   - Long-term fix: add `name: ec_network` to docker-compose.yml network definition
+#     then `task down && task up` to align both stacks on the same network.
+#   - Postgres/redis exporters connect via published ports on the host bridge (sidecar pattern).
 #
 # ─── Grafana Cloud Free Tier (optional remote_write) ─────────────────────────────
 # Uncomment and fill in your Grafana Cloud credentials to ship metrics to the cloud.
@@ -49,16 +54,17 @@ scrape_configs:
 
   # 1. Medusa backend /admin/metrics  (prom-client HTTP histogram + default metrics)
   #    Dev: open endpoint (no auth required when NODE_ENV != production)
-  #    CROSS-PROJECT DNS: use container_name (ec_backend), not service name (ec).
-  #    Service names only resolve within the same docker-compose project.
-  #    Container names are globally visible across projects on the same Docker network.
+  #    Uses host.docker.internal:9000 (macOS Docker Desktop) — port 9000 is published.
+  #    Reason: main stack (digital-commerce_ec_network) and observability (ec_network)
+  #    are separate Docker networks; container-name DNS does not cross network boundaries.
+  #    Long-term: add name:ec_network to docker-compose.yml + task down && task up.
   - job_name: b2b-commerce
     scrape_interval: 15s
     metrics_path: /admin/metrics
     scheme: http
     static_configs:
       - targets:
-          - ec_backend:9000
+          - host.docker.internal:9000
         labels:
           service: backend
           application: b2b-commerce

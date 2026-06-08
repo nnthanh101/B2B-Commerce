@@ -85,6 +85,46 @@ tasks:
         fi
       - docker compose exec ec sh -c "cd /server/apps/backend && pnpm medusa db:migrate"
 
+  db:reset:
+    desc: "DESTRUCTIVE: Drop postgres data volume and reseed from scratch (required after major PG version upgrade). CONFIRM=1 required."
+    cmds:
+      - |
+        if [ "${CONFIRM:-}" != "1" ]; then
+          echo "Destructive: drops ALL postgres data."
+          echo "  HITL/agents: CONFIRM=1 task db:reset"
+          exit 1
+        fi
+      - docker compose down
+      - docker volume ls -q | grep postgres_data | xargs docker volume rm 2>/dev/null || true
+      - docker compose up --build -d
+      - sleep 15
+      - docker compose exec ec sh -c "cd /server/apps/backend && pnpm seed"
+      - docker compose exec ec sh -c "cd /server/apps/backend && npx medusa exec ./src/scripts/seed-demo-b2b.ts"
+
+  # ---------------------------------------------------------------------------
+  # Observability stack (Prometheus + Grafana + exporters — opt-in overlay)
+  # ---------------------------------------------------------------------------
+
+  obs:up:
+    desc: "Start observability stack (Prometheus, Grafana, postgres/redis/node exporters)"
+    cmds:
+      - docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d
+
+  obs:down:
+    desc: "Stop observability stack only (leaves main platform running)"
+    cmds:
+      - docker compose -f docker-compose.observability.yml down
+
+  obs:restart:
+    desc: "Force-recreate observability containers to pick up config or version changes"
+    cmds:
+      - docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d --force-recreate prometheus postgres-exporter redis-exporter grafana node-exporter
+
+  obs:status:
+    desc: "Show Prometheus scrape target health (requires observability stack running)"
+    cmds:
+      - curl -s http://localhost:9090/api/v1/targets | jq -r '.data.activeTargets[] | "\(.labels.job | .[0:20]) | \(.health) | \(.lastError // "ok")"'
+
   # ---------------------------------------------------------------------------
   # Code quality
   # ---------------------------------------------------------------------------

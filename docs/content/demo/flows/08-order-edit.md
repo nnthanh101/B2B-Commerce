@@ -21,6 +21,12 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 ![Orders list page in admin console](pathname:///img/demo/flows/08-order-edit/generated-order-edit-01-orders-page.png)
 
+![Orders wrapper container](pathname:///img/demo/flows/08-order-edit/generated-order-edit-02-orders-wrapper.png)
+
+![Orders page heading](pathname:///img/demo/flows/08-order-edit/generated-order-edit-03-orders-heading.png)
+
+![Empty orders state](pathname:///img/demo/flows/08-order-edit/generated-order-edit-04-empty-orders.png)
+
 <video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/08-order-edit.mp4"></video>
 
 ## Script (voice narration — partial, backend-only)

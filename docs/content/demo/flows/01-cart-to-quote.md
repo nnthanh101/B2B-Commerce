@@ -21,6 +21,14 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 ![Shopping cart ready to quote](pathname:///img/demo/flows/01-cart-to-quote/generated-ctq-01-cart-page.png)
 
+![Cart with items added](pathname:///img/demo/flows/01-cart-to-quote/generated-ctq-02-cart-with-items.png)
+
+![Quote request modal](pathname:///img/demo/flows/01-cart-to-quote/generated-ctq-03-quote-modal.png)
+
+![Quote submitted confirmation](pathname:///img/demo/flows/01-cart-to-quote/generated-ctq-04-submitted.png)
+
+![Quote details page](pathname:///img/demo/flows/01-cart-to-quote/generated-ctq-05-quote-details.png)
+
 <video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/01-cart-to-quote.mp4"></video>
 
 ## Script (voice narration)

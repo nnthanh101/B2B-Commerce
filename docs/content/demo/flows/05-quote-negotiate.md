@@ -21,6 +21,12 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 ![Cart showing bulk quote for negotiation](pathname:///img/demo/flows/05-quote-negotiate/generated-quote-negotiate-01-cart.png)
 
+![Quote modal for submission](pathname:///img/demo/flows/05-quote-negotiate/generated-quote-negotiate-02-quote-modal.png)
+
+![Quote submitted confirmation](pathname:///img/demo/flows/05-quote-negotiate/generated-quote-negotiate-03-quote-submitted.png)
+
+![Quotes list for manager review](pathname:///img/demo/flows/05-quote-negotiate/generated-quote-negotiate-04-quotes-list.png)
+
 <video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/05-quote-negotiate.mp4"></video>
 
 ## Script (voice narration — partial, green-slice only)

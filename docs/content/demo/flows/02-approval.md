@@ -21,6 +21,12 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 ![Approvals dashboard with pending quote](pathname:///img/demo/flows/02-approval/generated-approval-01-approvals-page.png)
 
+![Quote row visible in approvals list](pathname:///img/demo/flows/02-approval/generated-approval-02-row-visible.png)
+
+![Pending badge on quote item](pathname:///img/demo/flows/02-approval/generated-approval-03-pending-badge.png)
+
+![Demo Corp company approval details](pathname:///img/demo/flows/02-approval/generated-approval-04-demo-corp.png)
+
 <video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/02-approval.mp4"></video>
 
 ## Script (voice narration)
