@@ -19,11 +19,7 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 **Duration**: ~2 min
 
-![Cart with spending limit warning displayed](pathname:///img/demo/flows/04-spending-limit/generated-spending-limit-01-cart.png)
-
-![Cart showing total exceeding limit](pathname:///img/demo/flows/04-spending-limit/generated-spending-limit-02-cart-total.png)
-
-![Checkout button disabled for spending limit exceeded](pathname:///img/demo/flows/04-spending-limit/generated-spending-limit-03-checkout-button.png)
+![Cart with spending limit warning — 2 items NZ$260, "Spending Limit Exceeded" button disabled](pathname:///img/demo/flows/04-spending-limit/step-01.png)
 
 <video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/04-spending-limit.mp4"></video>
 

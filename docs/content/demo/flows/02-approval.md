@@ -19,13 +19,9 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 **Duration**: ~2 min
 
-![Approvals dashboard with pending quote](pathname:///img/demo/flows/02-approval/generated-approval-01-approvals-page.png)
+![Approvals dashboard — #BZK0 Demo Corp Pending, 1 item](pathname:///img/demo/flows/02-approval/step-01.png)
 
-![Quote row visible in approvals list](pathname:///img/demo/flows/02-approval/generated-approval-02-row-visible.png)
-
-![Pending badge on quote item](pathname:///img/demo/flows/02-approval/generated-approval-03-pending-badge.png)
-
-![Demo Corp company approval details](pathname:///img/demo/flows/02-approval/generated-approval-04-demo-corp.png)
+![Approvals list with pending badge](pathname:///img/demo/flows/02-approval/generated-approval-01-approvals-page.png)
 
 <video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/02-approval.mp4"></video>
 
