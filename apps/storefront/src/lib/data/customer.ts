@@ -201,6 +201,85 @@ export async function signout(countryCode: string, customerId: string) {
   redirect(`/${countryCode}/account`)
 }
 
+/**
+ * Initiates the Keycloak SSO login flow (third-party OIDC).
+ *
+ * Calls sdk.auth.login with actor="customer", method="vymalo-keycloak".
+ * Returns { location: string } — the caller must redirect the browser to that URL.
+ * This is a server action so it can only be called from a client component that
+ * uses router.push / window.location, or from a Server Action that calls redirect().
+ */
+export async function loginWithKeycloak(): Promise<{ location: string } | string> {
+  try {
+    const result = await sdk.auth.login("customer", "vymalo-keycloak", {})
+
+    if (typeof result === "object" && "location" in result) {
+      return { location: result.location }
+    }
+
+    // Unexpected: provider returned a token directly (should not happen for OIDC)
+    return result as string
+  } catch (error: any) {
+    return error.toString()
+  }
+}
+
+/**
+ * Finalizes the Keycloak SSO callback.
+ *
+ * Called from the storefront callback page after Keycloak/Medusa redirects back
+ * with `code` and `state` query params.  Mirrors the session-persistence logic of
+ * login() — same setAuthToken + revalidateTag + transferCart sequence so that
+ * retrieveCustomer() works immediately after redirect.
+ */
+export async function handleKeycloakCallback(
+  code: string,
+  state: string,
+  countryCode: string
+): Promise<void> {
+  const result = await sdk.auth.callback("customer", "vymalo-keycloak", {
+    code,
+    state,
+  })
+
+  if (typeof result !== "string") {
+    // MFA required — not expected for this B2B SSO flow; surface as error
+    throw new Error("Unexpected MFA response from SSO callback")
+  }
+
+  const token = result
+
+  track("customer_logged_in_sso")
+  setAuthToken(token)
+
+  const [customerCacheTag, productsCacheTag, cartsCacheTag] = await Promise.all([
+    getCacheTag("customers"),
+    getCacheTag("products"),
+    getCacheTag("carts"),
+  ])
+
+  revalidateTag(customerCacheTag)
+
+  const customer = await retrieveCustomer()
+  const cart = await retrieveCart()
+
+  if (customer?.employee?.company_id) {
+    await updateCart({
+      metadata: {
+        ...cart?.metadata,
+        company_id: customer.employee.company_id,
+      },
+    })
+  }
+
+  revalidateTag(productsCacheTag)
+  revalidateTag(cartsCacheTag)
+
+  await transferCart()
+
+  redirect(`/${countryCode}/account`)
+}
+
 export async function transferCart() {
   const cartId = await getCartId()
 

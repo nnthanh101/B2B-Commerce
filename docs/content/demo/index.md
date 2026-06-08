@@ -24,20 +24,18 @@ This section contains the demo artifacts for B2B-Commerce: narrated flows, perso
 | [Personas: Sales Manager](./personas/sales-manager.md) | Sales manager persona |
 | [Demo Flows](./flows/index.md) | Individual flow playbooks (11 flows) |
 
-## 6-Market Currency Proof
+## Persona Reels
 
-B2B-Commerce renders localized pricing in 6 major markets. Click each screenshot to verify live currency symbols and regional pricing:
+Six persona-lens reels, each embedding a validated screen recording plus on-screen screenshots and a **Why / Business value / What-if-missing** block written from that role's perspective. Every figure on screen is truthful to the live render.
 
-| Market | Currency | Screenshot |
-|--------|----------|------------|
-| New Zealand | NZD | ![New Zealand market: NZ$ symbol and regional pricing proof](pathname:///img/demo/markets/nz-currency-2026-06-07.png) |
-| Australia | AUD | ![Australia market: A$ symbol and regional pricing proof](pathname:///img/demo/markets/au-currency-2026-06-07.png) |
-| Singapore | SGD | ![Singapore market: S$ symbol and regional pricing proof](pathname:///img/demo/markets/sg-currency-2026-06-07.png) |
-| Vietnam | VND | ![Vietnam market: ₫ symbol, zero-decimal VND pricing proof](pathname:///img/demo/markets/vn-currency-2026-06-07.png) |
-| United States | USD | ![United States market: $ symbol and regional pricing proof](pathname:///img/demo/markets/us-currency-2026-06-07.png) |
-| United Kingdom | GBP | ![United Kingdom market: £ symbol and regional pricing proof](pathname:///img/demo/markets/gb-currency-2026-06-07.png) |
-
-**Investor value**: Zero-configuration multi-currency cart reconciliation. Each market uses its own FX-generated pricing from a single Medusa v2 pricelist.
+| Reel | Persona lens | What it demonstrates |
+|------|--------------|----------------------|
+| [CFO — Governed Spend](./reel-cfo-narration.md) | CFO / Finance | Spend governed before money moves: limit enforced at cart, approval on the record |
+| [COO — Procurement Velocity](./reel-coo-narration.md) | COO / Operations | A quarter's restock in minutes: bulk SKU entry, quick-order paste, CSV export — still governed |
+| [Buyer — Governed Self-Service](./reel-buyer-narration.md) | Buyer-employee | Consumer-grade buying with company policy applied automatically at checkout |
+| [Sales Manager — Quote Negotiation](./reel-salesmgr-narration.md) | Sales / VP Sales | Counter-offer, message thread, and accept in-platform with a full audit trail |
+| [CEO — Cart → Quote → Approval](./reel-ceo-narration.md) | CEO / Executive | End-to-end: cart to filed quote to governed approval, NZD throughout |
+| [CTO — Operate / Observability](./reel-cto-narration.md) | CTO / Platform | Four golden signals on one Grafana board; Prometheus targets 4/4 UP |
 
 ## Quick Start
 

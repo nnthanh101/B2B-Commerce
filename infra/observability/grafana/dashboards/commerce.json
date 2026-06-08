@@ -48,7 +48,7 @@
       }
     ]
   },
-  "description": "B2B-Commerce B2B-Commerce — production observability dashboard (ADR-007 v4 2026-06-05 REDESIGN). 2-column packed grid, zero blank areas, 9 data panels. Datasource uid=prometheus (deterministic ADR-004). All PromQL verified against live Prometheus. Rate windows: fixed 5m.",
+  "description": "B2B-Commerce B2B-Commerce — production observability dashboard (ADR-007 v4 2026-06-05 REDESIGN). 2-column packed grid, zero blank areas, 9 data panels. Datasource uid=prometheus (deterministic ADR-004). All PromQL verified against live Prometheus. Rate windows: fixed 5m. KC-5 2026-06-09: Keycloak IdP Health panel added.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -718,18 +718,112 @@
       ],
       "title": "Up-Status — All Scrape Targets",
       "type": "row"
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 37 },
+      "id": 200,
+      "title": "Keycloak IdP — Health & HTTP Activity",
+      "type": "row"
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "description": "Keycloak 26.x IdP health and HTTP activity. KC-5 2026-06-09. Source: ec_keycloak:9000/metrics (Quarkus management interface, NOT published to host — container DNS only on ec_network). Target A: up{job=\"keycloak\"} — scrape status (1=UP, 0=DOWN / container not started). Target B: rate(http_server_requests_seconds_count{job=\"keycloak\"}[5m]) — Quarkus default HTTP server metric (present without SPI config). Login-event metrics (keycloak_logins_total, keycloak_failed_login_attempts_total) require the Keycloak metrics event-listener SPI (KC_FEATURES or --spi-events-listener) — out of scope this run; add targets C/D once SPI is enabled.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 80 }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Target UP (1=up 0=down)" },
+            "properties": [
+              { "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } },
+              { "id": "custom.axisLabel", "value": "UP (0/1)" },
+              { "id": "max", "value": 1 },
+              { "id": "min", "value": 0 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "HTTP req/s (all routes)" },
+            "properties": [
+              { "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } },
+              { "id": "custom.axisLabel", "value": "req/s" },
+              { "id": "unit", "value": "reqps" }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 38 },
+      "id": 201,
+      "options": {
+        "legend": {
+          "calcs": ["last", "mean"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "up{job=\"keycloak\"}",
+          "legendFormat": "Target UP (1=up 0=down)",
+          "refId": "A",
+          "instant": false,
+          "range": true
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"keycloak\"}[5m]))",
+          "legendFormat": "HTTP req/s (all routes)",
+          "refId": "B",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "title": "Keycloak IdP Health",
+      "type": "timeseries"
     }
 
   ],
   "refresh": "30s",
   "schemaVersion": 39,
-  "tags": ["b2b-commerce", "medusa", "observability", "adr-007-v4", "2026-06-05", "redesign-2col"],
+  "tags": ["b2b-commerce", "medusa", "observability", "adr-007-v4", "2026-06-05", "redesign-2col", "keycloak", "kc-5"],
   "templating": { "list": [] },
   "time": { "from": "now-1h", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
   "title": "Digital Commerce — Backend",
   "uid": "commerce-backend",
-  "version": 5,
+  "version": 6,
   "weekStart": ""
 }

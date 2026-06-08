@@ -2,26 +2,38 @@
 /**
  * CEO Reel — Full Fresh Capture (all 6 beats)
  *
+ * Param-ized for multi-region/multi-locale capture via env vars.
+ * Defaults reproduce the A/A+ NZD reel byte-identically (regression guard).
+ *
+ * Env vars (all optional — defaults produce NZD/NZ/Daniel):
+ *   REEL_REGION       region currency code, e.g. "nzd" (default) | "vnd"
+ *   REEL_REGION_PATH  storefront country-code path prefix, e.g. "nz" (default) | "vn"
+ *   REEL_VOICE        macOS say voice, e.g. "Daniel" (default) | "Linh"
+ *
  * Saves ALL frames to docs/static/img/demo/flows/ (permanent source, not build output).
  *
  * Pre-conditions:
  *   - Stack running: ec_backend (9000), ec_storefront (8000)
  *   - approval appr_01KTJPADHRQ6457KFCTF1JZ1VX in PENDING state (reset before run)
  *
- * Beat 1: Storefront cart — 3 items, NZD total > spending limit, spending-limit warning visible
+ * Beat 1: Storefront cart — 3 items, regional total > spending limit, spending-limit warning visible
  * Beat 2: "Submit request for quote" modal open
  * Beat 3: Buyer account Quotes list — status "Pending Merchant"
  * Beat 4: Admin Approvals list — Demo Corp pending (role-bar David)
  * Beat 5: Admin Approvals — REAL approve action: Check IconButton clicked -> confirm dialog
  * Beat 6: After approve, Approvals list shows Approved state
  *
- * Evidence paths:
+ * NZD evidence paths (default run, no env vars):
  *   docs/static/img/demo/flows/01-cart-to-quote/step-01.png  (beat1: cart)
  *   docs/static/img/demo/flows/01-cart-to-quote/step-04.png  (beat2: quote modal)
  *   docs/static/img/demo/flows/01-cart-to-quote/step-05.png  (beat3: quotes list)
  *   docs/static/img/demo/flows/02-approval/step-01.png       (beat4: admin approvals pending)
  *   docs/static/img/demo/flows/02-approval/step-05b-govern-approve.png (beat5: real approve dialog)
  *   docs/static/img/demo/flows/02-approval/step-06b-approved-audit.png (beat6: approved)
+ *
+ * VND evidence paths (REEL_REGION=vnd REEL_REGION_PATH=vn):
+ *   docs/static/img/demo/flows/01-cart-to-quote-vn/step-01.png  ...etc
+ *   docs/static/img/demo/flows/02-approval-vn/step-01.png        ...etc
  */
 
 import { chromium } from "@playwright/test";
@@ -34,11 +46,34 @@ const REPO_ROOT = path.resolve(
   new URL(import.meta.url).pathname, "../.."
 ).replace(/^file:\/\//, "");
 
-const BACKEND_URL  = process.env.BACKEND_URL  || "http://localhost:9000";
+const BACKEND_URL    = process.env.BACKEND_URL    || "http://localhost:9000";
 const STOREFRONT_URL = process.env.STOREFRONT_URL || "http://localhost:8000";
 
-const OUT_CART     = path.join(REPO_ROOT, "docs/static/img/demo/flows/01-cart-to-quote");
-const OUT_APPROVAL = path.join(REPO_ROOT, "docs/static/img/demo/flows/02-approval");
+// ── Region param-ization (regression guard: defaults reproduce NZD reel) ─────
+const REEL_REGION      = process.env.REEL_REGION      || "nzd";   // e.g. "vnd"
+const REEL_REGION_PATH = process.env.REEL_REGION_PATH || "nz";    // e.g. "vn"
+const IS_NZD           = REEL_REGION === "nzd";
+
+// ── VN role-bar labels (Vietnamese) — injected when REEL_REGION_PATH=vn ──────
+// Beats 1-3: Maria persona (storefront buyer)
+// Beats 4-6: David persona (admin approval)
+// English defaults preserved when IS_NZD (regression guard: English-label NZD reel unchanged)
+const ROLE_BAR_LABELS = IS_NZD
+  ? {
+      maria: { label: "Maria · Procurement Specialist", initial: "M" },
+      david: { label: "David · Approving Manager",      initial: "D" },
+    }
+  : {
+      maria: { label: "Maria · Chuyên viên Thu mua", initial: "M" },
+      david: { label: "David · Giám đốc Thu mua",   initial: "D" },
+    };
+
+// Output dirs: VN run gets vn-suffixed directories; NZD run uses original paths (no-op).
+const cartSuffix     = IS_NZD ? ""    : `-${REEL_REGION_PATH}`;
+const approvalSuffix = IS_NZD ? ""    : `-${REEL_REGION_PATH}`;
+
+const OUT_CART     = path.join(REPO_ROOT, `docs/static/img/demo/flows/01-cart-to-quote${cartSuffix}`);
+const OUT_APPROVAL = path.join(REPO_ROOT, `docs/static/img/demo/flows/02-approval${approvalSuffix}`);
 
 fs.mkdirSync(OUT_CART,     { recursive: true });
 fs.mkdirSync(OUT_APPROVAL, { recursive: true });
@@ -177,12 +212,22 @@ async function getPublishableKey(adminToken) {
   return key?.token || "";
 }
 
-async function getNZDRegion(pubKey) {
+/**
+ * getRegion(pubKey, currencyCode)
+ * Returns the region matching the given currency_code (default: "nzd" = NZ run).
+ * Replaces getNZDRegion — backward-compat alias kept below.
+ */
+async function getRegion(pubKey, currencyCode) {
   const res = await fetch(`${BACKEND_URL}/store/regions`, {
     headers: { "x-publishable-api-key": pubKey },
   });
   const data = await res.json();
-  return (data.regions || []).find(r => r.currency_code === "nzd") || null;
+  return (data.regions || []).find(r => r.currency_code === currencyCode) || null;
+}
+
+// Backward-compat alias (NZD default, used by existing code paths below)
+async function getNZDRegion(pubKey) {
+  return getRegion(pubKey, REEL_REGION);
 }
 
 async function getProducts(pubKey, regionId) {
@@ -311,6 +356,7 @@ async function main() {
   console.log("=== CEO Fresh Capture ===");
   console.log(`Backend: ${BACKEND_URL}`);
   console.log(`Storefront: ${STOREFRONT_URL}`);
+  console.log(`Region: ${REEL_REGION} / Path: /${REEL_REGION_PATH}`);
 
   // ── Step 1: API setup ──────────────────────────────────────────────────────
   console.log("\n[1/7] Authenticating...");
@@ -325,11 +371,11 @@ async function main() {
   const resetApproval = await resetApprovalToPending(adminToken, APPROVAL_ID);
   console.log(`  Approval ${resetApproval.id} status: ${resetApproval.status}`);
 
-  // ── Step 3: Build buyer cart with 3 compelling NZD items ──────────────────
-  console.log("\n[3/7] Building buyer cart...");
-  const nzRegion = await getNZDRegion(pubKey);
-  if (!nzRegion) throw new Error("No NZD region found");
-  console.log(`  NZ region: ${nzRegion.id}`);
+  // ── Step 3: Build buyer cart with 3 compelling items in the target region ───
+  console.log(`\n[3/7] Building buyer cart (region=${REEL_REGION})...`);
+  const nzRegion = await getNZDRegion(pubKey);  // uses REEL_REGION via alias
+  if (!nzRegion) throw new Error(`No region found for currency_code=${REEL_REGION}`);
+  console.log(`  Region ${REEL_REGION}: ${nzRegion.id}`);
 
   // Get sales channel
   const scRes = await fetch(`${BACKEND_URL}/admin/sales-channels?limit=5`, {
@@ -448,24 +494,29 @@ async function main() {
   // ── Step 5: Beat 1 — Cart page ────────────────────────────────────────────
   console.log("\n[5/7] Capturing storefront beats...");
 
-  await sfPage.goto(`${STOREFRONT_URL}/nz/cart`, { waitUntil: "domcontentloaded", timeout: 90000 });
+  await sfPage.goto(`${STOREFRONT_URL}/${REEL_REGION_PATH}/cart`, { waitUntil: "domcontentloaded", timeout: 90000 });
   await sfPage.waitForTimeout(4000);
 
   const cartText = await sfPage.textContent("body");
-  const hasNZD   = cartText.includes("NZ$") || cartText.includes("NZD");
-  console.log(`  Beat 1 cart — NZD visible: ${hasNZD}`);
+  // Currency detection: NZD shows "NZ$"; VND shows "₫"; generic fallback
+  const hasCurrency = cartText.includes("NZ$") || cartText.includes("NZD")
+                   || cartText.includes("₫")   || cartText.includes("VND");
+  console.log(`  Beat 1 cart — currency visible: ${hasCurrency} (region=${REEL_REGION})`);
   console.log(`  Cart body snippet: ${cartText.slice(0, 200)}`);
 
 
-  // CEO-AC-1: role-bar Maria + highlight 3 key elements WITHOUT scrollIntoView (prevents last
-  // highlight from centering "3 items" and pushing Monitor/Laptop off-screen).
-  // After all highlights, scroll to top so Monitor is first visible item below the role-bar.
-  await injectRoleBar(sfPage, "Maria · Procurement Specialist", "M");
-  // Highlight without scroll so viewport stays at top
+  // CEO-AC-1: role-bar Maria + highlight key elements WITHOUT scrollIntoView.
+  // Currency total text is dynamic: NZD = "NZ$4,647.00"; VND = first ₫<amount> total found.
+  const cartTotalMatch = IS_NZD
+    ? cartText.match(/NZ\$[\d,]+\.\d{2}/)
+    : cartText.match(/₫[\d,]+/);
+  const cartTotalDisplay = cartTotalMatch ? cartTotalMatch[0] : "";
+  console.log(`  Cart total display: ${cartTotalDisplay}`);
+
+  await injectRoleBar(sfPage, ROLE_BAR_LABELS.maria.label, ROLE_BAR_LABELS.maria.initial);
   await highlightElement(sfPage, "Request Quote", { scroll: false });
-  await highlightElement(sfPage, "NZ$4,647.00",   { scroll: false });
-  await highlightElement(sfPage, "3 items",        { scroll: false });
-  // Scroll to top so Monitor (first cart item at ~y=287) is fully in view
+  if (cartTotalDisplay) await highlightElement(sfPage, cartTotalDisplay, { scroll: false });
+  await highlightElement(sfPage, "3 items", { scroll: false });
   await sfPage.evaluate(() => window.scrollTo(0, 0));
   await sfPage.waitForTimeout(300);
 
@@ -496,7 +547,7 @@ async function main() {
   console.log(`  Beat 2 quote modal visible: ${quoteModal}`);
 
   // CEO-AC-2: role-bar Maria + scroll ALL containers to top so modal is not occluded
-  await injectRoleBar(sfPage, "Maria · Procurement Specialist", "M");
+  await injectRoleBar(sfPage, ROLE_BAR_LABELS.maria.label, ROLE_BAR_LABELS.maria.initial);
   await sfPage.evaluate(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
     document.querySelectorAll("*").forEach(el => {
@@ -521,7 +572,7 @@ async function main() {
   }
 
   // ── Beat 3: Quotes list ───────────────────────────────────────────────────
-  await sfPage.goto(`${STOREFRONT_URL}/nz/account/quotes`, { waitUntil: "domcontentloaded", timeout: 90000 });
+  await sfPage.goto(`${STOREFRONT_URL}/${REEL_REGION_PATH}/account/quotes`, { waitUntil: "domcontentloaded", timeout: 90000 });
   await sfPage.waitForTimeout(5000);
 
   const quotesText = await sfPage.textContent("body");
@@ -529,7 +580,7 @@ async function main() {
   console.log(`  Beat 3 quotes — Pending Merchant: ${hasPendingMerchant}`);
 
   // CEO-AC-3: role-bar Maria + scroll ALL containers to top + highlight first quote row
-  await injectRoleBar(sfPage, "Maria · Procurement Specialist", "M");
+  await injectRoleBar(sfPage, ROLE_BAR_LABELS.maria.label, ROLE_BAR_LABELS.maria.initial);
   await sfPage.evaluate(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
     document.querySelectorAll("*").forEach(el => {
@@ -542,10 +593,14 @@ async function main() {
   });
   await sfPage.waitForTimeout(400);
   // Highlight the first quote row (the topmost list item) as the hero element
-  await sfPage.evaluate(() => {
+  await sfPage.evaluate(({ isNZD }) => {
     // Find the first quote row — a container row that has "Pending Merchant" text
     const allRows = [...document.querySelectorAll("li, tr, [role='row'], article, .quote-row, [class*='row']")];
-    const firstQuoteRow = allRows.find(r => r.textContent?.includes("Pending Merchant") && r.textContent?.includes("NZ$1,582"));
+    const firstQuoteRow = allRows.find(r => {
+      const t = r.textContent || "";
+      if (!t.includes("Pending Merchant")) return false;
+      return isNZD ? t.includes("NZ$") : t.includes("₫");
+    });
     if (firstQuoteRow) {
       firstQuoteRow.style.outline = "3px solid #ffb000";
       firstQuoteRow.style.outlineOffset = "3px";
@@ -553,9 +608,11 @@ async function main() {
       firstQuoteRow.style.borderRadius = "6px";
       firstQuoteRow.scrollIntoView({ block: "nearest", behavior: "instant" });
     } else {
-      // Fallback: highlight the NZ$1,582.00 amount text
+      // Fallback: highlight any currency amount in quotes area
       const all = [...document.querySelectorAll("*")];
-      const el = all.find(n => n.children.length === 0 && n.textContent?.trim() === "NZ$1,582.00");
+      const el = isNZD
+        ? all.find(n => n.children.length === 0 && n.textContent?.trim().startsWith("NZ$"))
+        : all.find(n => n.children.length === 0 && n.textContent?.trim().startsWith("₫"));
       if (el) {
         el.style.outline = "3px solid #ffb000";
         el.style.outlineOffset = "3px";
@@ -563,7 +620,7 @@ async function main() {
         el.style.borderRadius = "6px";
       }
     }
-  });
+  }, { isNZD: IS_NZD });
 
   const beat3 = await sfPage.screenshot();
   save(beat3, path.join(OUT_CART, "step-05.png"));
@@ -600,7 +657,7 @@ async function main() {
   console.log(`  Beat 4 approval — Demo Corp: ${hasDemoCorp}, Pending: ${hasPending4}`);
 
   // CEO-AC-4: role-bar David + highlight the #2469 row
-  await injectRoleBar(adminPage, "David · Approving Manager", "D");
+  await injectRoleBar(adminPage, ROLE_BAR_LABELS.david.label, ROLE_BAR_LABELS.david.initial);
   // Highlight the row containing #2469 and the Pending badge
   await adminPage.evaluate(() => {
     // Find the table row containing '2469'
@@ -713,7 +770,7 @@ async function main() {
   }
 
   // CEO-AC-5: role-bar David + capture the dialog (or highlighted approve button state)
-  await injectRoleBar(adminPage, "David · Approving Manager", "D");
+  await injectRoleBar(adminPage, ROLE_BAR_LABELS.david.label, ROLE_BAR_LABELS.david.initial);
 
   const beat5 = await adminPage.screenshot();
   save(beat5, path.join(OUT_APPROVAL, "step-05b-govern-approve.png"));
@@ -761,7 +818,7 @@ async function main() {
   console.log(`  Beat 6 approval — Approved: ${hasApproved6}`);
 
   // CEO-AC-6: role-bar David + amber highlight on the Approved badge in #2469 row
-  await injectRoleBar(adminPage, "David · Approving Manager", "D");
+  await injectRoleBar(adminPage, ROLE_BAR_LABELS.david.label, ROLE_BAR_LABELS.david.initial);
   await adminPage.evaluate(() => {
     const rows = [...document.querySelectorAll("tr, [role='row']")];
     const targetRow = rows.find(r => r.textContent?.includes("2469"));

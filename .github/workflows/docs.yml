@@ -103,6 +103,18 @@ jobs:
       - name: Copy static assets into engine
         run: cp -r docs/static/. _engine/.claude/plugins/commerce/templates/docusaurus/static/
 
+      # FAST-FAIL MDX pre-flight (CA ask_7, AC-D1). Compiles every copied
+      # content/**/*.{md,mdx} with the engine's @mdx-js/mdx (the same MDX v3 compiler
+      # Docusaurus 3.10 uses) and aborts the job with `file:line: message` on the FIRST
+      # MDX error — BEFORE the slower full Docusaurus build. CONTENT_DIR points at the
+      # copied content the build actually compiles. Additive only; does not touch the
+      # proven sparse-checkout / PAT / copy / build / upload / deploy steps.
+      - name: MDX pre-flight (fast-fail)
+        working-directory: _engine/.claude/plugins/commerce/templates/docusaurus
+        run: node scripts/mdx-preflight.mjs
+        env:
+          CONTENT_DIR: ${{ github.workspace }}/_engine/.claude/plugins/commerce/templates/docusaurus/content
+
       - name: Build Docusaurus site
         # The engine npm run build uses --out-dir /site_out/site (Docker bind-mount path).
         # In CI there is no bind-mount, so we call docusaurus build directly with an

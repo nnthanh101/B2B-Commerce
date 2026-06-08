@@ -32,6 +32,22 @@ frames:
 **Audience**: Non-technical executive — must feel time and money saved
 **Real on-screen values**: NZ$4,647.00 cart / 3 items / NZ$1,582.00 quote / Approval #2469 / Demo Corp
 
+<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/ceo-cart-quote-approval.mp4"></video>
+
+![Loaded cart NZ$4,647 under quarter-close deadline with Request Quote CTA](pathname:///img/demo/flows/01-cart-to-quote/step-01.png)
+
+![Quote filed and live — Pending Merchant, NZ$1,582.00](pathname:///img/demo/flows/01-cart-to-quote/step-05.png)
+
+![Approval #2469 flipped to Approved — Demo Corp, on the record](pathname:///img/demo/flows/02-approval/step-06b-approved-audit.png)
+
+## Why this matters — CEO lens
+
+**Why**: A CEO cares that the whole order-to-approval cycle is fast *and* governed end-to-end. The legacy path — three emails, three sign-offs, a three-to-five day wait — slips the budget window every quarter, which this reel replaces with one click.
+
+**Business value**: The reel runs the full arc on real values: a NZ$4,647 cart becomes a filed NZ$1,582 quote in under ninety seconds, routes to approval #2469, and ends Approved — NZD throughout, every step traceable.
+
+**What-if-missing**: Without an end-to-end governed flow, cart-to-approval reverts to email chains and multi-day waits — the budget window slips and there is no single record of who decided what, the inverse of the days-to-minutes outcome shown here.
+
 ---
 
 ## Beat 1 — Setup: Loaded Cart Under Deadline

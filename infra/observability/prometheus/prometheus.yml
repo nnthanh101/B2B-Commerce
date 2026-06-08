@@ -21,6 +21,11 @@
 #   - Postgres/redis exporters use container names (ec_postgres_exporter, ec_redis_exporter)
 #     — they are always on ec_network (same compose overlay).
 #
+# AMENDMENT 2026-06-09 (KC-5 observability):
+#   - Added keycloak scrape job: ec_keycloak:9000/metrics (Quarkus management interface).
+#     Port 9000 is NOT published to the host (would collide with Medusa backend on host :9000);
+#     Prometheus reaches it via container DNS on ec_network.
+#
 # ─── Grafana Cloud Free Tier (optional remote_write) ─────────────────────────────
 # Uncomment and fill in your Grafana Cloud credentials to ship metrics to the cloud.
 # Grafana Cloud Free: 10K series, 14-day retention.
@@ -108,5 +113,29 @@ scrape_configs:
           - node-exporter:9100
         labels:
           service: node
+          application: b2b-commerce
+          environment: local
+
+  # 5. Keycloak 26.x IdP (Quarkus + Micrometer — management interface port 9000)
+  #    KC-5 observability: scrape the Quarkus management /metrics endpoint.
+  #    Port 9000 is NOT published to the host (collision with Medusa backend on host :9000);
+  #    Prometheus must reach it via container DNS on ec_network: ec_keycloak:9000.
+  #    Default metric families available without extra SPI config:
+  #      - JVM: jvm_memory_used_bytes, jvm_gc_pause_seconds_*
+  #      - HTTP: http_server_requests_seconds_count / _sum / _bucket
+  #      - Process: process_cpu_usage, system_cpu_usage
+  #    Login-event metrics (keycloak_logins_total / keycloak_failed_login_attempts_total)
+  #    require the Keycloak metrics event-listener SPI — enabled in docker-compose.yml via
+  #    KC_FEATURES env var or --spi-events-listener-jboss-logging-success-level; they will
+  #    appear in the panel automatically once the SPI is enabled.
+  - job_name: keycloak
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scheme: http
+    static_configs:
+      - targets:
+          - ec_keycloak:9000
+        labels:
+          service: keycloak
           application: b2b-commerce
           environment: local
