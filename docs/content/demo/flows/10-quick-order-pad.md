@@ -19,15 +19,7 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 **Duration**: ~2 min
 
-![Quick order pad with favorite SKUs pre-populated](pathname:///img/demo/flows/10-quick-order-pad/generated-quick-order-pad-01-cart.png)
-
-![Quick order pad component interface](pathname:///img/demo/flows/10-quick-order-pad/generated-quick-order-pad-02-component.png)
-
-![SKU input field in quick order pad](pathname:///img/demo/flows/10-quick-order-pad/generated-quick-order-pad-03-sku-input.png)
-
-![Add button in quick order pad](pathname:///img/demo/flows/10-quick-order-pad/generated-quick-order-pad-04-add-button.png)
-
-<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/10-quick-order-pad.mp4"></video>
+*Demo video for this flow is being re-captured.*
 
 ## Script (voice narration)
 

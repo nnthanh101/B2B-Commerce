@@ -19,13 +19,7 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 **Duration**: ~2 min
 
-![Cart after bulk SKU import resolved successfully](pathname:///img/demo/flows/09-bulk-add/generated-bulk-add-01-cart.png)
-
-![Quick order pad interface for bulk entry](pathname:///img/demo/flows/09-bulk-add/generated-bulk-add-02-quick-order-pad.png)
-
-![Add to cart button in bulk interface](pathname:///img/demo/flows/09-bulk-add/generated-bulk-add-03-add-button.png)
-
-<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/09-bulk-add.mp4"></video>
+*Demo video for this flow is being re-captured.*
 
 ## Script (voice narration)
 

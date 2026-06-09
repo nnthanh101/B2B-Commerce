@@ -19,13 +19,7 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 **Duration**: ~2 min
 
-![Shopping cart with NZD pricing and spending limit indicator](pathname:///img/demo/flows/07-full-ecommerce/generated-full-ecommerce-01-cart.png)
-
-![Cart page with product list](pathname:///img/demo/flows/07-full-ecommerce/generated-full-ecommerce-02-cart-page.png)
-
-![Cart summary with totals](pathname:///img/demo/flows/07-full-ecommerce/generated-full-ecommerce-03-cart-summary.png)
-
-<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/07-full-ecommerce.mp4"></video>
+*Demo video for this flow is being re-captured.*
 
 ## Script (voice narration)
 

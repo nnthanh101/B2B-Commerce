@@ -19,15 +19,7 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 **Duration**: ~2 min
 
-![Company roster with employees and spending limits](pathname:///img/demo/flows/03-company-mgmt/generated-company-mgmt-01-companies-list.png)
-
-![Company row with details](pathname:///img/demo/flows/03-company-mgmt/generated-company-mgmt-02-company-row.png)
-
-![Demo Corp company profile](pathname:///img/demo/flows/03-company-mgmt/generated-company-mgmt-03-demo-corp.png)
-
-![Company details and employee list](pathname:///img/demo/flows/03-company-mgmt/generated-company-mgmt-04-company-details.png)
-
-<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/03-company-mgmt.mp4"></video>
+*Demo video for this flow is being re-captured.*
 
 ## Script (voice narration)
 

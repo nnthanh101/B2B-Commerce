@@ -19,9 +19,7 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 **Duration**: ~2 min
 
-![Cart with spending limit warning — 2 items NZ$260, "Spending Limit Exceeded" button disabled](pathname:///img/demo/flows/04-spending-limit/step-01.png)
-
-<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/04-spending-limit.mp4"></video>
+*Demo video for this flow is being re-captured.*
 
 ## Script (voice narration)
 

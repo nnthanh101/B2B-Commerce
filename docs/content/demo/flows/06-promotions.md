@@ -19,13 +19,7 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 **Duration**: ~2 min
 
-![Cart showing bulk discount auto-applied](pathname:///img/demo/flows/06-promotions/generated-promotions-01-cart.png)
-
-![Promo code input field](pathname:///img/demo/flows/06-promotions/generated-promotions-02-promo-input.png)
-
-![Cart total with promotion discount applied](pathname:///img/demo/flows/06-promotions/generated-promotions-03-cart-total.png)
-
-<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/06-promotions.mp4"></video>
+*Demo video for this flow is being re-captured.*
 
 ## Script (voice narration)
 

@@ -19,11 +19,7 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 **Duration**: ~2 min
 
-![Invite employee form — green token-accept path](pathname:///img/demo/flows/11-invite-employee/step-01-invite-form.png)
-
-![Invite employee success confirmation](pathname:///img/demo/flows/11-invite-employee/step-02-success.png)
-
-<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/11-invite-employee.mp4"></video>
+*Demo video for this flow is being re-captured.*
 
 ## Script (voice narration)
 
