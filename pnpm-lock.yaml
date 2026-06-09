@@ -8,6 +8,11 @@ overrides:
   '@types/react': 19.0.5
   '@types/react-dom': 19.0.5
 
+patchedDependencies:
+  '@vymalo/medusa-keycloak@1.0.10':
+    hash: af8ab3dfad5a8bdbaf9baf612f39d9a626cf02fe64a23a3c8169940c7c5ab83b
+    path: patches/@vymalo__medusa-keycloak@1.0.10.patch
+
 importers:
 
   .:
@@ -92,7 +97,7 @@ importers:
         version: 2.0.0-alpha.43(@babel/runtime@7.29.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@vymalo/medusa-keycloak':
         specifier: 1.0.10
-        version: 1.0.10
+        version: 1.0.10(patch_hash=af8ab3dfad5a8bdbaf9baf612f39d9a626cf02fe64a23a3c8169940c7c5ab83b)
       cmdk:
         specifier: 0.2.1
         version: 0.2.1(@types/react@19.0.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -13539,7 +13544,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@vymalo/medusa-keycloak@1.0.10':
+  '@vymalo/medusa-keycloak@1.0.10(patch_hash=af8ab3dfad5a8bdbaf9baf612f39d9a626cf02fe64a23a3c8169940c7c5ab83b)':
     dependencies:
       jsonwebtoken: 9.0.3
       simple-oauth2: 5.1.0

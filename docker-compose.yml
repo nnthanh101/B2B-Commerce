@@ -45,7 +45,7 @@ services:
       - KEYCLOAK_CLIENT_ID=medusa
       - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET:-medusa-dev-secret-changeme-in-prod}
       - KEYCLOAK_SCOPE=openid profile email
-      - KEYCLOAK_CALLBACK_URL=http://localhost:8000/nz/account/auth-callback
+      - KEYCLOAK_CALLBACK_URL=http://localhost:8000/api/auth/keycloak-callback
     env_file:
       - apps/backend/.env
     volumes:

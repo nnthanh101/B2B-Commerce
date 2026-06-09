@@ -1,3 +1,7 @@
+// Force dynamic rendering so revalidateTag() runs in a live request context,
+// not during static-page generation (Next.js 15 restriction).
+export const dynamic = "force-dynamic"
+
 import { handleKeycloakCallback } from "@/lib/data/customer"
 import { Text } from "@medusajs/ui"
 
@@ -38,6 +42,10 @@ export default async function AuthCallbackPage({ params, searchParams }: Props) 
 
   const code = Array.isArray(query.code) ? query.code[0] : query.code
   const state = Array.isArray(query.state) ? query.state[0] : query.state
+  // scope is required by @vymalo/medusa-keycloak validateCallback.
+  // Keycloak does not include scope in the redirect URL, so fall back to the
+  // configured default scope. If scope is present (e.g. for other OIDC providers), use it.
+  const scope = Array.isArray(query.scope) ? query.scope[0] : (query.scope ?? "openid profile email")
 
   if (!code || !state) {
     return (
@@ -63,7 +71,7 @@ export default async function AuthCallbackPage({ params, searchParams }: Props) 
   // transfers the cart, and calls redirect() — so this function never returns
   // normally; Next.js throws the NEXT_REDIRECT special error to handle navigation.
   try {
-    await handleKeycloakCallback(code, state, countryCode)
+    await handleKeycloakCallback(code, state, countryCode, scope)
   } catch (error: unknown) {
     // NEXT_REDIRECT is thrown by redirect() — rethrow it so Next.js handles it.
     if (

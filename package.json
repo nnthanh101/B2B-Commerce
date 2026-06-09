@@ -27,6 +27,9 @@
     "overrides": {
       "@types/react": "19.0.5",
       "@types/react-dom": "19.0.5"
+    },
+    "patchedDependencies": {
+      "@vymalo/medusa-keycloak@1.0.10": "patches/@vymalo__medusa-keycloak@1.0.10.patch"
     }
   }
 }

@@ -19,11 +19,14 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 **Duration**: ~2 min
 
-![Admin order #47 — Wireless Keyboard 2×$159 = NZ$318.00, Demo Buyer, New Zealand](pathname:///img/demo/flows/08-order-edit/step-01.png)
+import useBaseUrl from '@docusaurus/useBaseUrl';
 
-![Admin orders list](pathname:///img/demo/flows/08-order-edit/generated-order-edit-01-orders-page.png)
-
-<video controls preload="metadata" style={{maxWidth:'800px'}} src="/video/demo/flows/08-order-edit.mp4"></video>
+<video
+  src={useBaseUrl('/video/demo/flows/flow-08-order-edit.mp4')}
+  controls
+  autoPlay={false}
+  style={{ width: '100%', maxWidth: '960px', borderRadius: '8px', marginBottom: '1.5rem' }}
+/>
 
 ## Script (voice narration — partial, backend-only)
 

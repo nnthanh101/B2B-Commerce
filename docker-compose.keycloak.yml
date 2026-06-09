@@ -79,15 +79,16 @@ services:
       postgres:
         condition: service_started
     healthcheck:
-      # Keycloak 26.x health endpoint is on the management port 9000 (container-internal)
+      # Keycloak 26.x (UBI9-micro base) has no curl or wget, and kc.sh has no 'health'
+      # subcommand (verified: exit=2 "Unknown option: 'health'").
+      # bash IS guaranteed present: kc.sh is a bash script (#!/bin/bash shebang), so bash
+      # must exist for kc.sh itself to run. The /dev/tcp pseudo-device is a bash built-in
+      # (no external binary required) and probes the management port synchronously.
       test:
         - "CMD"
-        - "curl"
-        - "--fail"
-        - "--silent"
-        - "--output"
-        - "/dev/null"
-        - "http://localhost:9000/health/ready"
+        - "bash"
+        - "-c"
+        - "exec 3<>/dev/tcp/localhost/9000; printf 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3; grep -q '200 OK' <&3"
       interval: 30s
       timeout: 10s
       retries: 10

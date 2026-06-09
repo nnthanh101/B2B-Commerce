@@ -119,9 +119,12 @@ export default async function seedDemoB2B({
 
   logger.info("Step 1: Company...")
 
+  // `name` is a real column on the company model and filters at runtime, but
+  // ModuleCompanyFilters only declares q/id — narrow cast preserves the exact
+  // equality filter (using `q` would broaden to a fuzzy multi-field search).
   const existingCompanies = await companyModule.listCompanies({
     name: DEMO_COMPANY_NAME,
-  })
+  } as any)
 
   let company: any
   if (existingCompanies.length > 0) {
@@ -674,11 +677,15 @@ export default async function seedDemoB2B({
     const { result: approvals } = await createApprovalsWorkflow(
       container
     ).run({
+      // The create-approval step derives `type` from approval_settings and
+      // ignores an input `type`; `status` is carried through harmlessly at
+      // runtime. ModuleCreateApproval declares neither, so narrow-cast the
+      // payload to keep the exact runtime input unchanged.
       input: {
         cart_id: cart.id,
         created_by: customer.id,
         status: ApprovalStatusType.PENDING,
-      },
+      } as any,
     })
     approval = Array.isArray(approvals) ? approvals[0] : approvals
     logger.info(
@@ -695,16 +702,22 @@ export default async function seedDemoB2B({
 
   logger.info("Step 7: Quote...")
 
+  // `customer_id` is a real column on the quote model and filters at runtime,
+  // but ModuleQuoteFilters declares only q/id/status — narrow cast preserves
+  // the exact per-customer idempotency lookup.
   const existingQuotes = await quoteModule.listQuotes({
     customer_id: customer.id,
-  })
+  } as any)
 
   if (existingQuotes.length > 0) {
     logger.info(
       `  Quote already exists (${existingQuotes[0].id}) — skipping creation`
     )
   } else {
-    // Create a minimal draft order so the quote has a valid draft_order_id
+    // Create a minimal draft order so the quote has a valid draft_order_id.
+    // `is_draft_order` is a real persisted Order column honored by the workflow
+    // at runtime, but it is absent from CreateOrderDTO (only on UpdateOrderDTO),
+    // so narrow-cast the input to keep the draft flag set exactly as before.
     const { result: draftOrder } = await createOrdersWorkflow(container).run({
       input: {
         is_draft_order: true,
@@ -733,7 +746,7 @@ export default async function seedDemoB2B({
         region_id: region.id,
         shipping_methods: [],
         promo_codes: [],
-      },
+      } as any,
     })
 
     const { result: orderChange } = await beginOrderEditOrderWorkflow(
@@ -809,11 +822,13 @@ export default async function seedDemoB2B({
     }
 
     // Idempotency check — look for an NZD demo-completed order on the resolved customer.
+    // `is_draft_order` is a real Order column and filters at runtime, but it is
+    // absent from FilterableOrderProps — narrow cast keeps the exact filter.
     const existingOrders = await orderModule.listOrders({
       customer_id: orderCustomerId,
       is_draft_order: false,
       currency_code: region.currency_code,
-    })
+    } as any)
     const existingDemoOrder = existingOrders.find(
       (o: any) => o.metadata?.demo_completed_order === true
     )
@@ -858,7 +873,9 @@ export default async function seedDemoB2B({
         ? orderCustomers[0].email
         : customer.email
 
-      // Create the order in "pending" status first (createOrderWorkflow requirement)
+      // Create the order in "pending" status first (createOrderWorkflow requirement).
+      // `is_draft_order` is a real persisted Order column honored at runtime but
+      // absent from CreateOrderDTO — narrow-cast the input to keep the flag.
       const { result: newOrder } = await createOrderWorkflow(container).run({
         input: {
           is_draft_order: false,
@@ -897,7 +914,7 @@ export default async function seedDemoB2B({
             demo_completed_order: true,
             company_id: company.id,
           },
-        },
+        } as any,
       })
 
       // Mark the order as completed

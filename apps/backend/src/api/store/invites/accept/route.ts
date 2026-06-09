@@ -61,7 +61,9 @@ export const POST = async (
         headers: req.headers as Record<string, string>,
         query: {},
         body: { email: invite.email, password },
-        authScope: "store",
+        // Medusa v2: the JWT actor scope is `actor_type`; the storefront
+        // customer actor is "customer" (was the non-existent `authScope`).
+        actor_type: "customer",
       }
     );
 
@@ -72,7 +74,7 @@ export const POST = async (
         headers: req.headers as Record<string, string>,
         query: {},
         body: { email: invite.email, password },
-        authScope: "store",
+        actor_type: "customer",
       });
 
       if (!registerResult.success) {

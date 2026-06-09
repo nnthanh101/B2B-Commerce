@@ -22,8 +22,28 @@ const VOICE = "Daniel"; // en_GB
 fs.mkdirSync(TMP_DIR, { recursive: true });
 fs.mkdirSync(OUT_DIR, { recursive: true });
 
-// CEO reel beats — frame path + narration text (SSOT: reel-ceo-narration.md)
+// CEO reel beats — REBUILT with SSO opening arc (scope_id: B2B-RELEASE-READINESS-2026-06-09, story RR-04b)
+// Beat order: SSO login → SSO Keycloak form → SSO authenticated → cart/limit/quote/approval/audit
+// SSOT: docs/content/demo/reel-ceo-narration.md
 const CEO_BEATS = [
+  {
+    // Beat 0a: Storefront login page — "Sign in with SSO" button highlighted
+    id: "beat0a",
+    frame: path.join(REPO_ROOT, "docs/static/img/demo/flows/00-sso-login/step-01.png"),
+    narration: "Before Maria submits a single quote, she needs to sign in. B2B Commerce supports enterprise SSO — she clicks Sign in with SSO, and the platform hands off to the company's identity provider.",
+  },
+  {
+    // Beat 0b: Real Keycloak login form — credentials entered
+    id: "beat0b",
+    frame: path.join(REPO_ROOT, "docs/static/img/demo/flows/00-sso-login/step-02.png"),
+    narration: "The real Keycloak login form. Maria enters her corporate credentials once — her identity is verified by the company's identity provider. No shared passwords. No IT tickets. Governed access from the first click.",
+  },
+  {
+    // Beat 0c: Authenticated SSO account — "Hello SSO" / "Signed in as: sso.buyer@demo.com"
+    id: "beat0c",
+    frame: path.join(REPO_ROOT, "docs/static/img/demo/flows/00-sso-login/step-03.png"),
+    narration: "Authenticated. Hello SSO — the account dashboard lands with her identity confirmed. Signed in as sso.buyer@demo.com via Keycloak. The governance chain starts here, before a single cart item is added.",
+  },
   {
     id: "beat1",
     frame: path.join(REPO_ROOT, "docs/static/img/demo/flows/01-cart-to-quote/step-01.png"),
@@ -434,6 +454,7 @@ async function main() {
 
   // Mode flags — only the requested reel(s) are built; existing files are untouched.
   const ctoOnly    = process.argv.includes("--cto-only");
+  const ceoOnly    = process.argv.includes("--ceo-only");
   const viCeoOnly  = process.argv.includes("--vi-ceo-only");
   const flow11Only = process.argv.includes("--flow11-only");
 
@@ -451,6 +472,10 @@ async function main() {
     // Existing CTO-only flag (protects A/A+ CEO reel)
     console.log("\n[--cto-only] Skipping CEO reel rebuild (protecting A/A+ CEO reel).");
     results.push(["CTO MP4", ctoMp4, await assembleReel("cto", CTO_BEATS, ctoMp4, "fill_crop")]);
+  } else if (ceoOnly) {
+    // CEO-only flag: rebuild CEO reel with SSO opening beats (RR-04b)
+    console.log("\n[--ceo-only] Building CEO reel only (9 beats: SSO + 6-beat governance arc).");
+    results.push(["CEO MP4", ceoMp4, await assembleReel("ceo", CEO_BEATS, ceoMp4, "letterbox")]);
   } else {
     // Default: CEO + CTO (original behavior, unchanged)
     results.push(["CEO MP4", ceoMp4, await assembleReel("ceo", CEO_BEATS, ceoMp4, "letterbox")]);

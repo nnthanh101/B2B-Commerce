@@ -41,6 +41,11 @@ tasks:
     cmds:
       - docker compose -f docker-compose.yml -f docker-compose.observability.yml -f docker-compose.keycloak.yml up --build -d
 
+  rebuild:backend:
+    desc: "Rebuild the Medusa backend image + renew node_modules volume (applies pnpm patches)"
+    cmds:
+      - docker compose -f docker-compose.yml -f docker-compose.keycloak.yml up -d --build --force-recreate --renew-anon-volumes ec
+
   down:
     desc: "Stop and remove all platform containers (commerce + observability + Keycloak)"
     cmds:
@@ -179,6 +184,32 @@ tasks:
     desc: "Run unit tests across all workspaces"
     cmds:
       - docker compose exec ec sh -c "cd /server && pnpm turbo test"
+
+  ci:build-proof:
+    desc: "Clean-tree CI gate replication (node:22): isolates node_modules with anonymous volumes so host copies never leak in, then pnpm install --frozen-lockfile + build + lint. Mirrors .github/workflows/ci.yml."
+    cmds:
+      - |
+        docker run --rm \
+          -v "{{.ROOT_DIR}}":/repo \
+          -v /repo/node_modules \
+          -v /repo/apps/backend/node_modules \
+          -v /repo/apps/storefront/node_modules \
+          -w /repo \
+          node:22 \
+          sh -c "corepack enable && corepack prepare pnpm@10.11.1 --activate && pnpm install --frozen-lockfile && pnpm build && pnpm lint"
+
+  ci:lockfile-sync:
+    desc: "Regenerate pnpm-lock.yaml in node:22 to encode pnpm.patchedDependencies (fixes ERR_PNPM_LOCKFILE_CONFIG_MISMATCH). Lockfile persists; node_modules isolated."
+    cmds:
+      - |
+        docker run --rm \
+          -v "{{.ROOT_DIR}}":/repo \
+          -v /repo/node_modules \
+          -v /repo/apps/backend/node_modules \
+          -v /repo/apps/storefront/node_modules \
+          -w /repo \
+          node:22 \
+          sh -c "corepack enable && corepack prepare pnpm@10.11.1 --activate && pnpm install --no-frozen-lockfile"
 
   # ---------------------------------------------------------------------------
   # Terraform — infrastructure validation (no cloud credentials required for local)

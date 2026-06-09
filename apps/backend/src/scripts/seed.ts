@@ -809,7 +809,8 @@ export default async function seed({
         headers: {},
         query: {},
         body: { email: adminEmail, password: adminPassword },
-        authScope: "admin",
+        // Medusa v2: admin actor scope is "user" (was the non-existent `authScope`).
+        actor_type: "user",
       }
     )
 

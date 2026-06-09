@@ -82,9 +82,8 @@ tags_test.tftest.hcl
 docs/node_modules/
 docs/site/
 docs/.docusaurus/
-# llms.txt — generated artifact (gen-llms-txt.sh); never hand-edit; not tracked in git
-docs/llms.txt
-docs/content/llms.txt
+# docs/llms.txt — canonical LLM-docs index (TRACKED in git; hand-curated + agent-maintained)
+# docs/content/llms.txt was deleted; do not recreate as a split-brain copy
 
 # act secret file — NEVER commit real tokens; copy from .secrets.example
 .secrets
@@ -94,3 +93,6 @@ docker-compose.override.yml
 _engine_src/
 _engine/
 .pnpm-store
+infra/terraform/aws/dev/.terraform
+infra/terraform/aws/local/.terraform
+# patches

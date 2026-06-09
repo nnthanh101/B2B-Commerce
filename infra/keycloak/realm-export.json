@@ -30,7 +30,11 @@
       "redirectUris": [
         "http://localhost:9000/auth/user/vymalo-keycloak/callback",
         "http://localhost:9000/auth/customer/vymalo-keycloak/callback",
-        "http://localhost:9000/*"
+        "http://localhost:9000/*",
+        "http://localhost:8000/*",
+        "http://localhost:8000/nz/account/auth-callback",
+        "http://host.docker.internal:8000/*",
+        "http://host.docker.internal:8000/nz/account/auth-callback"
       ],
       "webOrigins": [
         "+"
@@ -38,7 +42,7 @@
       "protocol": "openid-connect",
       "attributes": {
         "access.token.lifespan": "300",
-        "pkce.code.challenge.method": "S256"
+        "pkce.code.challenge.method": ""
       },
       "defaultClientScopes": [
         "web-origins",

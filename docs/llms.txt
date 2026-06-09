@@ -1,0 +1,322 @@
+# LLM Documentation Index
+# B2B-Commerce Wiki — canonical compiled index (hand-curated + agent-maintained)
+# Karpathy-style: content-oriented by category, one-line summary per page.
+# This is the SSOT for LLM-docs queries. Last updated: 2026-06-08
+# Total pages: 60
+
+# Usage: read this file first, then read specific pages via docs/content/<path>
+# Format: path | title | description | tags
+
+## architecture
+
+- docs/content/architecture/adrs/ADR-001-single-aws-account.md
+  title: ADR-001: Single AWS Account for Phase 2
+  description: B2B-Commerce deploys to a single AWS account per customer tenancy at Phase 2 (v0.3).
+  tags: adr, aws, deployment, phase-2, terraform
+
+- docs/content/architecture/adrs/ADR-002-rds-single-az.md
+  title: ADR-002: RDS PostgreSQL Single-AZ for Phase 2
+  description: Phase 2 deploys PostgreSQL on Amazon RDS Single-AZ db.t4g.micro — right-sized for low-TPS B2B quote workloads.
+  tags: adr, aws, rds, postgresql, database, phase-2
+
+- docs/content/architecture/adrs/ADR-003-anthropic-direct-api.md
+  title: ADR-003: Anthropic Direct API
+  description: B2B-Commerce uses Anthropics API directly (not through AWS Bedrock) for ADLC agent calls.
+  tags: adr, anthropic, ai, claude, adlc
+
+- docs/content/architecture/adrs/ADR-004-next-js-server-action.md
+  title: ADR-004: Next.js Server Actions
+  description: Next.js 15 Server Actions are used for B2B form mutations instead of dedicated API routes.
+  tags: adr, nextjs, frontend, server-actions
+
+- docs/content/architecture/adrs/ADR-005-postgres-full-text-search.md
+  title: ADR-005: Postgres Full-Text Search
+  description: PostgreSQL built-in FTS is used for product and quote search, avoiding Elasticsearch overhead.
+  tags: adr, postgresql, search, phase-1
+
+- docs/content/architecture/adrs/ADR-006-tag-only-github-actions.md
+  title: ADR-006: Tag-Only GitHub Actions CI
+  description: GitHub Actions workflows only trigger on git tags (not branch pushes) to prevent runaway CI costs.
+  tags: adr, github-actions, ci-cd, oidc, terraform
+
+- docs/content/architecture/adrs/ADR-007-grafana-prometheus-local-first.md
+  title: ADR-007: Grafana + Prometheus Observability (Local-First)
+  description: Grafana + Prometheus is the hybrid-cloud vendor-neutral observability SSOT. CloudWatch is permanently rejected as SSOT. Local-first via docker-compose.observability.yml.
+  tags: adr, observability, grafana, prometheus, hybrid-cloud, docker-compose
+
+- docs/content/architecture/adrs/ADR-008-medusa-modules-reuse-vs-new.md
+  title: ADR-008: Medusa Modules — Reuse vs New
+  description: Decision framework for extending existing Medusa modules vs. creating new custom modules.
+  tags: adr, medusa, modules, company, quote, approval
+
+- docs/content/architecture/adrs/ADR-009-apps-as-first-party-not-upstream.md
+  title: ADR-009: Apps as First-Party Code
+  description: apps/backend and apps/storefront are OceanSoft first-party code — not upstream forks to sync.
+  tags: adr, ip, monorepo, upstream, medusa
+
+- docs/content/architecture/adrs/ADR-010-medusa-ootb-extended.md
+  title: ADR-010: Medusa OOTB Extended
+  description: Strategy for extending Medusa out-of-the-box modules via workflows and links without forking core.
+  tags: adr, medusa, workflows, links, extension-pattern
+
+- docs/content/architecture/adrs/ADR-011-stripe-connect-marketplace.md
+  title: ADR-011: Stripe Connect Marketplace
+  description: Stripe Connect is the payment infrastructure for multi-supplier B2B marketplace payments.
+  tags: adr, stripe, payments, marketplace, phase-2
+
+- docs/content/architecture/adrs/ADR-012-quote-engine-architecture.md
+  title: ADR-012: Quote Engine Architecture
+  description: The B2B quote engine — state machine, negotiation steps, and approval integration.
+  tags: adr, quote, approval, state-machine, b2b
+
+- docs/content/architecture/adrs/ADR-013-anz-marketplace-supplier-vetting.md
+  title: ADR-013: ANZ Marketplace Supplier Vetting
+  description: Supplier onboarding and vetting process for the ANZ regulated-industry marketplace.
+  tags: adr, anz, marketplace, supplier, compliance, apra
+
+- docs/content/architecture/adrs/ADR-014-adlc-subagent-governance.md
+  title: ADR-014: ADLC Subagent Governance
+  description: Governance model for the 38-agent ADLC team — PO+CA coordination, file-locks, hook enforcement.
+  tags: adr, adlc, governance, agents, hitl, principle-i
+
+- docs/content/architecture/adrs/ADR-015-local-first-terraform-iac.md
+  title: ADR-015: Local-First Terraform IaC Foundation
+  description: Terraform with LocalStack Community for local-first IaC validation. Same modules promote to real AWS by swapping endpoints.
+  tags: adr, terraform, localstack, aws, iac, focus-tags, s3-state
+
+- docs/content/architecture/adrs/ADR-016-observability-under-infra.md
+  title: ADR-016: Runtime Observability Configs Under infra/
+  description: Grafana and Prometheus runtime configs moved from repo root to infra/observability/ for single-tree progression from local to cloud.
+  tags: adr, observability, grafana, prometheus, infra, docker-compose
+
+- docs/content/architecture/adrs/ADR-017-demo-video-pipeline.md
+  title: ADR-017: Demo Video Pipeline Hardening
+  description: Correct-by-construction demo-video pipeline — assert settled DOM before capture, gate per-flow manifest integrity before assembly.
+  tags: adr, demo, video, pipeline, capture, ci
+
+- docs/content/architecture/adrs/index.md
+  title: Architecture Decision Records
+  description: Index of all architectural decisions for the B2B-Commerce platform.
+  tags: adr, architecture, decisions
+
+- docs/content/architecture/local-mvp.md
+  title: Local MVP Topology
+  description: Phase 1 four-service docker-compose topology reference for B2B-Commerce local development.
+  tags: architecture, docker-compose, local-dev, topology, phase-1
+
+- docs/content/architecture/overview.md
+  title: Architecture Overview
+  description: System topology, repository layout, technology stack, and AWS deployment roadmap for B2B-Commerce.
+  tags: architecture, docker, medusa, nextjs, terraform, observability
+
+- docs/content/architecture/v0.3-deploy-release-reference.md
+  title: v0.3 Deploy + Release Reference
+  description: Salvaged design for Phase 3 ECS production deployment and GitHub Actions release pipeline.
+  tags: architecture, deployment, release, ecs, github-actions, phase-3
+
+## demo
+
+- docs/content/demo/feature-walkthrough-narration.md
+  title: Feature Walkthrough Narration
+  description: Extended narration for the feature-by-feature walkthrough demo.
+  tags: demo, narration, feature-walkthrough
+
+- docs/content/demo/flows/01-cart-to-quote.md
+  title: Flow 01: Cart to Quote
+  description: Buyer adds items to cart and submits a quote request.
+  tags: demo, flow, cart, quote, buyer
+
+- docs/content/demo/flows/02-approval.md
+  title: Flow 02: Approval Workflow
+  description: Admin approves a quote — multi-step approval flow with spending limit enforcement.
+  tags: demo, flow, approval, admin, sales-manager
+
+- docs/content/demo/flows/03-company-mgmt.md
+  title: Flow 03: Company Management
+  description: Admin creates and manages a buyer company with employees and spending limits.
+  tags: demo, flow, company, admin, employees
+
+- docs/content/demo/flows/04-spending-limit.md
+  title: Flow 04: Spending Limit Enforcement
+  description: Buyer attempts a cart that exceeds spending limit — hook blocks the order.
+  tags: demo, flow, spending-limit, buyer, validation
+
+- docs/content/demo/flows/05-quote-negotiate.md
+  title: Flow 05: Quote Negotiation
+  description: Sales manager negotiates price on a quote via message thread before approving.
+  tags: demo, flow, quote, negotiation, sales-manager
+
+- docs/content/demo/flows/06-promotions.md
+  title: Flow 06: Promotions
+  description: Buyer applies a promotion code during checkout.
+  tags: demo, flow, promotions, buyer, checkout
+
+- docs/content/demo/flows/07-full-ecommerce.md
+  title: Flow 07: Full E-Commerce Flow
+  description: Buyer completes an end-to-end purchase without quote — standard DTC flow on the B2B storefront.
+  tags: demo, flow, ecommerce, buyer, checkout
+
+- docs/content/demo/flows/08-order-edit.md
+  title: Flow 08: Order Editing
+  description: Admin edits a post-checkout order — adds/removes line items, adjusts quantity.
+  tags: demo, flow, order-edit, admin
+
+- docs/content/demo/flows/09-bulk-add.md
+  title: Flow 09: Bulk Add to Cart
+  description: Buyer adds multiple SKUs to cart in bulk via the B2B bulk-order interface.
+  tags: demo, flow, bulk-add, buyer, cart
+
+- docs/content/demo/flows/10-quick-order-pad.md
+  title: Flow 10: Quick Order Pad
+  description: Buyer uses the quick order pad to enter SKUs and quantities directly.
+  tags: demo, flow, quick-order, buyer, sku
+
+- docs/content/demo/flows/11-invite-employee.md
+  title: Flow 11: Invite Employee
+  description: Admin invites a new employee to a buyer company, setting role and spending limit.
+  tags: demo, flow, invite, employee, admin, company
+
+- docs/content/demo/flows/index.md
+  title: Demo Flows
+  description: Index of 11 B2B-Commerce demo flow playbooks.
+  tags: demo, flows, index
+
+- docs/content/demo/index.md
+  title: Demo
+  description: B2B-Commerce demo flows, persona playbooks, and recording storyboard.
+  tags: demo, flows, personas, storyboard
+
+- docs/content/demo/narration.md
+  title: Demo Narration Script
+  description: Timestamped voice-over narration script for the B2B-Commerce demo recording.
+  tags: demo, narration, voice-over, recording
+
+- docs/content/demo/persona-flow-map.md
+  title: Persona Flow Map
+  description: Machine-readable persona-to-flow ownership contract for demo batch recording.
+  tags: demo, personas, flows, machine-readable
+
+- docs/content/demo/personas/admin.md
+  title: Persona: Admin
+  description: Admin persona playbook — company and quote management from the Medusa admin UI.
+  tags: demo, persona, admin, merchant
+
+- docs/content/demo/personas/buyer.md
+  title: Persona: Buyer-Employee
+  description: Buyer-employee persona playbook — the primary user who triggers every B2B workflow.
+  tags: demo, persona, buyer, employee
+
+- docs/content/demo/personas/sales-manager.md
+  title: Persona: Sales Manager
+  description: Sales manager persona playbook — quote negotiation, spending limit enforcement, approval.
+  tags: demo, persona, sales-manager, quote, approval
+
+- docs/content/demo/scripts.md
+  title: Demo Scripts — Narration Cue Sheet
+  description: Consolidated voice narration cues for all 11 B2B demo flows. Use this guide to record your voiceover and sync with auto-generated MP4s.
+  tags: demo, scripts, narration, voice-recording
+
+- docs/content/demo/storyboard.md
+  title: Demo Storyboard
+  description: 3-Act demo storyboard — scene-by-scene breakdown for the 5-minute B2B-Commerce recording.
+  tags: demo, storyboard, recording, playwright, acts
+
+## infrastructure
+
+- docs/content/infrastructure/index.md
+  title: Index: Infrastructure
+  description: Directory of compiled wiki pages for the B2B-Commerce infrastructure layer — Terraform modules, observability stack, and IaC concepts — so you can navigate to the right page without reading raw HCL.
+  tags: infra, terraform, observability, index, iac, aws
+
+- docs/content/infrastructure/local-first-iac.md
+  title: Concept: Local-First IaC
+  description: Understand the local-first IaC principle — validate infra locally in Docker + LocalStack before any real AWS resource is provisioned — so you can extend the Terraform stack with confidence at each phase.
+  tags: terraform, iac, localstack, concept, local-first, aws, architecture
+
+- docs/content/infrastructure/observability-stack.md
+  title: Entity: Observability Stack
+  description: Understand the Prometheus + Grafana local observability stack — scrape targets, datasource provisioning, dashboard auto-load pattern — so you can add metrics or promote the stack to AWS Managed Prometheus/Grafana without re-reading config files.
+  tags: observability, grafana, prometheus, monitoring, infra, entity
+
+- docs/content/infrastructure/terraform-bootstrap.md
+  title: Entity: Terraform Bootstrap
+  description: Understand the Terraform S3 state bootstrap module — the genesis resource that avoids the self-referential deadlock so all other root modules can use a remote backend without bootstrapping conflicts.
+  tags: terraform, iac, bootstrap, s3, state, aws, entity
+
+- docs/content/infrastructure/terraform-modules.md
+  title: Entity: Terraform Workload Modules
+  description: Understand the six Terraform workload modules (tags, foundation, appregistry, network, compute, observability, data) — what each creates today vs. at v0.3 — so you can add resources without re-reading each modules main.tf.
+  tags: terraform, iac, modules, aws, infra, entity
+
+## modules
+
+- docs/content/modules/approval-module.md
+  title: Entity: Approval Module
+  description: Understand the Approval Medusa v2 module — its three models (Approval, ApprovalSettings, ApprovalStatus), the hasPendingApprovals guard, and approval-type routing — so you can configure and extend company-level purchase gates.
+  tags: b2b, modules, approval, workflow, spending-limit, medusa-v2, entity
+
+- docs/content/modules/company-module.md
+  title: Entity: Company Module
+  description: Understand the Company Medusa v2 module — its models, spending-limit reset, and employee relationship — so you can extend or integrate it without reading raw code.
+  tags: b2b, modules, company, employee, medusa-v2, entity
+
+- docs/content/modules/index.md
+  title: Index: B2B Backend Modules
+  description: Directory of all compiled Entity pages for the B2B Medusa v2 backend modules — use this to navigate to the module you need without reading raw TypeScript.
+  tags: b2b, modules, index, medusa-v2
+
+- docs/content/modules/quote-module.md
+  title: Entity: Quote Module
+  description: Understand the Quote Medusa v2 module — its state machine, message thread, and cart linkage — so you can trace a buyers quote request from cart to accepted order.
+  tags: b2b, modules, quote, negotiation, medusa-v2, entity
+
+## process-qa
+
+- docs/content/process-qa/dev-workflow-hooks.md
+  title: Dev Workflow — ADLC Hook Constraints
+  description: How validate-bash.sh v3.3.0 works, what it blocks, and approved workarounds for AI-agent development.
+  tags: dev-workflow, hooks, adlc, validate-bash, container-first
+
+- docs/content/process-qa/discovery-brief.md
+  title: Discovery Brief
+  description: Executive summary, problem statement, wedge stories, and Phase 2 sprint plan for B2B-Commerce.
+  tags: discovery, requirements, phase-1, anz, b2b
+
+- docs/content/process-qa/golden-path.md
+  title: Golden Path
+  description: The canonical 15-minute demo walkthrough proving the B2B quote-assisted workflow with dual-persona.
+  tags: demo, golden-path, quickstart, buyer, admin, quote, approval
+
+- docs/content/process-qa/readiness-scorecard.md
+  title: Enterprise GTM Readiness Scorecard
+  description: Enterprise GTM readiness assessment for Phase 1 B2B-Commerce — scored 2026-06-05.
+  tags: readiness, gtm, scoring, enterprise, phase-1
+
+- docs/content/process-qa/release-self-qa-framework.md
+  title: Release Self-QA Framework
+  description: Standard operating procedure for release QA — sections A-F, test pyramid, and HITL approval gates.
+  tags: qa, release, testing, playwright, e2e, process
+
+## root
+
+- docs/content/b2b-blueprint.md
+  title: B2B Blueprint
+  description: Product strategy, unfair advantage stack, feature matrix, persona journeys, and deployment timeline for B2B-Commerce.
+  tags: blueprint, strategy, b2b, anz, quote, approval, roadmap
+
+- docs/content/index.md
+  title: B2B-Commerce Documentation
+  description: LLM-queryable wiki for the OceanSoft B2B-Commerce platform — compiled by ADLC agents.
+  tags: overview, getting-started, b2b, oceansoft
+
+- docs/content/licensing.md
+  title: Licensing
+  description: MIT license scope, upstream attribution, and future commercial path for B2B-Commerce.
+  tags: licensing, mit, commercial, oceansoft
+
+- docs/content/quickstart.md
+  title: Quickstart
+  description: Run the full B2B-Commerce stack locally in Docker in under 10 minutes.
+  tags: quickstart, docker, local-dev
+
+<!-- Last updated: 2026-06-08 | Maintained by ADLC llm-docs skill | Do not hand-edit the body; update via /commerce:docs-ingest -->

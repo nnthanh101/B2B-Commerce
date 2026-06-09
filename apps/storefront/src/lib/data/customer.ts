@@ -6,6 +6,7 @@ import { B2BCustomer } from "@/types/global"
 import { HttpTypes } from "@medusajs/types"
 import { track } from "@vercel/analytics/server"
 import { revalidateTag } from "next/cache"
+import { after } from "next/server"
 import { redirect } from "next/navigation"
 import { retrieveCart, updateCart } from "./cart"
 import { createCompany, createEmployee } from "./companies"
@@ -235,11 +236,16 @@ export async function loginWithKeycloak(): Promise<{ location: string } | string
 export async function handleKeycloakCallback(
   code: string,
   state: string,
-  countryCode: string
+  countryCode: string,
+  // scope is required by @vymalo/medusa-keycloak@1.0.10 validateCallback.
+  // Keycloak does not echo scope back in the redirect URL, so we default to the
+  // configured KEYCLOAK_SCOPE value (openid profile email).
+  scope: string = "openid profile email"
 ): Promise<void> {
   const result = await sdk.auth.callback("customer", "vymalo-keycloak", {
     code,
     state,
+    scope,
   })
 
   if (typeof result !== "string") {
@@ -250,17 +256,19 @@ export async function handleKeycloakCallback(
   const token = result
 
   track("customer_logged_in_sso")
-  setAuthToken(token)
+  await setAuthToken(token)
 
-  const [customerCacheTag, productsCacheTag, cartsCacheTag] = await Promise.all([
-    getCacheTag("customers"),
-    getCacheTag("products"),
-    getCacheTag("carts"),
-  ])
+  // Fetch customer directly (no cache — auth token was just set above)
+  const authHeaders = { authorization: `Bearer ${token}` }
+  const customer = await sdk.client
+    .fetch<{ customer: B2BCustomer }>(`/store/customers/me`, {
+      method: "GET",
+      query: { fields: "*employee, *orders" },
+      headers: authHeaders,
+    })
+    .then(({ customer }) => customer as B2BCustomer)
+    .catch(() => null)
 
-  revalidateTag(customerCacheTag)
-
-  const customer = await retrieveCustomer()
   const cart = await retrieveCart()
 
   if (customer?.employee?.company_id) {
@@ -272,10 +280,20 @@ export async function handleKeycloakCallback(
     })
   }
 
-  revalidateTag(productsCacheTag)
-  revalidateTag(cartsCacheTag)
-
   await transferCart()
+
+  // Defer cache invalidations to after() so revalidateTag does not run during
+  // the Server Component render phase (Next.js 15 restriction).
+  after(async () => {
+    const [customerCacheTag, productsCacheTag, cartsCacheTag] = await Promise.all([
+      getCacheTag("customers"),
+      getCacheTag("products"),
+      getCacheTag("carts"),
+    ])
+    if (customerCacheTag) revalidateTag(customerCacheTag)
+    if (productsCacheTag) revalidateTag(productsCacheTag)
+    if (cartsCacheTag) revalidateTag(cartsCacheTag)
+  })
 
   redirect(`/${countryCode}/account`)
 }
