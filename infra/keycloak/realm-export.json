@@ -1,0 +1,119 @@
+{
+  "id": "medusa-commerce",
+  "realm": "medusa-commerce",
+  "displayName": "OceanSoft B2B Commerce",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "clients": [
+    {
+      "id": "medusa",
+      "clientId": "medusa",
+      "name": "Medusa Commerce Client",
+      "description": "B2B Commerce SSO client for Medusa backend (admin + customer auth)",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "medusa-dev-secret-changeme-in-prod",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:9000/auth/user/vymalo-keycloak/callback",
+        "http://localhost:9000/auth/customer/vymalo-keycloak/callback",
+        "http://localhost:9000/*",
+        "http://localhost:8000/*",
+        "http://localhost:8000/nz/account/auth-callback",
+        "http://host.docker.internal:8000/*",
+        "http://host.docker.internal:8000/nz/account/auth-callback"
+      ],
+      "webOrigins": [
+        "+"
+      ],
+      "protocol": "openid-connect",
+      "attributes": {
+        "access.token.lifespan": "300",
+        "pkce.code.challenge.method": ""
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "sso.buyer@demo.com",
+      "email": "sso.buyer@demo.com",
+      "firstName": "SSO",
+      "lastName": "Buyer",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "SsoBuyer2026!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "default-roles-medusa-commerce"
+      ]
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "default-roles-medusa-commerce",
+        "description": "Default role granted to all new users in the medusa-commerce realm",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "medusa-commerce"
+      }
+    ]
+  },
+  "defaultRoles": [
+    "default-roles-medusa-commerce"
+  ],
+  "scopeMappings": [],
+  "clientScopeMappings": {},
+  "browserFlow": "browser",
+  "registrationFlow": "registration",
+  "directGrantFlow": "direct grant",
+  "resetCredentialsFlow": "reset credentials",
+  "clientAuthenticationFlow": "clients",
+  "dockerAuthenticationFlow": "docker auth",
+  "firstBrokerLoginFlow": "first broker login",
+  "attributes": {
+    "cibaBackchannelTokenDeliveryMode": "poll",
+    "cibaAuthRequestedUserHint": "login_hint",
+    "cibaExpiresIn": "120",
+    "cibaInterval": "5",
+    "realmReusableOtpCode": "false",
+    "frontendUrl": "",
+    "acr.loa.map": "{}",
+    "displayName": "OceanSoft B2B Commerce",
+    "displayNameHtml": ""
+  },
+  "internationalizationEnabled": false,
+  "supportedLocales": [],
+  "defaultLocale": "en"
+}

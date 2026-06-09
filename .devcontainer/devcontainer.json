@@ -4,6 +4,14 @@
   "service": "ec",
   "workspaceFolder": "/server",
   "postCreateCommand": "pnpm install --frozen-lockfile",
+  // Docs preview: `task docs:dev` serves the Docusaurus site on port 5001 (maps 5001:3000).
+  "forwardPorts": [5001],
+  "portsAttributes": {
+    "5001": {
+      "label": "Docs preview (task docs:dev)",
+      "onAutoForward": "silent"
+    }
+  },
   "customizations": {
     "vscode": {
       "extensions": [

@@ -33,3 +33,4 @@ This directory contains accepted architectural decisions for the B2B-Commerce pl
 | [ADR-014](./ADR-014-adlc-subagent-governance.md) | ADLC Subagent Governance | Accepted |
 | [ADR-015](./ADR-015-local-first-terraform-iac.md) | Local-First Terraform IaC | Accepted |
 | [ADR-016](./ADR-016-observability-under-infra.md) | Observability Configs Under infra/ | Accepted |
+| [ADR-017](./ADR-017-demo-video-pipeline.md) | Demo Video Pipeline Hardening | Accepted |

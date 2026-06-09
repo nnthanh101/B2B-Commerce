@@ -132,7 +132,7 @@ tasks:
     desc: "Tier 4 — browser screenshots (Playwright) + terminal capture (screencapture)"
     dir: "{{.REPO}}"
     cmds:
-      - bash scripts/visual-verify.sh "{{.BACKEND_URL}}" "tmp/B2B-Commerce/test-results"
+      - BASE_URL="{{.BACKEND_URL}}" ADLC_EVIDENCE_DIR="tmp/B2B-Commerce/test-results/screenshots" DC_PW_SPEC=tests/e2e/screenshots.spec.ts TEST_ADMIN_EMAIL=admin@test.local TEST_ADMIN_PASSWORD=Test1234! bash ".adlc/.claude/plugins/commerce/scripts/visual-verify.sh" --all
 
   # ---------------------------------------------------------------------------
   # Reporting + idempotency

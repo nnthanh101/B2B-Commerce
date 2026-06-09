@@ -19,7 +19,7 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 **Duration**: ~2 min
 
-![Company roster with employees and spending limits](pathname:///img/demo/flows/03-company-mgmt/generated-company-mgmt-01-companies-list.png)
+*Demo video for this flow is being re-captured.*
 
 ## Script (voice narration)
 
@@ -34,3 +34,7 @@ last_compiled: "2026-06-07T00:00:00Z"
 **[00:41]** "Sarah accepts the invite, sets a password, and joins the company instantly — no support ticket needed."
 
 **[00:50]** "David can now see Sarah in the team roster with her role and spending limit visible."
+
+## Cross-References
+
+- [Persona: David (Admin)](../personas/admin.md) — full persona playbook

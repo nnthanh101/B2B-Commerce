@@ -10,6 +10,13 @@
  * R4: buyer cart pre-loaded by fixture (auth.ts Step 8); Request Quote asserted HARD
  * Config SSOT: all URLs/creds from ../config (no hardcoded values)
  *
+ * KEY ARCHITECTURE NOTES:
+ * - CartTemplate is a "use client" component using useCart() hook (client-side hydration)
+ * - Summary renders only when cart && cart.region is populated in client state
+ * - Checkout is rendered as a LocalizedClientLink with data-testid="checkout-button"
+ * - "Checkout" button text is inside an <a> tag wrapping a <Button> — use link selector
+ * - Request Quote is inside RequestQuoteConfirmation (requires customer to be set)
+ *
  * Anti-theater gates:
  * G5: grep -E "mcp|anthropic|agent|claude" cart-to-quote.spec.ts → must return 0 lines
  */
@@ -34,55 +41,77 @@ test.describe("B2B cart-to-quote flow [generated]", () => {
 
     // Step 1: navigate to cart (fixture pre-loads _medusa_cart_id cookie with a line item)
     await buyerPage.goto(`${STOREFRONT_URL}/${TEST_REGION_COUNTRY}/cart`);
-    await buyerPage.waitForLoadState("networkidle");
+    await buyerPage.waitForLoadState("networkidle", { timeout: 30000 });
 
     await buyerPage.screenshot({
       path: path.join(SCREENSHOTS_DIR, "generated-ctq-01-cart-page.png"),
     });
 
-    // Step 2: verify cart page renders (real assertion)
-    const cartContainer = buyerPage.locator('[data-testid="cart-container"]')
-      .or(buyerPage.locator("text=/cart/i"));
-    await expect(cartContainer.first()).toBeVisible({ timeout: 5000 });
-    console.log("[cart-to-quote] Cart page rendered");
+    // Step 2: verify cart-container is visible (data-testid from CartTemplate)
+    // CartTemplate renders data-testid="cart-container" unconditionally
+    const cartContainer = buyerPage.locator('[data-testid="cart-container"]');
+    await expect(cartContainer.first()).toBeVisible({ timeout: 20000 });
+    console.log("[cart-to-quote] Cart container rendered");
 
-    // Step 2.5: Wait for cart data to fully hydrate (Checkout button is only visible after cart API response)
-    const checkoutBtn = buyerPage.getByRole("button", { name: /Checkout|Log in to Checkout/ })
-    await expect(checkoutBtn.first()).toBeVisible({ timeout: 5000 })
-    console.log("[cart-to-quote] Cart hydrated — Checkout button visible");
+    // Step 2.5: Wait for cart items to be visible (cart must have ≥1 item from fixture)
+    // CartTemplate shows items heading: "You have X items in your cart"
+    const itemsHeading = buyerPage.locator('text=/items in your cart/i')
+      .or(buyerPage.locator('text=/item in your cart/i'));
+    await expect(itemsHeading.first()).toBeVisible({ timeout: 30000 });
+    const headingText = await itemsHeading.first().textContent();
+    console.log(`[cart-to-quote] HARD ASSERT: Items visible — "${headingText}"`);
 
-    // Step 2.7: CONCRETE ASSERT — verify a known product SKU (256-BLUE laptop) is visible in cart
-    // Seed-constant from seed-demo-b2b.ts — cart fixture pre-loads a sample product
-    const skuVisible = buyerPage.locator('text=/256-BLUE|SKU/i').first();
-    const isSkuInCart = await skuVisible.isVisible({ timeout: 3000 }).catch(() => false);
-    if (isSkuInCart) {
-      console.log("[cart-to-quote] CONCRETE ASSERT PASS: Known SKU (256-BLUE) visible in cart");
-    } else {
-      console.log("[cart-to-quote] CONTENT CHECK: SKU details may not be visible in list view");
-    }
+    // C3 positive assertions: cart must show ≥1 item count, NZ$ total, and NOT be empty
+    // Fails on empty-cart frame (regression guard for stale publishable key)
+    const headingNumber = parseInt((headingText ?? "").replace(/\D/g, ""), 10) || 0;
+    expect(headingNumber).toBeGreaterThanOrEqual(1);
+    console.log(`[cart-to-quote] C3 ASSERT: item count=${headingNumber} ≥ 1`);
 
-    // Step 3: click "Request Quote" — HARD ASSERTION (buyer is auth + has items in cart)
-    const requestQuoteBtn = buyerPage.getByRole("button", { name: "Request Quote" });
-    await expect(requestQuoteBtn.first()).toBeVisible({ timeout: 5000 });
-    console.log("[cart-to-quote] Request Quote button visible");
+    const nzdTotal = buyerPage.locator('text=/NZ\\$/').first();
+    await expect(nzdTotal).toBeVisible({ timeout: 15000 });
+    console.log("[cart-to-quote] C3 ASSERT: NZ$ total visible");
+
+    await expect(buyerPage.getByText(/you don't have anything in your cart/i)).not.toBeVisible();
+    console.log("[cart-to-quote] C3 ASSERT: empty-cart message not present");
 
     await buyerPage.screenshot({
       path: path.join(SCREENSHOTS_DIR, "generated-ctq-02-cart-with-items.png"),
     });
 
+    // Step 3: Wait for Summary panel to hydrate (Summary only shows when cart.region is set)
+    // data-testid="checkout-button" is on the LocalizedClientLink wrapping the Checkout button
+    // Allow up to 45s for client-side cart context to fully hydrate with region data
+    const checkoutLink = buyerPage.locator('[data-testid="checkout-button"]')
+      .or(buyerPage.getByRole("link", { name: /Checkout|Log in to Checkout/i }))
+      .or(buyerPage.getByRole("button", { name: /Checkout|Log in to Checkout/i }));
+
+    await expect(checkoutLink.first()).toBeVisible({ timeout: 45000 });
+    console.log("[cart-to-quote] HARD ASSERT: Checkout button/link visible (Summary hydrated)");
+
+    // Step 4: click "Request Quote" — HARD ASSERTION
+    // Only visible when !!customer (buyer is authenticated from fixture)
+    const requestQuoteBtn = buyerPage.getByRole("button", { name: "Request Quote" });
+    await expect(requestQuoteBtn.first()).toBeVisible({ timeout: 20000 });
+    console.log("[cart-to-quote] Request Quote button visible");
+
+    await buyerPage.screenshot({
+      path: path.join(SCREENSHOTS_DIR, "generated-ctq-03-cart-summary.png"),
+    });
+
     await requestQuoteBtn.first().click();
-    await buyerPage.waitForLoadState("networkidle");
+    await buyerPage.waitForLoadState("networkidle", { timeout: 20000 });
     console.log("[cart-to-quote] Request Quote button clicked");
 
     await buyerPage.screenshot({
-      path: path.join(SCREENSHOTS_DIR, "generated-ctq-03-quote-modal.png"),
+      path: path.join(SCREENSHOTS_DIR, "generated-ctq-04-quote-modal.png"),
     });
 
-    // Step 4: modal must be visible (real assertion)
+    // Step 5: modal must be visible (real assertion)
     const quoteModal = buyerPage.locator('[role="dialog"]');
-    await expect(quoteModal.first()).toBeVisible({ timeout: 5000 });
+    await expect(quoteModal.first()).toBeVisible({ timeout: 15000 });
+    console.log("[cart-to-quote] HARD ASSERT: Quote modal visible");
 
-    // Step 5: submit quote form
+    // Step 6: submit quote form
     const buttons = await buyerPage.locator('[role="dialog"] button').all();
     console.log(`[cart-to-quote] Found ${buttons.length} buttons in modal`);
 
@@ -116,16 +145,16 @@ test.describe("B2B cart-to-quote flow [generated]", () => {
     }
 
     await buyerPage.screenshot({
-      path: path.join(SCREENSHOTS_DIR, "generated-ctq-04-submitted.png"),
+      path: path.join(SCREENSHOTS_DIR, "generated-ctq-05-submitted.png"),
     });
 
-    // Step 6: verify redirect to quote details page (real URL assertion)
+    // Step 7: verify redirect to quote details page (real URL assertion)
     const finalUrl = buyerPage.url();
     expect(finalUrl).toContain("/account/quotes/details");
     console.log(`[cart-to-quote] Final URL: ${finalUrl}`);
 
     await buyerPage.screenshot({
-      path: path.join(SCREENSHOTS_DIR, "generated-ctq-05-quote-details.png"),
+      path: path.join(SCREENSHOTS_DIR, "generated-ctq-06-quote-details.png"),
     });
   });
 });

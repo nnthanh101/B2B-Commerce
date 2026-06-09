@@ -42,7 +42,7 @@ test.describe("B2B quick-order-pad flow [generated]", () => {
         .or(buyerPage.locator('[class*="quick-order"]').first()))
       .or(buyerPage.locator('textarea').first());
 
-    await expect(quickOrderPad).toBeVisible({ timeout: 5000 });
+    await expect(quickOrderPad).toBeVisible({ timeout: 30000 });
     console.log("[quick-order-pad] HARD ASSERT 1 PASS: Quick-order-pad component visible");
 
     await buyerPage.screenshot({

@@ -24,6 +24,11 @@ on:
       - b2b
     paths:
       - "docs/content/**"
+      - "docs/static/**"
+      - ".github/workflows/docs.yml"
+  pull_request:
+    paths:
+      - "docs/content/**"
       - ".github/workflows/docs.yml"
   workflow_dispatch:
 
@@ -37,7 +42,62 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
+  lint:
+    name: Lint wiki (lint-wiki.sh — 7-gate exit-2)
+    runs-on: ubuntu-latest
+    # Runs on every PR and push touching docs content or this workflow.
+    # Ingest is HITL-gated (/commerce:docs-ingest) — NOT wired here (Principle I).
+    # act-runnable: act -j lint -W .github/workflows/docs.yml
+    steps:
+      - name: Checkout public repo
+        uses: actions/checkout@v4
+
+      # Sparse-checkout only the engine scripts directory from adlc-framework.
+      # Same PAT + branch as the build job (ADLC_FRAMEWORK_PAT, ref: command-center).
+      # cone-mode: false required — cone mode silently excludes dotfile dirs (.claude/).
+      - name: Checkout engine scripts from adlc-framework (sparse)
+        uses: actions/checkout@v4
+        with:
+          repository: 1xOps/adlc-framework
+          token: ${{ secrets.ADLC_FRAMEWORK_PAT }}
+          ref: command-center
+          sparse-checkout: |
+            .claude/plugins/commerce/scripts/**
+            .claude/plugins/commerce/scripts/
+          sparse-checkout-cone-mode: false
+          path: _engine
+
+      # act-only fallback: reuse local workspace copy of the engine scripts when the
+      # sparse-checkout above has the scripts dir. Emits a notice either way.
+      - name: Populate engine scripts from local workspace copy (act only)
+        if: ${{ env.ACT == 'true' }}
+        run: |
+          DST=_engine/.claude/plugins/commerce/scripts
+          SRC=_engine_src/.claude/plugins/commerce/scripts
+          if [ -d "$DST" ]; then
+            echo "::notice::engine scripts present from sparse-checkout — no fallback needed"
+          elif [ -d "$SRC" ]; then
+            mkdir -p _engine/.claude/plugins/commerce
+            cp -r "$SRC" "$DST"
+            echo "::warning::engine scripts missing from sparse-checkout; used local _engine_src. CI would FAIL here."
+          else
+            echo "::error::engine scripts absent from BOTH sparse-checkout and _engine_src — lint will fail."
+          fi
+
+      - name: Run lint-wiki.sh (deterministic 7-gate linter)
+        run: |
+          mkdir -p tmp/B2B-Commerce
+          CLAUDE_PROJECT_DIR="${GITHUB_WORKSPACE}" \
+            bash _engine/.claude/plugins/commerce/scripts/lint-wiki.sh \
+            "${GITHUB_WORKSPACE}/docs/content"
+        # Exit 2 from lint-wiki.sh surfaces as a failed step (non-zero exit = job fails).
+        # Gate 6 (LOG_APPEND_COMPLETENESS) may exit 2 if log.md is missing ingest entries;
+        # run `task docs:gen-log` locally before pushing to satisfy this gate.
+
   build:
     name: Build Docusaurus site
     runs-on: ubuntu-latest
@@ -55,8 +115,32 @@ jobs:
         with:
           repository: 1xOps/adlc-framework
           token: ${{ secrets.ADLC_FRAMEWORK_PAT }}
-          sparse-checkout: .claude/plugins/commerce/templates/docusaurus
+          ref: command-center
+          # cone-mode: false required — cone mode silently excludes dotfile dirs (.claude/) at repo root.
+          # Two-line form: /** covers nested files; trailing slash covers files directly in the dir root.
+          sparse-checkout: |
+            .claude/plugins/commerce/templates/docusaurus/**
+            .claude/plugins/commerce/templates/docusaurus/
+          sparse-checkout-cone-mode: false
           path: _engine
+
+      # ACT-only fallback (legacy). With `ref: command-center` the sparse-checkout above now
+      # provides the engine for act too, so this is a transparent no-op. Kept only to avoid a
+      # hard failure on older local setups; emits a notice either way (no silent green-washing).
+      - name: Populate engine from local workspace copy (act only)
+        if: ${{ env.ACT == 'true' }}
+        run: |
+          DST=_engine/.claude/plugins/commerce/templates/docusaurus
+          SRC=_engine_src/.claude/plugins/commerce/templates/docusaurus
+          if [ -d "$DST" ]; then
+            echo "::notice::engine present from sparse-checkout (ref: command-center) — no fallback needed"
+          elif [ -d "$SRC" ]; then
+            mkdir -p _engine/.claude/plugins/commerce/templates
+            cp -r "$SRC" "$DST"
+            echo "::warning::engine missing from sparse-checkout; used local _engine_src (--bind). CI would FAIL here — check ref/branch."
+          else
+            echo "::error::engine absent from BOTH sparse-checkout and _engine_src — build will fail (this is the real CI state, not masked)."
+          fi
 
       - name: Set up Node 22
         uses: actions/setup-node@v4
@@ -72,6 +156,28 @@ jobs:
           cp -r docs/content/. \
             _engine/.claude/plugins/commerce/templates/docusaurus/content/
 
+      - name: Copy static assets into engine
+        run: cp -r docs/static/. _engine/.claude/plugins/commerce/templates/docusaurus/static/
+
+      # FAST-FAIL MDX pre-flight (CA ask_7, AC-D1). Compiles every copied
+      # content/**/*.{md,mdx} with the engine's @mdx-js/mdx (the same MDX v3 compiler
+      # Docusaurus 3.10 uses) and aborts the job with `file:line: message` on the FIRST
+      # MDX error — BEFORE the slower full Docusaurus build. CONTENT_DIR points at the
+      # copied content the build actually compiles. Additive only; does not touch the
+      # proven sparse-checkout / PAT / copy / build / upload / deploy steps.
+      - name: MDX pre-flight (fast-fail)
+        # Run the PUBLIC repo's copy of the script (ships in this repo, so it does NOT
+        # depend on the private engine REPO having mdx-preflight.mjs). working-directory
+        # stays the engine dir so `@mdx-js/mdx` resolves from the engine's installed
+        # node_modules (npm ci above). CONTENT_DIR points at the copied content.
+        working-directory: _engine/.claude/plugins/commerce/templates/docusaurus
+        run: node ${{ github.workspace }}/scripts/mdx-preflight.mjs
+        env:
+          CONTENT_DIR: ${{ github.workspace }}/_engine/.claude/plugins/commerce/templates/docusaurus/content
+          # @mdx-js/mdx lives in the engine's node_modules (npm ci above), not the public
+          # repo. Anchor the public script's require.resolve at the engine package.json.
+          MDX_RESOLVE_BASE: ${{ github.workspace }}/_engine/.claude/plugins/commerce/templates/docusaurus/package.json
+
       - name: Build Docusaurus site
         # The engine npm run build uses --out-dir /site_out/site (Docker bind-mount path).
         # In CI there is no bind-mount, so we call docusaurus build directly with an
@@ -82,6 +188,7 @@ jobs:
           NODE_ENV: production
 
       - name: Upload Pages artifact
+        if: ${{ !env.ACT }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs/site

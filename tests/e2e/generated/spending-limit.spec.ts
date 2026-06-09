@@ -53,6 +53,14 @@ test.describe("B2B spending-limit flow [generated]", () => {
     const cartTotalText = await cartTotalLocator.first().textContent();
     console.log(`[spending-limit] CONTENT CHECK: Cart total = "${cartTotalText}"`);
 
+    // C3 positive assertions: NZ$ present AND not empty cart (regression guard)
+    const nzdTotal = buyerPage.locator('text=/NZ\\$/').first();
+    await expect(nzdTotal).toBeVisible({ timeout: 15000 });
+    console.log("[spending-limit] C3 ASSERT: NZ$ total visible");
+
+    await expect(buyerPage.getByText(/you don't have anything in your cart/i)).not.toBeVisible();
+    console.log("[spending-limit] C3 ASSERT: empty-cart message not present");
+
     // Step 4: CONCRETE ASSERT (Approach B) — extract numeric total and verify ≤ 500000
     // Parse cart total (format: "1299" or "€1,299.00" or similar)
     let cartTotalValue = 0;

@@ -19,7 +19,7 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 **Duration**: ~2 min
 
-![Cart showing bulk discount auto-applied](pathname:///img/demo/flows/06-promotions/generated-promotions-01-cart.png)
+*Demo video for this flow is being re-captured.*
 
 ## Script (voice narration)
 

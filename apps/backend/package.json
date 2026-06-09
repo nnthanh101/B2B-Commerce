@@ -55,7 +55,8 @@
     "react-hook-form": "7.49.1",
     "react-i18next": "13.5.0",
     "react-router-dom": "6.30.3",
-    "zod": "4.2.0"
+    "zod": "4.2.0",
+    "@vymalo/medusa-keycloak": "1.0.10"
   },
   "devDependencies": {
     "@medusajs/test-utils": "2.15.5",

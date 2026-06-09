@@ -1,0 +1,104 @@
+# docker-compose.keycloak.yml — B2B-Commerce Keycloak SSO overlay
+#
+# KC-1 / KC-2 / KC-5-infra implementation.
+# ADLC Architecture Decision (2026-06-09):
+#
+# Usage:
+#   task up           (includes this file via -f overlay — keycloak cold-boots with commerce)
+#   task keycloak:up  (standalone start — ec_postgres must already be running)
+#   task keycloak:down (stop keycloak only)
+#
+# Port Decision (CA-locked):
+#   - Publish 8080:8080 ONLY.
+#   - DO NOT publish 9000 — it collides with the Medusa backend host port.
+#   - Keycloak management/metrics on container port 9000 are reachable via ec_network DNS
+#     (Prometheus scrapes http://ec_keycloak:9000/metrics — no host exposure needed).
+#
+# DB Decision:
+#   - Keycloak uses a dedicated `keycloak` DB inside ec_postgres.
+#   - `infra/keycloak/init-db.sql` creates the DB (idempotent); run via `task keycloak:db-init`.
+#   - The init-db.sql is executed as a pre-dep of `task up` so fresh volumes get the DB
+#     before Keycloak attempts to connect.
+#
+# Realm:
+#   - `infra/keycloak/realm-export.json` is imported at startup via --import-realm.
+#   - Realm: medusa-commerce; client: medusa; demo user: sso.buyer@demo.com / SsoBuyer2026!
+#
+# Network: joins ec_network (external) — created by docker-compose.yml.
+#   All service names resolve via Docker DNS on ec_network:
+#     ec_postgres:5432, ec_backend:9000, ec_keycloak:8080, ec_keycloak:9000
+#
+# Secrets hygiene:
+#   KEYCLOAK_ADMIN_PASSWORD is read from env or .env (never hardcoded here for prod).
+#   Local dev placeholder is acceptable; rotate for staging/prod.
+
+services:
+
+  keycloak:
+    image: nnthanh101/keycloak:26.2-b2b
+    build:
+      context: ./infra/keycloak
+      dockerfile: Dockerfile
+    container_name: ec_keycloak
+    restart: unless-stopped
+    command:
+      - start-dev
+      - --import-realm
+    environment:
+      # Admin credentials — local dev only; override via .env or shell for staging/prod
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN:-admin}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD:-admin}
+
+      # Hostname / issuer — keycloak resolves via ec_network DNS; browser uses /etc/hosts or localhost
+      - KC_HOSTNAME=keycloak
+      - KC_HOSTNAME_STRICT=false
+      - KC_HTTP_ENABLED=true
+
+      # Management / metrics — served on container port 9000 (NOT published to host)
+      - KC_HEALTH_ENABLED=true
+      - KC_METRICS_ENABLED=true
+
+      # Database — connects to the keycloak DB in the shared ec_postgres container
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://ec_postgres:5432/keycloak
+      - KC_DB_USERNAME=postgres
+      - KC_DB_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+
+      # Logging
+      - KC_LOG_LEVEL=INFO
+    ports:
+      # Only 8080 (HTTP) is published to the host.
+      # 9000 (management) stays container-internal to avoid collision with Medusa backend :9000
+      - "8080:8080"
+    volumes:
+      # Realm export imported at start-dev via --import-realm (idempotent — skipped if realm exists)
+      - ./infra/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    networks:
+      - ec_network
+    depends_on:
+      postgres:
+        condition: service_started
+    healthcheck:
+      # Keycloak 26.x (UBI9-micro base) has no curl or wget, and kc.sh has no 'health'
+      # subcommand (verified: exit=2 "Unknown option: 'health'").
+      # bash IS guaranteed present: kc.sh is a bash script (#!/bin/bash shebang), so bash
+      # must exist for kc.sh itself to run. The /dev/tcp pseudo-device is a bash built-in
+      # (no external binary required) and probes the management port synchronously.
+      test:
+        - "CMD"
+        - "bash"
+        - "-c"
+        - "exec 3<>/dev/tcp/localhost/9000; printf 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3; grep -q '200 OK' <&3"
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+    labels:
+      application: b2b-commerce
+      service: keycloak-sso
+      environment: local
+      managed-by: adlc
+
+networks:
+  ec_network:
+    external: true

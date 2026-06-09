@@ -51,6 +51,14 @@ test.describe("B2B promotions flow [generated]", () => {
     const totalText = await cartTotalLocator.first().textContent();
     console.log(`[promotions] CONTENT CHECK: Cart total = "${totalText}"`);
 
+    // C3 positive assertions: NZ$ present AND not empty cart (regression guard)
+    const nzdTotal = buyerPage.locator('text=/NZ\\$/').first();
+    await expect(nzdTotal).toBeVisible({ timeout: 15000 });
+    console.log("[promotions] C3 ASSERT: NZ$ total visible");
+
+    await expect(buyerPage.getByText(/you don't have anything in your cart/i)).not.toBeVisible();
+    console.log("[promotions] C3 ASSERT: empty-cart message not present");
+
     await buyerPage.screenshot({
       path: path.join(SCREENSHOTS_DIR, "generated-promotions-03-cart-total.png"),
     });

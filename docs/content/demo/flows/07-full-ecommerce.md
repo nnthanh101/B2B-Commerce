@@ -19,7 +19,7 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 **Duration**: ~2 min
 
-![Shopping cart with NZD pricing and spending limit indicator](pathname:///img/demo/flows/07-full-ecommerce/generated-full-ecommerce-01-cart.png)
+*Demo video for this flow is being re-captured.*
 
 ## Script (voice narration)
 

@@ -10,10 +10,10 @@
 #
 # OPTIONS:
 #   --flows-dir   <dir>    Narration .md files dir  (default: docs/content/demo/flows)
-#   --stills-root <dir>    Per-flow stills parent   (default: tmp/Digital-Commerce/demo/flows)
-#   --out-dir     <dir>    Reel output dir          (default: tmp/Digital-Commerce/demo/flows)
+#   --stills-root <dir>    Per-flow stills parent   (default: tmp/B2B-Commerce/demo/flows)
+#   --out-dir     <dir>    Reel output dir          (default: tmp/B2B-Commerce/demo/flows)
 #   --persona-map <file>   Flow-owner map           (default: docs/content/demo/persona-flow-map.md)
-#   --verdict     <file>   Green verdict JSON       (default: tmp/Digital-Commerce/test-results/flow-green-verdict-2026-06-06.json)
+#   --verdict     <file>   Green verdict JSON       (default: tmp/B2B-Commerce/test-results/flow-green-verdict-2026-06-06.json)
 #   --voice       <name>   macOS TTS voice          (default: Daniel)
 #   --dry-run              Validate wiring; skip actual build + ffprobe
 #   --help                 Print this help and exit
@@ -56,10 +56,10 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TODAY="$(date +%Y-%m-%d)"
 
 FLOWS_DIR="${REPO_ROOT}/docs/content/demo/flows"
-STILLS_ROOT="${REPO_ROOT}/tmp/Digital-Commerce/demo/flows"
+STILLS_ROOT="${REPO_ROOT}/tmp/B2B-Commerce/demo/flows"
 OUT_DIR="${REPO_ROOT}/docs/static/video/demo/flows"
 PERSONA_MAP="${REPO_ROOT}/docs/content/demo/persona-flow-map.md"
-VERDICT_FILE="${REPO_ROOT}/tmp/Digital-Commerce/test-results/flow-green-verdict-${TODAY}.json"
+VERDICT_FILE="${REPO_ROOT}/tmp/B2B-Commerce/test-results/flow-green-verdict-${TODAY}.json"
 VOICE="Daniel"
 DRY_RUN=0
 
@@ -214,6 +214,33 @@ PASS_FLOWS_FAILED=0            # PASS flows that failed to produce a valid reel
 mkdir -p "$OUT_DIR"
 
 # ---------------------------------------------------------------------------
+# 9a. Manifest integrity check: ≥1 PNG still + ≥1 narration timestamp cue
+# ---------------------------------------------------------------------------
+manifest_check_flow() {
+  local slug="$1"
+  local narration_md="$2"
+  local flow_stills="${STILLS_ROOT}/${slug}"
+  local png_count ts_count
+
+  png_count=$(find "$flow_stills" -maxdepth 1 -name '*.png' 2>/dev/null | wc -l | tr -d '[:space:]')
+  png_count=${png_count:-0}
+
+  ts_count=$(grep -c '^\*\*\[' "$narration_md" 2>/dev/null || true)
+  ts_count=${ts_count:-0}
+
+  if [[ "$png_count" -eq 0 ]]; then
+    echo "  MANIFEST FAIL ${slug}: 0 PNG stills in ${flow_stills}" >&2
+    return 1
+  fi
+  if [[ "$ts_count" -eq 0 ]]; then
+    echo "  MANIFEST FAIL ${slug}: 0 narration timestamp cues in ${narration_md}" >&2
+    return 1
+  fi
+  echo "  MANIFEST OK ${slug}: png=${png_count} cues=${ts_count}"
+  return 0
+}
+
+# ---------------------------------------------------------------------------
 # 10. Main loop — one reel per flow
 # ---------------------------------------------------------------------------
 for flow_md in "${FLOW_FILES[@]}"; do
@@ -255,6 +282,22 @@ for flow_md in "${FLOW_FILES[@]}"; do
     continue
   fi
 
+  # ---- 10b-manifest. Manifest integrity gate ----
+  if ! manifest_check_flow "$slug" "$flow_md"; then
+    EVIDENCE_FLOWS+=("{\"flow\":\"${slug}\",\"status\":\"MANIFEST_FAIL\",\"reason\":\"missing stills or narration\"}")
+    continue
+  fi
+
+  # ---- 10b-tsv. Subtitle composites available? ----
+  tsv_manifest="${flow_stills}/stills.tsv"
+  if [[ -f "$tsv_manifest" ]]; then
+    subtitle_count=$(wc -l < "$tsv_manifest" | tr -d '[:space:]')
+    subtitle_count=${subtitle_count:-0}
+    echo "  Subtitle composites: ${subtitle_count} cue PNG(s) available (${tsv_manifest})"
+  else
+    echo "  No subtitle composites yet — using plain still"
+  fi
+
   # ---- 10c. Persona-goal injection ----
   goal="$(persona_goal_for_flow "$slug")"
   owner="$(persona_owner_for_flow "$slug")"
@@ -275,16 +318,23 @@ for flow_md in "${FLOW_FILES[@]}"; do
   fi
 
   # ---- 10d. Define output paths ----
-  flow_build_dir="${OUT_DIR}/${slug}-build"
+  flow_build_dir="${REPO_ROOT}/tmp/B2B-Commerce/demo/video-build/${slug}"
   reel_mp4="${OUT_DIR}/${slug}.mp4"
   reel_m4a="${OUT_DIR}/${slug}.m4a"
+
+  # ---- 10c-stills. Resolve stills source: TSV (subtitle composites) or directory (plain) ----
+  stills_arg="${flow_stills}"
+  if [[ -f "${flow_stills}/stills.tsv" ]]; then
+    stills_arg="${flow_stills}/stills.tsv"
+    echo "  Using subtitle composites (TSV mode): ${stills_arg}"
+  fi
 
   # ---- 10e. Dry-run: print the command and continue ----
   if [[ "$DRY_RUN" -eq 1 ]]; then
     echo "  [DRY-RUN] Would call:"
     echo "    bash ${WRAPPER} \\"
     echo "      --narration ${injected_narration} \\"
-    echo "      --stills    ${flow_stills} \\"
+    echo "      --stills    ${stills_arg} \\"
     echo "      --out       ${flow_build_dir} \\"
     echo "      --voice     ${VOICE}"
     echo "  [DRY-RUN] Would rename:"
@@ -299,7 +349,7 @@ for flow_md in "${FLOW_FILES[@]}"; do
   echo "  Building reel via wrapper..."
   if ! bash "$WRAPPER" \
       --narration "$injected_narration" \
-      --stills    "$flow_stills" \
+      --stills    "$stills_arg" \
       --out       "$flow_build_dir" \
       --voice     "$VOICE"; then
     echo "  ERROR: wrapper exited non-zero for ${slug}" >&2

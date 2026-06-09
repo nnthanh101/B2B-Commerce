@@ -34,16 +34,22 @@ tasks:
       - bash scripts/preflight-build-context.sh
 
   up:
-    desc: "Start all platform services (builds images if needed)"
+    desc: "Start all platform services + observability stack + Keycloak SSO (builds images if needed)"
     deps:
       - preflight:context
+      - keycloak:db-init
     cmds:
-      - docker compose up --build -d
+      - docker compose -f docker-compose.yml -f docker-compose.observability.yml -f docker-compose.keycloak.yml up --build -d
+
+  rebuild:backend:
+    desc: "Rebuild the Medusa backend image + renew node_modules volume (applies pnpm patches)"
+    cmds:
+      - docker compose -f docker-compose.yml -f docker-compose.keycloak.yml up -d --build --force-recreate --renew-anon-volumes ec
 
   down:
-    desc: "Stop and remove all platform containers"
+    desc: "Stop and remove all platform containers (commerce + observability + Keycloak)"
     cmds:
-      - docker compose down
+      - docker compose -f docker-compose.yml -f docker-compose.observability.yml -f docker-compose.keycloak.yml down
 
   logs:
     desc: "Stream live logs from all services"
@@ -85,6 +91,81 @@ tasks:
         fi
       - docker compose exec ec sh -c "cd /server/apps/backend && pnpm medusa db:migrate"
 
+  db:reset:
+    desc: "DESTRUCTIVE: Drop postgres data volume and reseed from scratch (required after major PG version upgrade). CONFIRM=1 required."
+    cmds:
+      - |
+        if [ "${CONFIRM:-}" != "1" ]; then
+          echo "Destructive: drops ALL postgres data."
+          echo "  HITL/agents: CONFIRM=1 task db:reset"
+          exit 1
+        fi
+      - docker compose -f docker-compose.yml -f docker-compose.observability.yml -f docker-compose.keycloak.yml down
+      - docker volume ls -q | grep postgres_data | xargs docker volume rm 2>/dev/null || true
+      - docker compose up -d postgres
+      - sleep 5
+      - docker compose exec -T ec_postgres psql -U postgres -d ec-store < infra/keycloak/init-db.sql
+      - docker compose -f docker-compose.yml -f docker-compose.observability.yml -f docker-compose.keycloak.yml up --build -d
+      - sleep 15
+      - docker compose exec ec sh -c "cd /server/apps/backend && pnpm seed"
+      - docker compose exec ec sh -c "cd /server/apps/backend && npx medusa exec ./src/scripts/seed-demo-b2b.ts"
+
+  # ---------------------------------------------------------------------------
+  # Observability stack (Prometheus + Grafana + exporters — opt-in overlay)
+  # ---------------------------------------------------------------------------
+
+  obs:up:
+    desc: "Start observability stack (Prometheus, Grafana, postgres/redis/node exporters)"
+    cmds:
+      - docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d
+
+  obs:down:
+    desc: "Stop observability stack only (leaves main platform running)"
+    cmds:
+      - docker compose -f docker-compose.observability.yml down
+
+  obs:restart:
+    desc: "Force-recreate observability containers to pick up config or version changes"
+    cmds:
+      - docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d --force-recreate prometheus postgres-exporter redis-exporter grafana node-exporter
+
+  obs:status:
+    desc: "Show Prometheus scrape target health (requires observability stack running)"
+    cmds:
+      - curl -s http://localhost:9090/api/v1/targets | jq -r '.data.activeTargets[] | "\(.labels.job | .[0:20]) | \(.health) | \(.lastError // "ok")"'
+
+  # ---------------------------------------------------------------------------
+  # Keycloak SSO (ec_keycloak — overlay: docker-compose.keycloak.yml)
+  # ---------------------------------------------------------------------------
+
+  keycloak:db-init:
+    desc: "Idempotent: create the 'keycloak' database in ec_postgres (safe to re-run on existing volumes)"
+    cmds:
+      - docker compose up -d postgres
+      - sleep 5
+      - docker compose exec -T ec_postgres psql -U postgres -d ec-store < infra/keycloak/init-db.sql
+
+  keycloak:up:
+    desc: "Start Keycloak SSO container only (ec_postgres must already be running)"
+    cmds:
+      - docker compose -f docker-compose.yml -f docker-compose.keycloak.yml up -d keycloak
+
+  keycloak:down:
+    desc: "Stop Keycloak SSO container only (leaves main platform running)"
+    cmds:
+      - docker compose -f docker-compose.keycloak.yml down
+
+  keycloak:health:
+    desc: "Check Keycloak realm discovery + management /health/ready (runs checks inside ec_network containers)"
+    cmds:
+      - docker compose exec -T ec_keycloak curl -sf http://localhost:9000/health/ready
+      - docker compose exec -T ec wget -qO- http://keycloak:8080/realms/medusa-commerce/.well-known/openid-configuration
+
+  keycloak:install:
+    desc: "Install @vymalo/medusa-keycloak provider inside ec container (for rebuilds — dep already in package.json)"
+    cmds:
+      - docker compose exec ec pnpm add @vymalo/medusa-keycloak@1.0.10
+
   # ---------------------------------------------------------------------------
   # Code quality
   # ---------------------------------------------------------------------------
@@ -97,12 +178,38 @@ tasks:
   lint:scripts:
     desc: "Shellcheck all helper scripts in scripts/ for syntax and safety"
     cmds:
-      - shellcheck -x scripts/lib/common.sh scripts/preflight-backend.sh scripts/e2e.sh scripts/live-smoke.sh scripts/visual-verify.sh scripts/localstack-up.sh scripts/localstack-assert.sh scripts/db-local-up.sh scripts/preflight-images.sh scripts/lint-test-paths.sh scripts/preflight-build-context.sh
+      - shellcheck -x scripts/lib/common.sh scripts/preflight-backend.sh scripts/e2e.sh scripts/live-smoke.sh scripts/localstack-up.sh scripts/localstack-assert.sh scripts/db-local-up.sh scripts/preflight-images.sh scripts/lint-test-paths.sh scripts/preflight-build-context.sh
 
   test:unit:
     desc: "Run unit tests across all workspaces"
     cmds:
       - docker compose exec ec sh -c "cd /server && pnpm turbo test"
+
+  ci:build-proof:
+    desc: "Clean-tree CI gate replication (node:22): isolates node_modules with anonymous volumes so host copies never leak in, then pnpm install --frozen-lockfile + build + lint. Mirrors .github/workflows/ci.yml."
+    cmds:
+      - |
+        docker run --rm \
+          -v "{{.ROOT_DIR}}":/repo \
+          -v /repo/node_modules \
+          -v /repo/apps/backend/node_modules \
+          -v /repo/apps/storefront/node_modules \
+          -w /repo \
+          node:22 \
+          sh -c "corepack enable && corepack prepare pnpm@10.11.1 --activate && pnpm install --frozen-lockfile && pnpm build && pnpm lint"
+
+  ci:lockfile-sync:
+    desc: "Regenerate pnpm-lock.yaml in node:22 to encode pnpm.patchedDependencies (fixes ERR_PNPM_LOCKFILE_CONFIG_MISMATCH). Lockfile persists; node_modules isolated."
+    cmds:
+      - |
+        docker run --rm \
+          -v "{{.ROOT_DIR}}":/repo \
+          -v /repo/node_modules \
+          -v /repo/apps/backend/node_modules \
+          -v /repo/apps/storefront/node_modules \
+          -w /repo \
+          node:22 \
+          sh -c "corepack enable && corepack prepare pnpm@10.11.1 --activate && pnpm install --no-frozen-lockfile"
 
   # ---------------------------------------------------------------------------
   # Terraform — infrastructure validation (no cloud credentials required for local)
@@ -300,7 +407,23 @@ tasks:
         npm run start -- --host 0.0.0.0
 
   docs:lint:
-    desc: "Run validate-wiki.sh against docs/content/ (wiki health gate — pure bash in node:22 container)"
+    desc: "Run lint-wiki.sh (deterministic 7-gate exit-2 linter) against docs/content/ — the real CI/DoD gate"
+    vars:
+      ENGINE_SCRIPTS: "{{.ROOT_DIR}}/.claude/plugins/commerce/scripts"
+      DOCS_CONTENT: "{{.ROOT_DIR}}/docs/content"
+    cmds:
+      - CLAUDE_PROJECT_DIR="{{.ROOT_DIR}}" bash "{{.ENGINE_SCRIPTS}}/lint-wiki.sh" "{{.DOCS_CONTENT}}"
+
+  docs:stale-check:
+    desc: "Answer 'did we forget to re-ingest after changing raw sources?' — runs GATE 7 (INGEST_STALENESS) via lint-wiki.sh; exits 2 when any raw source is newer than a page's last_compiled. Re-ingest via /commerce:docs-ingest to clear."
+    vars:
+      ENGINE_SCRIPTS: "{{.ROOT_DIR}}/.claude/plugins/commerce/scripts"
+      DOCS_CONTENT: "{{.ROOT_DIR}}/docs/content"
+    cmds:
+      - CLAUDE_PROJECT_DIR="{{.ROOT_DIR}}" bash "{{.ENGINE_SCRIPTS}}/lint-wiki.sh" "{{.DOCS_CONTENT}}"
+
+  docs:lint:fast:
+    desc: "Run validate-wiki.sh (3-gate pre-build check) — fast sanity check; use docs:lint for the full deterministic gate"
     vars:
       DOCS_TMPL: "{{.ROOT_DIR}}/.claude/plugins/commerce/templates/docusaurus"
       DOCS_CONTENT: "{{.ROOT_DIR}}/docs/content"
@@ -311,3 +434,48 @@ tasks:
         -w /docs
         node:22
         bash scripts/validate-wiki.sh
+
+  docs:gen-index:
+    desc: "Generate docs/llms.txt index from docs/content/ frontmatter (deterministic; re-run after ingest)"
+    vars:
+      ENGINE_SCRIPTS: "{{.ROOT_DIR}}/.claude/plugins/commerce/scripts"
+      DOCS_CONTENT: "{{.ROOT_DIR}}/docs/content"
+    cmds:
+      - CLAUDE_PROJECT_DIR="{{.ROOT_DIR}}" bash "{{.ENGINE_SCRIPTS}}/gen-llms-txt.sh" "{{.DOCS_CONTENT}}"
+
+  docs:gen-log:
+    desc: "Append ingest changelog entries to docs/content/log.md from tmp/**/docs-ingest-*.json action logs (idempotent)"
+    vars:
+      ENGINE_SCRIPTS: "{{.ROOT_DIR}}/.claude/plugins/commerce/scripts"
+      DOCS_CONTENT: "{{.ROOT_DIR}}/docs/content"
+    cmds:
+      - CLAUDE_PROJECT_DIR="{{.ROOT_DIR}}" bash "{{.ENGINE_SCRIPTS}}/gen-log-md.sh" "{{.DOCS_CONTENT}}"
+
+  docs:ingest:
+    desc: |
+      HITL-GATED: LLM-docs compilation is a Claude command (/commerce:docs-ingest) — NOT auto-run.
+      This task documents the procedure and runs the post-ingest automation (gen-log + gen-index).
+      Step 1 (HITL): open Claude Code, run /commerce:docs-ingest in B2B-Commerce context.
+      Step 2 (agent-ok): task docs:gen-log   — append ingest entry to docs/content/log.md
+      Step 3 (agent-ok): task docs:gen-index — regenerate docs/llms.txt
+      Step 4 (agent-ok): task docs:lint      — verify 6 gates pass (exit 2 = lint failure)
+      Principle I: ingest is NOT auto-published; only post-ingest artifacts are generated here.
+    cmds:
+      - task docs:gen-log
+      - task docs:gen-index
+      - task docs:lint
+
+  docs:screenshot:
+    desc: "Capture rendered homepage PNG via headless Playwright (visual-content gate). Requires 'task docs:dev' on :5001."
+    vars:
+      SHOT_DIR: "{{.ROOT_DIR}}/tmp/B2B-Commerce/screenshots"
+      SHOT_URL: '{{.SHOT_URL | default "http://host.docker.internal:5001/B2B-Commerce/"}}'
+    cmds:
+      - mkdir -p "{{.SHOT_DIR}}"
+      - docker run --rm
+        --add-host=host.docker.internal:host-gateway
+        -v "{{.SHOT_DIR}}:/out"
+        mcr.microsoft.com/playwright:v1.60.0-jammy
+        npx playwright screenshot --full-page --wait-for-timeout 3000
+        "{{.SHOT_URL}}"
+        /out/docs-verify-2026-06-08-home.png

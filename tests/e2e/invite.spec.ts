@@ -1,14 +1,14 @@
 /**
  * E2E Test: GAP-006 Invite-by-Email Flow
  *
- * Scope: Employee invite workflow — create invite → parse token from backend logs → accept → login
+ * Scope: Employee invite workflow — create invite → extract token from API → accept → login
  *
  * Pre-condition: seed-demo-b2b.ts has been run (creates Demo Corp + admin user)
  *
  * Flow:
  * 1. Admin logs in (via adminPage fixture, already authenticated)
  * 2. POST /store/invites with email + spending_limit (API call, not UI drawer)
- * 3. Grep backend logs for [INVITE_TOKEN] line → extract raw token
+ * 3. Extract token from response body (token_display field) or admin API fallback
  * 4. Navigate to /[countryCode]/invite/accept?token=<rawToken>
  * 5. Fill password "TestPassword123!", first/last names
  * 6. Submit → assert "Account Ready" heading visible
@@ -19,7 +19,7 @@
  * Anti-theater gates:
  * G1: No soft-pass fallbacks (error-swallowing catch patterns BANNED)
  * G2: Hard assertions only (await expect(locator).toBeVisible() — no if/else branching)
- * G3: Token extraction via regex must be deterministic (named groups, clear error on mismatch)
+ * G3: Token extraction via API response must be deterministic (clear error on mismatch)
  * G4: Single-use token validation (attempt to reuse same token should fail with 4xx)
  * G5: grep -E "mcp|anthropic|agent|claude" invite.spec.ts → must return 0 lines
  *
@@ -30,7 +30,6 @@
  */
 
 import path from "node:path";
-import { execSync } from "node:child_process";
 import { test, expect } from "./fixtures/auth";
 import {
   BACKEND_URL,
@@ -41,47 +40,61 @@ import {
 } from "./config";
 
 /**
- * Helper: Extract invite token from backend container logs
- * Logs format: [INVITE_TOKEN] invite_id=<id> token=<token>
+ * Helper: Extract invite token from API response or admin endpoint
+ * Preferred: token_display from POST /store/invites response
+ * Fallback: GET /admin/invites/{invite_id} using admin JWT
  * Returns: { invite_id, token } or throws error if not found
  */
-async function extractTokenFromBackendLogs(): Promise<{
-  invite_id: string;
-  token: string;
-}> {
-  try {
-    // Run: docker logs <container_name> and grep for [INVITE_TOKEN]
-    // The backend container is typically named "backend" in docker-compose
-    const logs = execSync(
-      `docker logs --tail 100 --timestamps false \
-      $(docker ps --filter "label=com.docker.compose.service=backend" --format "{{.ID}}" | head -1) 2>&1`,
-      { encoding: "utf-8" }
-    );
+async function extractTokenFromResponse(
+  responseData: { token_display?: string; invite?: { id?: string } },
+  inviteId?: string,
+  adminAuthCookie?: { value: string }
+): Promise<{ invite_id: string; token: string }> {
+  // Try to get token from response first
+  if (responseData.token_display) {
+    const token = responseData.token_display;
+    const id = inviteId || responseData.invite?.id;
+    if (id) {
+      console.log(
+        `[invite] ✓ Token extracted from response: invite_id=${id}, token=${token.substring(0, 16)}...`
+      );
+      return { invite_id: id, token };
+    }
+  }
 
-    // Regex: [INVITE_TOKEN] invite_id=<id> token=<token>
-    const match = logs.match(
-      /\[INVITE_TOKEN\]\s+invite_id=(?<invite_id>\w+)\s+token=(?<token>[a-f0-9]+)/
-    );
+  // Fallback: Query admin endpoint if we have the invite ID and admin JWT
+  if (inviteId && adminAuthCookie) {
+    try {
+      const adminRes = await fetch(`${BACKEND_URL}/admin/invites/${inviteId}`, {
+        headers: {
+          Authorization: `Bearer ${adminAuthCookie.value}`,
+        },
+      });
 
-    if (!match || !match.groups) {
-      throw new Error(
-        `[invite] Token extraction failed — no [INVITE_TOKEN] line found in backend logs. ` +
-          `Logs tail: ${logs.slice(-500)}`
+      if (adminRes.ok) {
+        const adminData = (await adminRes.json()) as {
+          token?: string;
+          id?: string;
+        };
+        if (adminData.token) {
+          console.log(
+            `[invite] ✓ Token extracted from admin API: invite_id=${inviteId}, token=${adminData.token.substring(0, 16)}...`
+          );
+          return { invite_id: inviteId, token: adminData.token };
+        }
+      }
+    } catch (err) {
+      console.warn(
+        `[invite] Admin API fallback failed: ${err instanceof Error ? err.message : String(err)}`
       );
     }
-
-    const { invite_id, token } = match.groups;
-    console.log(
-      `[invite] ✓ Token extracted: invite_id=${invite_id}, token=${token.substring(0, 16)}...`
-    );
-
-    return { invite_id, token };
-  } catch (err) {
-    const errMsg = err instanceof Error ? err.message : String(err);
-    throw new Error(
-      `[invite] Failed to extract token from backend logs: ${errMsg}`
-    );
   }
+
+  // If we get here, extraction failed
+  throw new Error(
+    `[invite] Token extraction failed — no token_display in response and no admin API fallback available. ` +
+      `Response: ${JSON.stringify(responseData)}`
+  );
 }
 
 test.describe("B2B invite-by-email flow [GAP-006]", () => {
@@ -148,22 +161,19 @@ test.describe("B2B invite-by-email flow [GAP-006]", () => {
 
       const createInviteData = (await createInviteRes.json()) as {
         invite: { id: string; email: string };
-        token_display: string;
+        token_display?: string;
       };
 
       console.log(
         `[invite] ✓ Invite created: id=${createInviteData.invite.id}, email=${createInviteData.invite.email}`
       );
 
-      // Step 3: Extract token from backend logs
-      // Wait a brief moment for logs to flush
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
+      // Step 3: Extract token from response (or admin API as fallback)
       const { invite_id: loggedInviteId, token: rawToken } =
-        await extractTokenFromBackendLogs();
+        await extractTokenFromResponse(createInviteData, createInviteData.invite.id, adminAuthCookie);
 
       console.log(
-        `[invite] ✓ Token from logs: invite_id=${loggedInviteId}, token=${rawToken.substring(0, 16)}...`
+        `[invite] ✓ Token extracted: invite_id=${loggedInviteId}, token=${rawToken.substring(0, 16)}...`
       );
 
       // Step 4: Create a fresh browser context for the invitee (storefront)
@@ -380,54 +390,48 @@ test.describe("B2B invite-by-email flow [GAP-006]", () => {
   );
 
   test(
-    "token extraction from logs handles malformed input gracefully",
-    async ({ adminPage }) => {
-      // VERIFY TOKEN EXTRACTION LOGIC — test the regex independently
+    "token extraction handles API response and fallback gracefully",
+    async () => {
+      // VERIFY TOKEN EXTRACTION LOGIC — test response parsing
       // This is a meta-test ensuring the extraction function is robust
 
       console.log(
-        "[invite] Testing token extraction regex against known log formats"
+        "[invite] Testing token extraction from API response formats"
       );
 
-      const testCases = [
-        {
-          logLine: "[INVITE_TOKEN] invite_id=inv_abc123 token=a1b2c3d4e5f6g7h8",
-          shouldMatch: true,
-          expectedInviteId: "inv_abc123",
-          expectedToken: "a1b2c3d4e5f6g7h8",
-        },
-        {
-          logLine:
-            "2024-06-06T10:00:00Z [INVITE_TOKEN] invite_id=inv_xyz789 token=aaaaaabbbbbbccccccdddddd",
-          shouldMatch: true,
-          expectedInviteId: "inv_xyz789",
-          expectedToken: "aaaaaabbbbbbccccccdddddd",
-        },
-        {
-          logLine: "Some unrelated log line",
-          shouldMatch: false,
-        },
-      ];
+      // Test case 1: token_display in response
+      const responseWithToken = {
+        invite: { id: "inv_abc123", email: "test@example.com" },
+        token_display: "a1b2c3d4e5f6g7h8",
+      };
 
-      for (const testCase of testCases) {
-        const match = testCase.logLine.match(
-          /\[INVITE_TOKEN\]\s+invite_id=(?<invite_id>\w+)\s+token=(?<token>[a-f0-9]+)/
+      const result1 = await extractTokenFromResponse(
+        responseWithToken,
+        "inv_abc123"
+      );
+      expect(result1.token).toBe("a1b2c3d4e5f6g7h8");
+      expect(result1.invite_id).toBe("inv_abc123");
+      console.log(`✓ Token extraction from response succeeded`);
+
+      // Test case 2: missing token_display without fallback (should throw)
+      const responseWithoutToken = {
+        invite: { id: "inv_xyz789", email: "test@example.com" },
+      };
+
+      try {
+        await extractTokenFromResponse(responseWithoutToken, "inv_xyz789");
+        throw new Error("Expected error for missing token");
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        expect(errMsg).toContain(
+          "Token extraction failed"
         );
-
-        if (testCase.shouldMatch) {
-          expect(match).toBeTruthy();
-          expect(match?.groups?.invite_id).toBe(testCase.expectedInviteId);
-          expect(match?.groups?.token).toBe(testCase.expectedToken);
-          console.log(
-            `✓ Regex matched: ${testCase.logLine.substring(0, 50)}...`
-          );
-        } else {
-          expect(match).toBeFalsy();
-          console.log(`✓ Regex correctly rejected: ${testCase.logLine}`);
-        }
+        console.log(
+          `✓ Correctly rejected response without token_display: ${errMsg.substring(0, 50)}...`
+        );
       }
 
-      console.log("[invite] Token extraction regex validation passed");
+      console.log("[invite] Token extraction validation passed");
     }
   );
 });

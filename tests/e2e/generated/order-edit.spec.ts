@@ -165,6 +165,13 @@ test.describe("B2B order-edit flow [generated]", () => {
       // Extract display_id/order number text from row
       const orderIdText = await firstOrderRow.textContent({ timeout: 2000 }).catch(() => "");
       console.log(`[order-edit] OE-04 CONTENT CHECK (runtime-extracted): Order row text = "${orderIdText?.trim().substring(0, 80)}"`);
+      // NZD currency check: seeded order is NZD; warn if EUR/GBP visible
+      const rowText = orderIdText ?? "";
+      if (rowText.match(/NZ\$|NZD/)) {
+        console.log("[order-edit] ✓ NZD CURRENCY ASSERT PASS: Order row shows NZD pricing");
+      } else if (rowText.match(/€|£|EUR|GBP/)) {
+        console.warn(`[order-edit] NZD CHECK WARN: Order shows non-NZD currency="${rowText.substring(0,50)}" — check NEXT_PUBLIC_DEFAULT_REGION=nz`);
+      }
 
       // OE-05: CONTENT CHECK — navigate to order details page
       await firstOrderRow.click();

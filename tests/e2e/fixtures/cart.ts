@@ -170,12 +170,19 @@ export async function setCartIdCookie(
   cartId: string,
   storefrontUrl: string = "http://localhost:8000"
 ) {
+  // Resolve cookie domain from storefrontUrl (supports host.docker.internal and localhost)
+  let cookieDomain = "localhost";
+  try {
+    cookieDomain = new URL(storefrontUrl).hostname;
+  } catch {
+    // fallback to localhost
+  }
   console.log(`[cart] Setting _medusa_cart_id cookie: ${cartId}`);
   await context.addCookies([
     {
       name: "_medusa_cart_id",
       value: cartId,
-      domain: "localhost",
+      domain: cookieDomain,
       path: "/",
       httpOnly: false,
       sameSite: "Lax",

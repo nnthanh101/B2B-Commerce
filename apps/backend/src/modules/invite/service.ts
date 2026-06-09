@@ -1,11 +1,16 @@
 import crypto from "node:crypto";
 import { MedusaService } from "@medusajs/framework/utils";
+import type { InferTypeOf } from "@medusajs/framework/types";
 import { Invite } from "./models";
+
+// `Invite` is a DML model *value* (model.define(...)), not a type. The runtime
+// entity shape is inferred via InferTypeOf so methods can be typed correctly.
+type InviteDTO = InferTypeOf<typeof Invite>;
 
 class InviteModuleService extends MedusaService({
   Invite,
 }) {
-  async accept(token: string): Promise<Invite> {
+  async accept(token: string): Promise<InviteDTO> {
     const tokenHash = crypto
       .createHash("sha256")
       .update(token)
@@ -28,11 +33,12 @@ class InviteModuleService extends MedusaService({
     return invite;
   }
 
-  async markUsed(inviteId: string): Promise<Invite> {
-    return (await this.updateInvites({
+  async markUsed(inviteId: string): Promise<InviteDTO> {
+    const updated = (await this.updateInvites({
       id: inviteId,
       used_at: new Date(),
-    }))[0];
+    })) as unknown as InviteDTO[];
+    return updated[0];
   }
 }
 

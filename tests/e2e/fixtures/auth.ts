@@ -14,6 +14,17 @@ const MEDUSA_BACKEND_URL = BACKEND_URL;
 const TEST_ADMIN_EMAIL = ADMIN_EMAIL;
 const TEST_ADMIN_PASSWORD = ADMIN_PASSWORD;
 
+// Resolve cookie domain from STOREFRONT_URL (supports host.docker.internal and localhost)
+// When running container-first (STOREFRONT_URL=http://host.docker.internal:8000),
+// the cookie domain must be "host.docker.internal" not "localhost" for the browser to send it.
+const COOKIE_DOMAIN = (() => {
+  try {
+    return new URL(STOREFRONT_URL).hostname;
+  } catch {
+    return "localhost";
+  }
+})();
+
 /**
  * Admin context fixture: returns a page with admin authentication.
  * Admin has access to /app (Medusa admin dashboard).
@@ -28,66 +39,76 @@ export const test = base.extend<{
 }>({
   adminContext: async ({ browser }, use) => {
     const context = await browser.newContext();
-    const page = await context.newPage();
-    page.setDefaultTimeout(25000);
-    page.setDefaultNavigationTimeout(30000);
 
-    // CRITICAL: Dual-path admin authentication:
-    // 1. UI login to `/app` (admin dashboard) — establishes browser session
-    // 2. API login to `/auth/customer/emailpass` — gets JWT for `/store/invites` endpoint
-    //
-    // Why: The `/app` dashboard is admin-specific (UI login creates httpOnly cookies).
-    // The `/store/invites` endpoint requires customer auth (JWT in Authorization header).
-    // The seeded admin is also a customer (see seed-demo-b2b.ts L213-267).
+    // API-FIRST admin authentication (no UI login — works reliably inside Docker):
+    // 1. POST /auth/user/emailpass → get short-lived JWT
+    // 2. POST /auth/session with Bearer <JWT> → get connect.sid session cookie
+    // 3. Set connect.sid cookie in browser context → admin SPA reads session from backend
+    //    (Medusa v2 admin uses session-based auth: __AUTH_TYPE__ = "session" by default)
+    // 4. POST /auth/customer/emailpass → get customer JWT for /store/invites endpoint
 
-    // STEP 1: Admin UI login for /app dashboard access
-    console.log("[auth] Step 1: Admin UI login to /app dashboard...");
-
-    await page.goto(`${MEDUSA_BACKEND_URL}/app/login`);
-    await page.waitForLoadState("domcontentloaded");
-
-    const emailInput = page.locator(
-      'input[type="email"], input[name="email"], input[id="email"]'
-    );
-    await emailInput.waitFor({ state: "visible", timeout: 20000 });
-    await emailInput.fill(TEST_ADMIN_EMAIL);
-
-    const pwInput = page.locator("input[type=\"password\"], input[name=\"password\"]");
-    await pwInput.first().fill(TEST_ADMIN_PASSWORD);
-
-    const submitBtn = page.locator(
-      'button[type="submit"], button:has-text("Sign in"), button:has-text("Log in"), button:has-text("Login"), button:has-text("Continue")'
-    );
-    await submitBtn.first().click();
-
-    await page.waitForFunction(
-      () => {
-        const p = window.location.pathname;
-        return (
-          p.startsWith("/app") &&
-          p !== "/app/login" &&
-          !p.startsWith("/app/login")
-        );
-      },
-      { timeout: 20000 }
-    );
-    await page.waitForLoadState("networkidle").catch(() => {
-      // Network timeout is OK — page may still be usable
+    // STEP 1: Admin user token
+    console.log("[auth] Step 1: Admin user token via /auth/user/emailpass...");
+    const userTokenRes = await fetch(`${MEDUSA_BACKEND_URL}/auth/user/emailpass`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: TEST_ADMIN_EMAIL, password: TEST_ADMIN_PASSWORD }),
     });
-    console.log("[auth] ✓ Step 1: Admin dashboard authenticated");
+    if (!userTokenRes.ok) {
+      const errText = await userTokenRes.text();
+      throw new Error(`[auth] Admin /auth/user/emailpass failed: ${userTokenRes.status} ${errText}`);
+    }
+    const { token: adminUserToken } = (await userTokenRes.json()) as { token: string };
+    console.log(`[auth] ✓ Step 1: Admin user token: ${adminUserToken.substring(0, 20)}...`);
 
-    // STEP 2: API login to get customer JWT for /store/invites
-    console.log("[auth] Step 2: Admin customer API login for /store/invites...");
+    // STEP 2: Create a server session (returns connect.sid cookie)
+    console.log("[auth] Step 2: Create admin session via /auth/session...");
+    const sessionRes = await fetch(`${MEDUSA_BACKEND_URL}/auth/session`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${adminUserToken}`,
+      },
+    });
+    if (!sessionRes.ok) {
+      const errText = await sessionRes.text();
+      throw new Error(`[auth] Admin /auth/session failed: ${sessionRes.status} ${errText}`);
+    }
 
+    // Parse connect.sid from Set-Cookie header
+    const rawCookie = sessionRes.headers.get("set-cookie") ?? "";
+    console.log(`[auth] Session raw cookie: ${rawCookie.substring(0, 80)}...`);
+    const sessionCookieMatch = rawCookie.match(/connect\.sid=([^;]+)/);
+    if (!sessionCookieMatch) {
+      throw new Error(`[auth] connect.sid not found in Set-Cookie: "${rawCookie}"`);
+    }
+    const sessionCookieValue = decodeURIComponent(sessionCookieMatch[1]);
+    console.log(`[auth] ✓ Step 2: connect.sid obtained: ${sessionCookieValue.substring(0, 20)}...`);
+
+    // STEP 3: Set connect.sid cookie in browser context
+    // Use BACKEND_URL hostname (admin SPA is served from :9000, not :8000)
+    const adminCookieDomain = (() => {
+      try { return new URL(MEDUSA_BACKEND_URL).hostname; } catch { return "localhost"; }
+    })();
+    await context.addCookies([
+      {
+        name: "connect.sid",
+        value: sessionCookieValue,
+        domain: adminCookieDomain,
+        path: "/",
+        httpOnly: true,
+        sameSite: "Lax",
+      },
+    ]);
+    console.log(`[auth] ✓ Step 3: connect.sid cookie set (domain=${adminCookieDomain})`);
+
+    // STEP 4: Customer JWT for /store/invites endpoint
+    console.log("[auth] Step 4: Admin customer JWT via /auth/customer/emailpass...");
     const customerLoginRes = await fetch(`${MEDUSA_BACKEND_URL}/auth/customer/emailpass`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: TEST_ADMIN_EMAIL,
-        password: TEST_ADMIN_PASSWORD,
-      }),
+      body: JSON.stringify({ email: TEST_ADMIN_EMAIL, password: TEST_ADMIN_PASSWORD }),
     });
-
     if (!customerLoginRes.ok) {
       const errText = await customerLoginRes.text();
       throw new Error(
@@ -95,22 +116,21 @@ export const test = base.extend<{
         `The admin user (${TEST_ADMIN_EMAIL}) must be seeded as a CUSTOMER with employee/company link.`
       );
     }
-
     const { token: adminCustomerToken } = (await customerLoginRes.json()) as { token: string };
-    console.log(`[auth] ✓ Step 2: Customer token obtained: ${adminCustomerToken.substring(0, 20)}...`);
+    console.log(`[auth] ✓ Step 4: Customer token obtained: ${adminCustomerToken.substring(0, 20)}...`);
 
     // Add the customer JWT token as a cookie so tests can extract it via adminContext.cookies()
     await context.addCookies([
       {
         name: "_medusa_jwt",
         value: adminCustomerToken,
-        domain: "localhost",
+        domain: COOKIE_DOMAIN,
         path: "/",
         httpOnly: true,
         sameSite: "Lax",
       },
     ]);
-    console.log(`[auth] ✓ Step 2: Customer JWT cookie added to context`);
+    console.log(`[auth] ✓ Step 4: Customer JWT cookie added to context`);
 
     await use(context);
     await context.close();
@@ -128,7 +148,7 @@ export const test = base.extend<{
     // Enable video recording for buyer context (1280x720 resolution)
     const context = await browser.newContext({
       recordVideo: {
-        dir: "./tmp/B2B-Commerce/test-results/videos",
+        dir: "./tmp/Digital-Commerce/test-results/videos",
         size: { width: 1280, height: 720 },
       },
       viewport: { width: 1280, height: 720 },
@@ -207,7 +227,7 @@ export const test = base.extend<{
       {
         name: "_medusa_jwt",
         value: T_final,
-        domain: "localhost",
+        domain: COOKIE_DOMAIN,
         path: "/",
         httpOnly: true,
         sameSite: "Lax",
@@ -345,6 +365,7 @@ export const test = base.extend<{
         headers: {
           "Content-Type": "application/json",
           "x-publishable-api-key": publishableKey,
+          "Authorization": `Bearer ${T_final}`,
         },
         data: {
           region_id: regionId,
@@ -354,12 +375,15 @@ export const test = base.extend<{
         const errText = await createCartRes.text();
         throw new Error(`POST /store/carts failed: ${createCartRes.status()} ${errText}`);
       }
-      const cartData = (await createCartRes.json()) as { cart?: { id: string } };
+      const cartData = (await createCartRes.json()) as { cart?: { id: string; customer_id?: string } };
       cartId = cartData.cart?.id ?? "";
       if (!cartId) {
         throw new Error("No cart ID returned from POST /store/carts");
       }
-      console.log(`[auth] ✓ Cart created: ${cartId}`);
+      if (!cartData.cart?.customer_id) {
+        console.warn(`[auth] WARN: Cart ${cartId} has no customer_id — CartMismatchBanner may appear. Check Authorization header was processed.`);
+      }
+      console.log(`[auth] ✓ Cart created: ${cartId}${cartData.cart?.customer_id ? ' (customer_id: ' + cartData.cart.customer_id + ')' : ' (ANONYMOUS — no customer_id)'}`);
 
       // Add line item
       const addLineRes = await context.request.post(
@@ -368,6 +392,7 @@ export const test = base.extend<{
           headers: {
             "Content-Type": "application/json",
             "x-publishable-api-key": publishableKey,
+            "Authorization": `Bearer ${T_final}`,
           },
           data: { variant_id: firstVariant.id, quantity: 1 },
         }
@@ -425,62 +450,69 @@ export const test = base.extend<{
    */
   salesManagerContext: async ({ browser }, use) => {
     const context = await browser.newContext();
-    const page = await context.newPage();
-    page.setDefaultTimeout(25000);
-    page.setDefaultNavigationTimeout(30000);
 
-    // CRITICAL: Dual-path admin authentication (same as adminContext)
-    // 1. UI login to `/app` (admin dashboard) — establishes browser session
-    // 2. API login to `/auth/customer/emailpass` — gets JWT for `/store/invites` endpoint
+    // API-FIRST admin authentication (same pattern as adminContext — no UI login):
+    // 1. POST /auth/user/emailpass → admin JWT
+    // 2. POST /auth/session with Bearer → connect.sid session cookie
+    // 3. POST /auth/customer/emailpass → customer JWT for /store/invites
 
-    // STEP 1: Admin UI login for /app dashboard access
-    console.log("[auth] Step 1: Sales Manager UI login to /app dashboard...");
-
-    await page.goto(`${MEDUSA_BACKEND_URL}/app/login`);
-    await page.waitForLoadState("domcontentloaded");
-
-    const emailInput = page.locator(
-      'input[type="email"], input[name="email"], input[id="email"]'
-    );
-    await emailInput.waitFor({ state: "visible", timeout: 20000 });
-    await emailInput.fill(TEST_ADMIN_EMAIL);
-
-    const pwInput = page.locator("input[type=\"password\"], input[name=\"password\"]");
-    await pwInput.first().fill(TEST_ADMIN_PASSWORD);
-
-    const submitBtn = page.locator(
-      'button[type="submit"], button:has-text("Sign in"), button:has-text("Log in"), button:has-text("Login"), button:has-text("Continue")'
-    );
-    await submitBtn.first().click();
-
-    await page.waitForFunction(
-      () => {
-        const p = window.location.pathname;
-        return (
-          p.startsWith("/app") &&
-          p !== "/app/login" &&
-          !p.startsWith("/app/login")
-        );
-      },
-      { timeout: 20000 }
-    );
-    await page.waitForLoadState("networkidle").catch(() => {
-      // Network timeout is OK — page may still be usable
+    // STEP 1: Sales Manager user token
+    console.log("[auth] Step 1: Sales Manager user token via /auth/user/emailpass...");
+    const userTokenRes = await fetch(`${MEDUSA_BACKEND_URL}/auth/user/emailpass`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: TEST_ADMIN_EMAIL, password: TEST_ADMIN_PASSWORD }),
     });
-    console.log("[auth] ✓ Step 1: Sales Manager dashboard authenticated");
+    if (!userTokenRes.ok) {
+      const errText = await userTokenRes.text();
+      throw new Error(`[auth] Sales Manager /auth/user/emailpass failed: ${userTokenRes.status} ${errText}`);
+    }
+    const { token: smUserToken } = (await userTokenRes.json()) as { token: string };
+    console.log(`[auth] ✓ Step 1: SM user token: ${smUserToken.substring(0, 20)}...`);
 
-    // STEP 2: API login to get customer JWT for /store/invites
-    console.log("[auth] Step 2: Sales Manager customer API login for /store/invites...");
+    // STEP 2: Create server session → connect.sid cookie
+    console.log("[auth] Step 2: Create SM session via /auth/session...");
+    const sessionRes = await fetch(`${MEDUSA_BACKEND_URL}/auth/session`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${smUserToken}`,
+      },
+    });
+    if (!sessionRes.ok) {
+      const errText = await sessionRes.text();
+      throw new Error(`[auth] SM /auth/session failed: ${sessionRes.status} ${errText}`);
+    }
+    const rawCookie = sessionRes.headers.get("set-cookie") ?? "";
+    const sessionCookieMatch = rawCookie.match(/connect\.sid=([^;]+)/);
+    if (!sessionCookieMatch) {
+      throw new Error(`[auth] SM connect.sid not found in Set-Cookie: "${rawCookie}"`);
+    }
+    const smSessionCookieValue = decodeURIComponent(sessionCookieMatch[1]);
+    console.log(`[auth] ✓ Step 2: SM connect.sid obtained: ${smSessionCookieValue.substring(0, 20)}...`);
 
+    const adminCookieDomain = (() => {
+      try { return new URL(MEDUSA_BACKEND_URL).hostname; } catch { return "localhost"; }
+    })();
+    await context.addCookies([
+      {
+        name: "connect.sid",
+        value: smSessionCookieValue,
+        domain: adminCookieDomain,
+        path: "/",
+        httpOnly: true,
+        sameSite: "Lax",
+      },
+    ]);
+    console.log(`[auth] ✓ Step 2: SM connect.sid cookie set (domain=${adminCookieDomain})`);
+
+    // STEP 3: Customer JWT for /store/invites endpoint
+    console.log("[auth] Step 3: Sales Manager customer JWT via /auth/customer/emailpass...");
     const customerLoginRes = await fetch(`${MEDUSA_BACKEND_URL}/auth/customer/emailpass`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: TEST_ADMIN_EMAIL,
-        password: TEST_ADMIN_PASSWORD,
-      }),
+      body: JSON.stringify({ email: TEST_ADMIN_EMAIL, password: TEST_ADMIN_PASSWORD }),
     });
-
     if (!customerLoginRes.ok) {
       const errText = await customerLoginRes.text();
       throw new Error(
@@ -488,22 +520,20 @@ export const test = base.extend<{
         `The admin user (${TEST_ADMIN_EMAIL}) must be seeded as a CUSTOMER with employee/company link.`
       );
     }
-
     const { token: salesManagerCustomerToken } = (await customerLoginRes.json()) as { token: string };
-    console.log(`[auth] ✓ Step 2: Sales Manager customer token obtained: ${salesManagerCustomerToken.substring(0, 20)}...`);
+    console.log(`[auth] ✓ Step 3: Sales Manager customer token obtained: ${salesManagerCustomerToken.substring(0, 20)}...`);
 
-    // Add the customer JWT token as a cookie so tests can extract it via salesManagerContext.cookies()
     await context.addCookies([
       {
         name: "_medusa_jwt",
         value: salesManagerCustomerToken,
-        domain: "localhost",
+        domain: COOKIE_DOMAIN,
         path: "/",
         httpOnly: true,
         sameSite: "Lax",
       },
     ]);
-    console.log(`[auth] ✓ Step 2: Sales Manager customer JWT cookie added to context`);
+    console.log(`[auth] ✓ Step 3: Sales Manager customer JWT cookie added to context`);
 
     await use(context);
     await context.close();

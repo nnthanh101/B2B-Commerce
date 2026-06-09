@@ -9,6 +9,8 @@ source_refs:
 last_compiled: "2026-06-07T00:00:00Z"
 ---
 
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
 # Flow 02: Approval Workflow
 
 **Persona**: David (Admin)
@@ -19,7 +21,9 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 **Duration**: ~2 min
 
-![Approvals dashboard with pending quote](pathname:///img/demo/flows/02-approval/generated-approval-01-approvals-page.png)
+<img src={useBaseUrl('/img/demo/flows/02-approval/step-01.png')} alt="Approvals dashboard — #BZK0 Demo Corp Pending, 1 item" style={{maxWidth:'800px'}} />
+
+*Demo video for this flow is being re-captured.*
 
 ## Script (voice narration)
 
@@ -34,3 +38,7 @@ last_compiled: "2026-06-07T00:00:00Z"
 **[00:43]** "David's audit log shows: Approved by David, 14-Jun-2026 10:34am, comment recorded."
 
 **[00:51]** "No email chains. No ambiguity. Every decision on record."
+
+## Cross-References
+
+- [Persona: David (Admin)](../personas/admin.md) — full persona playbook

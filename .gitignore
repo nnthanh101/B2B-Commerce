@@ -13,6 +13,8 @@ node_modules/
 .env
 .env.local
 .env.*.local
+.env.test
+.env.test.*
 apps/backend/.env
 apps/storefront/.env
 
@@ -80,7 +82,17 @@ tags_test.tftest.hcl
 docs/node_modules/
 docs/site/
 docs/.docusaurus/
+# docs/llms.txt — canonical LLM-docs index (TRACKED in git; hand-curated + agent-maintained)
+# docs/content/llms.txt was deleted; do not recreate as a split-brain copy
 
 # act secret file — NEVER commit real tokens; copy from .secrets.example
 .secrets
 docker-compose.override.yml
+
+# act local engine copy (not committed — pre-populated for act --bind)
+_engine_src/
+_engine/
+.pnpm-store
+infra/terraform/aws/dev/.terraform
+infra/terraform/aws/local/.terraform
+# patches

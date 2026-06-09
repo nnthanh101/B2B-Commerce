@@ -13,13 +13,20 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 **Persona**: Priya (Sales Manager)
 
-**Scenario**: Maria places order #QT-2026-1847 for 100 units of cables. Two hours later, she emails Priya asking to add 50 more units and remove the power adapters. Instead of waiting for a credit memo and a new order, Priya opens the order in the admin UI, edits the line items (remove 10 adapters, add 50 cables), and saves. The order recalculates. Audit log records the change. Maria sees it instantly in her account.
+**Scenario**: Maria places order #47 for 2× Wireless Keyboard at NZ$318.00. Priya opens it in the admin UI, edits the quantity, and saves. The order recalculates instantly. Audit log records the change. Maria sees it in her account without any email back-and-forth.
 
-**Status**: ⚠️ **EXCLUDED** — Storefront /account/orders route renders Forbidden; backend order-edit API is green; visual layer blocked
+**Status**: ✅ GREEN
 
 **Duration**: ~2 min
 
-![Orders list page in admin console](pathname:///img/demo/flows/08-order-edit/generated-order-edit-01-orders-page.png)
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
+<video
+  src={useBaseUrl('/video/demo/flows/flow-08-order-edit.mp4')}
+  controls
+  autoPlay={false}
+  style={{ width: '100%', maxWidth: '960px', borderRadius: '8px', marginBottom: '1.5rem' }}
+/>
 
 ## Script (voice narration — partial, backend-only)
 

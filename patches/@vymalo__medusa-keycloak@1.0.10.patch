@@ -1,0 +1,30 @@
+diff --git a/dist/service.js b/dist/service.js
+index 0000001..0000002 100644
+--- a/dist/service.js
++++ b/dist/service.js
+@@ -68,7 +68,7 @@
+         const jwtData = jsonwebtoken_1.default.decode(access_token, {
+             complete: true,
+         });
+-        const entity_id = jwtData.email;
++        const entity_id = jwtData?.payload?.email;
+         if (!entity_id) {
+             return {
+                 success: false,
+@@ -87,11 +87,11 @@
+             const created = await authIdentityService.create({
+                 entity_id,
+                 user_metadata: {
+-                    email: jwtData.email,
+-                    name: jwtData.name,
+-                    picture: jwtData.picture,
+-                    given_name: jwtData.given_name,
+-                    family_name: jwtData.family_name,
++                    email: jwtData?.payload?.email,
++                    name: jwtData?.payload?.name,
++                    picture: jwtData?.payload?.picture,
++                    given_name: jwtData?.payload?.given_name,
++                    family_name: jwtData?.payload?.family_name,
+                 },
+             });
+             return {

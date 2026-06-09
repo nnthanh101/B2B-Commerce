@@ -1,12 +1,13 @@
 services:
   postgres:
-    image: postgres:15-alpine
+    # PostgreSQL 17 (LTS, 2026-2030). UPGRADE from PG15: CONFIRM=1 task db:reset (drops volume + reseeds).
+    image: postgres:17-alpine
     container_name: ec_postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: ec-store
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
       - "5432:5432"
     volumes:
@@ -15,7 +16,7 @@ services:
       - ec_network
 
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     container_name: ec_redis
     restart: unless-stopped
     ports:
@@ -35,8 +36,16 @@ services:
       - "5173:5173"
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/ec-store
+      - DATABASE_URL=postgres://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/ec-store
       - REDIS_URL=redis://redis:6379
+      # Keycloak SSO — local-dev config (not secrets; matches realm-export.json client `medusa`)
+      # These override/augment env_file so no .env edit is required to enable SSO.
+      - KEYCLOAK_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=medusa-commerce
+      - KEYCLOAK_CLIENT_ID=medusa
+      - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET:-medusa-dev-secret-changeme-in-prod}
+      - KEYCLOAK_SCOPE=openid profile email
+      - KEYCLOAK_CALLBACK_URL=http://localhost:8000/api/auth/keycloak-callback
     env_file:
       - apps/backend/.env
     volumes:
@@ -65,7 +74,7 @@ services:
       - /server/apps/backend/node_modules
       - /server/apps/storefront/node_modules
       - /server/apps/storefront/.next
-    entrypoint: ["./scripts/start-storefront.sh"]
+    entrypoint: ["sh", "./scripts/start-storefront.sh"]
     networks:
       - ec_network
 
@@ -74,4 +83,5 @@ volumes:
 
 networks:
   ec_network:
+    name: ec_network
     driver: bridge

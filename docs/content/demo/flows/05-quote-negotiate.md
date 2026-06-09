@@ -19,7 +19,7 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 **Duration**: ~2 min
 
-![Cart showing bulk quote for negotiation](pathname:///img/demo/flows/05-quote-negotiate/generated-quote-negotiate-01-cart.png)
+*Demo video for this flow is being re-captured.*
 
 ## Script (voice narration — partial, green-slice only)
 
@@ -32,3 +32,7 @@ last_compiled: "2026-06-07T00:00:00Z"
 **[00:31]** "Maria sees the counter and accepts it instantly — visual confirmation blocked pending route fix."
 
 **[00:38]** "Backend negotiation flow is green; storefront route and messaging UI are in the next phase."
+
+## Cross-References
+
+- [Persona: Priya (Sales Manager)](../personas/sales-manager.md) — full persona playbook

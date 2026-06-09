@@ -4,16 +4,16 @@ description: Understand the Quote Medusa v2 module — its state machine, messag
 tags: [b2b, modules, quote, negotiation, medusa-v2, entity]
 source_refs:
   - path: "apps/backend/src/modules/quote"
-    last_compiled: "2026-06-07"
+    last_compiled: "2026-06-09"
   - path: "apps/backend/src/modules/quote/models/quote.ts"
-    last_compiled: "2026-06-07"
+    last_compiled: "2026-06-09"
   - path: "apps/backend/src/modules/quote/models/message.ts"
-    last_compiled: "2026-06-07"
+    last_compiled: "2026-06-09"
   - path: "apps/backend/src/modules/quote/service.ts"
-    last_compiled: "2026-06-07"
+    last_compiled: "2026-06-09"
   - path: "apps/backend/src/modules/quote/index.ts"
-    last_compiled: "2026-06-07"
-last_compiled: "2026-06-07T10:00:00Z"
+    last_compiled: "2026-06-09"
+last_compiled: "2026-06-09T10:26:53Z"
 ---
 
 # Entity: Quote Module
@@ -150,4 +150,6 @@ Source: `apps/backend/src/modules/quote/migrations/` (compiled 2026-06-07)
 - [Entity: Company Module](./company-module.md) — company employees initiate quotes
 - [Entity: Approval Module](./approval-module.md) — high-value quotes trigger approval workflows
 - [Architecture Overview](../architecture/overview.md)
-- ADR-012: [`docs/content/architecture/adrs/ADR-012-quote-engine-architecture.md`](../architecture/adrs/ADR-012-quote-engine-architecture.md)
+- [ADR-012: Quote Engine Architecture](../architecture/adrs/ADR-012-quote-engine-architecture.md) — full decision record for quote state machine
+- [ADR-011: Stripe Connect Marketplace](../architecture/adrs/ADR-011-stripe-connect-marketplace.md) — payment settlement decision for quote-to-order conversion
+- [ADR-013: ANZ Marketplace Supplier Vetting](../architecture/adrs/ADR-013-anz-marketplace-supplier-vetting.md) — regulatory context for quote workflows in ANZ market

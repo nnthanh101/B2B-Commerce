@@ -64,6 +64,7 @@ All services run in a single `docker-compose.yml` file — same file used by VS 
 - **Approval Workflows** — Manager/admin approval gates for high-value orders
 - **Bulk Add-to-Cart** — B2B buyers add multiple SKUs in one action
 - **Order Editing** — Post-order modifications without full re-checkout
+- **Keycloak SSO** — Local OpenID Connect identity provider for storefront login; demo user pre-configured
 
 ## Repository Layout
 
@@ -95,6 +96,7 @@ The documentation site is built with Docusaurus 3.10 at `docs/`. GitHub Pages de
 
 - **[Quickstart](./docs/content/quickstart.md)** — Step-by-step setup + verification commands
 - **[Architecture Overview](./docs/content/architecture/overview.md)** — Component diagram, stack decisions, AWS roadmap
+- **[Keycloak SSO Integration](./docs/content/auth/keycloak-sso.md)** — Local OIDC provider; storefront login; admin limitation explained
 - **[B2B Blueprint](./docs/content/b2b-blueprint.md)** — Product strategy, feature matrix, roadmap
 - **[Licensing](./docs/content/licensing.md)** — MIT vs. commercial boundary table
 - **[ADRs](./docs/content/architecture/adrs/)** — 16 Architecture Decision Records

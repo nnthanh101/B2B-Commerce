@@ -67,7 +67,13 @@ async function globalSetup() {
     // Step 2: Run the B2B demo seed (A0-US-2)
     // Uses apps/backend/src/scripts/seed-demo-b2b.ts via medusa exec.
     // NOT the stale REST seeds (tests/fixtures/seed-demo-b2b.ts, tests/e2e/fixtures/seed.ts).
-    await runB2BSeed();
+    // SKIP_SEED=true: set when seed was already run externally (e.g. container-first runner
+    // where docker exec is unavailable inside the Playwright container; seed via task seed:demo).
+    if (process.env.SKIP_SEED !== "true") {
+      await runB2BSeed();
+    } else {
+      console.log("[global-setup] SKIP_SEED=true — skipping docker-exec seed (pre-seeded externally via task seed:demo)");
+    }
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     console.error(`\n❌ Global setup failed: ${errMsg}`);

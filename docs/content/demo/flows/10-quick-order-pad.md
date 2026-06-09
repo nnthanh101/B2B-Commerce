@@ -19,7 +19,7 @@ last_compiled: "2026-06-07T00:00:00Z"
 
 **Duration**: ~2 min
 
-![Quick order pad with favorite SKUs pre-populated](pathname:///img/demo/flows/10-quick-order-pad/generated-quick-order-pad-01-cart.png)
+*Demo video for this flow is being re-captured.*
 
 ## Script (voice narration)
 

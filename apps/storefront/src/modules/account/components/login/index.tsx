@@ -1,11 +1,11 @@
-import { login } from "@/lib/data/customer"
+import { login, loginWithKeycloak } from "@/lib/data/customer"
 import { LOGIN_VIEW } from "@/modules/account/templates/login-template"
 import ErrorMessage from "@/modules/checkout/components/error-message"
 import { SubmitButton } from "@/modules/checkout/components/submit-button"
 import Button from "@/modules/common/components/button"
 import Input from "@/modules/common/components/input"
 import { Checkbox, Text } from "@medusajs/ui"
-import { useActionState } from "react"
+import { useActionState, useState, useTransition } from "react"
 
 type Props = {
   setCurrentView: (view: LOGIN_VIEW) => void
@@ -13,6 +13,22 @@ type Props = {
 
 const Login = ({ setCurrentView }: Props) => {
   const [message, formAction] = useActionState(login, null)
+  const [ssoError, setSsoError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+
+  const handleSsoLogin = () => {
+    setSsoError(null)
+    startTransition(async () => {
+      const result = await loginWithKeycloak()
+      if (typeof result === "string") {
+        setSsoError(result)
+        return
+      }
+      // result.location is the Keycloak authorize URL — hard-navigate so cookies
+      // and the OIDC state param survive the redirect.
+      window.location.href = result.location
+    })
+  }
 
   return (
     <div
@@ -66,6 +82,29 @@ const Login = ({ setCurrentView }: Props) => {
           </Button>
         </div>
       </form>
+
+      <div className="flex items-center gap-3 my-2">
+        <div className="flex-1 border-t border-neutral-200" />
+        <Text className="text-neutral-500 text-sm">or</Text>
+        <div className="flex-1 border-t border-neutral-200" />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Button
+          variant="secondary"
+          onClick={handleSsoLogin}
+          disabled={isPending}
+          className="w-full h-10"
+          data-testid="sso-login-button"
+        >
+          {isPending ? "Redirecting…" : "Sign in with SSO"}
+        </Button>
+        {ssoError && (
+          <Text className="text-red-500 text-sm" data-testid="sso-error-message">
+            {ssoError}
+          </Text>
+        )}
+      </div>
     </div>
   )
 }
