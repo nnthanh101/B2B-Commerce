@@ -4,16 +4,16 @@ description: Understand the Quote Medusa v2 module — its state machine, messag
 tags: [b2b, modules, quote, negotiation, medusa-v2, entity]
 source_refs:
   - path: "apps/backend/src/modules/quote"
-    last_compiled: "2026-06-07"
+    last_compiled: "2026-06-09"
   - path: "apps/backend/src/modules/quote/models/quote.ts"
-    last_compiled: "2026-06-07"
+    last_compiled: "2026-06-09"
   - path: "apps/backend/src/modules/quote/models/message.ts"
-    last_compiled: "2026-06-07"
+    last_compiled: "2026-06-09"
   - path: "apps/backend/src/modules/quote/service.ts"
-    last_compiled: "2026-06-07"
+    last_compiled: "2026-06-09"
   - path: "apps/backend/src/modules/quote/index.ts"
-    last_compiled: "2026-06-07"
-last_compiled: "2026-06-07T10:00:00Z"
+    last_compiled: "2026-06-09"
+last_compiled: "2026-06-09T10:26:53Z"
 ---
 
 # Entity: Quote Module

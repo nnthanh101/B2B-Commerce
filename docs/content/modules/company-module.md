@@ -4,16 +4,16 @@ description: Understand the Company Medusa v2 module — its models, spending-li
 tags: [b2b, modules, company, employee, medusa-v2, entity]
 source_refs:
   - path: "apps/backend/src/modules/company"
-    last_compiled: "2026-06-07"
+    last_compiled: "2026-06-09"
   - path: "apps/backend/src/modules/company/models/company.ts"
-    last_compiled: "2026-06-07"
+    last_compiled: "2026-06-09"
   - path: "apps/backend/src/modules/company/models/employee.ts"
-    last_compiled: "2026-06-07"
+    last_compiled: "2026-06-09"
   - path: "apps/backend/src/modules/company/service.ts"
-    last_compiled: "2026-06-07"
+    last_compiled: "2026-06-09"
   - path: "apps/backend/src/modules/company/index.ts"
-    last_compiled: "2026-06-07"
-last_compiled: "2026-06-07T10:00:00Z"
+    last_compiled: "2026-06-09"
+last_compiled: "2026-06-09T10:26:53Z"
 ---
 
 # Entity: Company Module
@@ -111,7 +111,7 @@ flowchart LR
 
 ## Migrations
 
-Source: `apps/backend/src/modules/company/migrations/` (compiled 2026-06-07)
+Source: `apps/backend/src/modules/company/migrations/` (compiled 2026-06-09)
 
 | File | Date | Change |
 |------|------|--------|
@@ -119,6 +119,7 @@ Source: `apps/backend/src/modules/company/migrations/` (compiled 2026-06-07)
 | `Migration20241001085304.ts` | 2024-10-01 | Address fields added |
 | `Migration20241014114520.ts` | 2024-10-14 | `spending_limit_reset_frequency` added |
 | `Migration20250107125154.ts` | 2025-01-07 | `currency_code` nullable, model refinements |
+| `Migration20260608232347.ts` | 2026-06-08 | Consolidated schema snapshot: company + employee tables with FK, indexes, `raw_spending_limit` jsonb column |
 
 ---
 

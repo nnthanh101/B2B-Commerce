@@ -4,20 +4,20 @@ description: Understand the Approval Medusa v2 module — its three models (Appr
 tags: [b2b, modules, approval, workflow, spending-limit, medusa-v2, entity]
 source_refs:
   - path: "apps/backend/src/modules/approval"
-    last_compiled: "2026-06-07"
+    last_compiled: "2026-06-09"
   - path: "apps/backend/src/modules/approval/models/approval.ts"
-    last_compiled: "2026-06-07"
+    last_compiled: "2026-06-09"
   - path: "apps/backend/src/modules/approval/models/approval-settings.ts"
-    last_compiled: "2026-06-07"
+    last_compiled: "2026-06-09"
   - path: "apps/backend/src/modules/approval/models/approval-status.ts"
-    last_compiled: "2026-06-07"
+    last_compiled: "2026-06-09"
   - path: "apps/backend/src/modules/approval/service.ts"
-    last_compiled: "2026-06-07"
+    last_compiled: "2026-06-09"
   - path: "apps/backend/src/modules/approval/index.ts"
-    last_compiled: "2026-06-07"
+    last_compiled: "2026-06-09"
   - path: "apps/backend/src/types/approval/module.ts"
-    last_compiled: "2026-06-07"
-last_compiled: "2026-06-07T10:00:00Z"
+    last_compiled: "2026-06-09"
+last_compiled: "2026-06-09T10:26:53Z"
 ---
 
 # Entity: Approval Module
